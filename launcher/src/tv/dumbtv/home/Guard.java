@@ -31,12 +31,20 @@ public final class Guard extends AccessibilityService {
     private static final String AMAZON_HOME = "com.amazon.tv.launcher.ui.HomeActivity_vNext";
     private static final long COVER_MAX_MS = 1500;
     private static final long REPEAT_MS = 1000;
+    /**
+     * Android 11 (Fire OS 8) aborts a background activity start unless the caller has a visible
+     * window. The cover is that window, but only once its surface is on screen, which takes a
+     * frame or two after cover(); the first launch can lose that race, so it is fired again.
+     */
+    private static final long[] RETRY_MS = {60, 150, 300, 500, 800, 1200};
 
     private static volatile boolean paused;
     private static Guard running;
 
     private final Handler handler = new Handler(Looper.getMainLooper());
     private final Runnable uncover = this::uncover;
+    private final Runnable retry = this::retry;
+    private int retries;
     private View cover;
     private long lastLaunch;
 
@@ -55,6 +63,8 @@ public final class Guard extends AccessibilityService {
     static void arrived(Context c) {
         AlarmManager alarms = (AlarmManager) c.getSystemService(Context.ALARM_SERVICE);
         alarms.cancel(launch(c));
+        Guard g = running;
+        if (g != null) g.handler.post(g::stopRetry);
     }
 
     /** Called once our home window is on screen. */
@@ -101,6 +111,7 @@ public final class Guard extends AccessibilityService {
     @Override
     public void onDestroy() {
         handler.removeCallbacks(uncover);
+        stopRetry();
         if (cover != null) ((WindowManager) getSystemService(WINDOW_SERVICE)).removeView(cover);
         if (running == this) running = null;
         super.onDestroy();
@@ -123,6 +134,21 @@ public final class Guard extends AccessibilityService {
         lastLaunch = now;
         cover();
         home(this);
+        stopRetry();
+        handler.postDelayed(retry, RETRY_MS[0]);
+    }
+
+    private void retry() {
+        if (paused) return;
+        home(this);
+        if (++retries < RETRY_MS.length) {
+            handler.postDelayed(retry, RETRY_MS[retries] - RETRY_MS[retries - 1]);
+        }
+    }
+
+    private void stopRetry() {
+        handler.removeCallbacks(retry);
+        retries = 0;
     }
 
     /** The overlay window exists from service start; a GONE root keeps its surface hidden. */

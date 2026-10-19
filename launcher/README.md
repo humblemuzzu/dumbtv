@@ -152,6 +152,10 @@ protected package. Three things combine to make HOME land here, measured on this
 3. **Amazon's home is covered before it draws.** `Guard` keeps an overlay window ready
    (no surface while idle, so it costs nothing during video). It shows the overlay
    the moment Amazon's home appears, and removes it once our window is on screen.
+4. **Fire OS 8 (Android 11) needs the launch fired again.** Android 11 aborts a
+   background activity start unless the caller owns a visible window. The overlay is
+   that window, but only a frame or two after it is shown, so the first launch can be
+   refused; `Guard` repeats it for up to 1.2 s until `Home` resumes.
 
 What you see on HOME: the app, then about 0.3 s of black, then this home screen.
 

@@ -112,7 +112,7 @@ else
   echo "checksum ok"
 fi
 
-out=$(adb_ install -r "$APK" 2>&1 | tail -1 || true)
+out=$(adb_ install -r --no-incremental "$APK" 2>&1 | tail -1 || true)
 case $out in
   *Success*) ;;
   *INSTALL_FAILED_UPDATE_INCOMPATIBLE*)

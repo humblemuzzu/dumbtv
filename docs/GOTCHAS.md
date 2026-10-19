@@ -215,13 +215,22 @@ Advanced settings > Configure filter update, add
 the rest, reboot. The routing tweaks (`detectDNS = false`, `routeIPs`) cannot be set this
 way. `verify.sh` skips the list count there and relies on the blocked-host lookups.
 
-**HOME does not move to dumbtv home yet.** Android 11 blocks the Guard's alarm-fired
-launch as a background activity start (logcat: `Background activity start ...
-callingUidHasAnyVisibleWindow: false`). The service is bound, so `verify.sh` reports it
-as bound; press HOME to see the truth. Android's documented way past this is the
-"display over other apps" permission (`SYSTEM_ALERT_WINDOW`), which the launcher does
-not declare. Adding it is open: it would end the launcher's no-permissions rule, and it
-needs testing on a Fire OS 8 device.
+**Android 11 aborts the Guard's first launch.** The alarm-fired launch is a background
+activity start (logcat: `Background activity start ... callingUidHasAnyVisibleWindow:
+false` then `Abort background activity starts`). Android 11 lets it through when the
+caller owns a visible window, and the Guard's cover overlay is one, but only once its
+surface is on screen, a frame or two after `cover()`. The first launch loses that race,
+so `Guard` fires it again at 60, 150, 300, 500, 800 and 1200 ms until `Home` resumes;
+the second or third attempt lands. No `SYSTEM_ALERT_WINDOW` needed, and the launcher
+keeps no permissions. Measured on a Fire TV Edition television (AFTCIBFBD1, Fire OS
+8.1.8.0): 20/20 HOME presses from Netflix, YouTube, Spotify and Disney+ landed on dumbtv
+home, under a second each, and it was in front after a reboot. Before the retry, 1 in 3.
+`appops set tv.dumbtv.home SYSTEM_ALERT_WINDOW allow` does nothing here: the op stays
+`default` for a package that does not declare the permission.
+
+**`adb install` with recent platform-tools (37.0.1 here) ends with `Install command complete in N ms`**
+(incremental install), so `install.sh` read that line instead of `Success`. It now
+passes `--no-incremental`.
 
 **`com.amazon.dummy.settings` and `com.android.traceur` come back enabled after a
 reboot.** Re-run `debloat.sh` after a reboot to switch them off again.
