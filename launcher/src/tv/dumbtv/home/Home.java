@@ -9,8 +9,14 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Rect;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.ColorDrawable;
+import android.graphics.drawable.Drawable;
+import android.graphics.drawable.GradientDrawable;
+import android.graphics.drawable.TransitionDrawable;
 import android.media.tv.TvInputManager;
 import android.net.Uri;
 import android.os.Bundle;
@@ -56,12 +62,15 @@ public final class Home extends Activity {
     private TvInputManager tv;
     private int applied = -1, appsGeneration;
     private boolean resumed, landed;
+    /** Grid layout: a top shelf for the focused tile over a blurred backdrop, apps in a grid. */
+    private boolean grid;
     private FrameLayout root;
-    private ImageView wall;
+    private ImageView wall, shelfArt;
     private View shade;
-    private TextView clock, date;
+    private TextView clock, date, shelfName;
     private Row apps, inputs;
     private Tile moving;
+    private Item featured;
     private String wallKey;
 
     private final BroadcastReceiver packages = new BroadcastReceiver() {
@@ -104,13 +113,18 @@ public final class Home extends Activity {
     private final class Row {
         final String kind;
         final TextView title;
+        /** Null for a grid row: the grid scrolls with the page. */
         final HorizontalScrollView scroll;
+        /** A row of tiles, or for a grid a column of lines of tiles. */
         final LinearLayout strip;
+        final View body;
+        final boolean asGrid;
         List<Item> all = new ArrayList<>();
 
-        Row(String kind, String name, LinearLayout parent) {
+        Row(String kind, String name, LinearLayout parent, boolean asGrid) {
             this.kind = kind;
-            int edge = dp(56), bleed = dp(14);
+            this.asGrid = asGrid;
+            int edge = grid ? dp(GRID_EDGE) : dp(56), bleed = dp(14);
             title = Ui.text(Home.this, 12, Ui.FAINT, Ui.MEDIUM);
             title.setText(name.toUpperCase(Locale.ROOT));
             title.setLetterSpacing(0.14f);
@@ -118,6 +132,14 @@ public final class Home extends Activity {
             strip = new LinearLayout(Home.this);
             strip.setClipChildren(false);
             strip.setClipToPadding(false);
+            if (asGrid) {
+                strip.setOrientation(LinearLayout.VERTICAL);
+                strip.setPadding(edge, dp(10), edge, dp(4));
+                scroll = null;
+                body = strip;
+                parent.addView(strip, new LinearLayout.LayoutParams(MATCH, WRAP));
+                return;
+            }
             strip.setPadding(bleed, dp(12), bleed, dp(8));
             scroll = new HorizontalScrollView(Home.this) {
                 /** Keeps the focused tile centered, except near either end of the row. */
@@ -136,22 +158,68 @@ public final class Home extends Activity {
             scroll.setClipToPadding(false);
             scroll.setPadding(edge - bleed, 0, edge - bleed, 0);
             scroll.addView(strip, new FrameLayout.LayoutParams(WRAP, WRAP));
+            body = scroll;
             parent.addView(title, new LinearLayout.LayoutParams(MATCH, WRAP));
             parent.addView(scroll, new LinearLayout.LayoutParams(MATCH, WRAP));
         }
 
         void setVisible(boolean on) {
             int v = on ? View.VISIBLE : View.GONE;
-            title.setVisibility(v);
-            scroll.setVisibility(v);
+            title.setVisibility(asGrid ? View.GONE : v);
+            body.setVisibility(v);
+        }
+
+        /** Every tile, in order. */
+        List<Tile> tiles() {
+            List<Tile> out = new ArrayList<>();
+            if (!asGrid) {
+                for (int i = 0; i < strip.getChildCount(); i++) out.add((Tile) strip.getChildAt(i));
+                return out;
+            }
+            for (int l = 0; l < strip.getChildCount(); l++) {
+                ViewGroup line = (ViewGroup) strip.getChildAt(l);
+                for (int i = 0; i < line.getChildCount(); i++) out.add((Tile) line.getChildAt(i));
+            }
+            return out;
+        }
+
+        /** The tiles a press of DOWN from the header can land on. */
+        LinearLayout firstLine() {
+            return asGrid && strip.getChildCount() > 0 ? (LinearLayout) strip.getChildAt(0) : strip;
+        }
+
+        /** Lays {@code tiles} out again: one strip, or lines of {@link #gridCols} for a grid. */
+        void place(List<Tile> tiles) {
+            for (Tile t : tiles) {
+                if (t.getParent() != null) ((ViewGroup) t.getParent()).removeView(t);
+            }
+            strip.removeAllViews();
+            int gap = asGrid ? dp(GRID_GAP) : dp(18), cols = asGrid ? gridCols() : Integer.MAX_VALUE;
+            LinearLayout line = strip;
+            for (int i = 0; i < tiles.size(); i++) {
+                if (asGrid && i % cols == 0) {
+                    line = new LinearLayout(Home.this);
+                    line.setClipChildren(false);
+                    line.setClipToPadding(false);
+                    LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(MATCH, WRAP);
+                    lp.bottomMargin = dp(12);
+                    strip.addView(line, lp);
+                }
+                LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(WRAP, WRAP);
+                lp.rightMargin = gap;
+                line.addView(tiles.get(i), lp);
+            }
         }
     }
+
+    private static final int GRID_EDGE = 48, GRID_GAP = 28;
 
     @Override
     protected void onCreate(Bundle state) {
         super.onCreate(state);
         Future<List<Item>> catalog = io.submit(() -> Catalog.apps(this));
         cfg = Config.get(this);
+        grid = "grid".equals(cfg.get(Config.LAYOUT));
         tv = (TvInputManager) getSystemService(Context.TV_INPUT_SERVICE);
         setContentView(build());
 
@@ -184,7 +252,8 @@ public final class Home extends Activity {
             loadApps(null);
             return;
         }
-        int fit = getResources().getDisplayMetrics().widthPixels / (cardSize()[0] + dp(18)) + 1;
+        int fit = grid ? gridCols() * 3
+                : getResources().getDisplayMetrics().widthPixels / (cardSize()[0] + dp(18)) + 1;
         for (Item it : Catalog.visible(cfg, Catalog.APPS, apps.all)) {
             if (fit-- <= 0) break;
             Catalog.art(getPackageManager(), it);
@@ -270,7 +339,10 @@ public final class Home extends Activity {
                     shift(1);
                     break;
                 case KeyEvent.KEYCODE_DPAD_UP:
+                    if (rowOf(moving).asGrid) shift(-gridCols());
+                    break;
                 case KeyEvent.KEYCODE_DPAD_DOWN:
+                    if (rowOf(moving).asGrid) shift(gridCols());
                     break;
                 default:
                     stopMoving();
@@ -310,8 +382,8 @@ public final class Home extends Activity {
     private List<int[]> rowBlocks(View content) {
         List<int[]> rows = new ArrayList<>();
         for (Row row : new Row[] {apps, inputs}) {
-            if (row.scroll.getVisibility() != View.VISIBLE) continue;
-            rows.add(new int[] {topIn(row.title, content), topIn(row.scroll, content) + row.scroll.getHeight()});
+            if (row.body.getVisibility() != View.VISIBLE) continue;
+            rows.add(new int[] {topIn(row.title, content), topIn(row.body, content) + row.body.getHeight()});
         }
         return rows;
     }
@@ -346,6 +418,19 @@ public final class Home extends Activity {
         }
     }
 
+    /**
+     * Grid layout: the shelf stays in view while the focus is on the header or the first line
+     * of apps; deeper down, the focused line sits a third of the way down the screen.
+     */
+    private int gridTarget(ScrollView page, Rect r) {
+        View content = page.getChildAt(0);
+        int range = Math.max(0, content.getHeight() - page.getHeight());
+        LinearLayout first = apps.firstLine();
+        int firstBottom = first == apps.strip ? 0 : topIn(first, content) + first.getHeight();
+        if (r.centerY() <= firstBottom) return 0;
+        return Math.max(0, Math.min(range, r.top - page.getHeight() / 3));
+    }
+
     /** {@code v}'s top edge in {@code content}'s coordinates. */
     private static int topIn(View v, View content) {
         int y = 0;
@@ -368,13 +453,13 @@ public final class Home extends Activity {
             /** Scrolls in whole rows: the focused row shows complete, and a row starts at the top edge. */
             @Override
             protected int computeScrollDeltaToGetChildRectOnScreen(Rect r) {
-                return rowTarget(this, r) - getScrollY();
+                return (grid ? gridTarget(this, r) : rowTarget(this, r)) - getScrollY();
             }
 
             @Override
             protected void onLayout(boolean changed, int l, int t, int r, int b) {
                 super.onLayout(changed, l, t, r, b);
-                fitBottom(this);
+                if (!grid) fitBottom(this);
             }
 
             /**
@@ -406,7 +491,7 @@ public final class Home extends Activity {
             @Override
             public View focusSearch(View focused, int direction) {
                 if (direction == View.FOCUS_DOWN && chips.contains(focused)) {
-                    View below = nearest(apps.strip, focused);
+                    View below = nearest(apps.firstLine(), focused);
                     if (below != null) return below;
                 }
                 return super.focusSearch(focused, direction);
@@ -415,8 +500,13 @@ public final class Home extends Activity {
         column.setOrientation(LinearLayout.VERTICAL);
         column.setClipChildren(false);
         column.setClipToPadding(false);
-        column.setPadding(0, dp(40), 0, dp(32));
+        column.setPadding(0, dp(grid ? 24 : 40), 0, dp(32));
         scroll.addView(column, new FrameLayout.LayoutParams(MATCH, WRAP));
+
+        if (grid) {
+            buildGrid(column);
+            return root;
+        }
 
         LinearLayout head = new LinearLayout(this);
         head.setGravity(Gravity.TOP);
@@ -433,9 +523,131 @@ public final class Home extends Activity {
         head.addView(chip("Settings", v -> openSettings()));
         column.addView(head, new LinearLayout.LayoutParams(MATCH, WRAP));
 
-        apps = new Row(Catalog.APPS, "Apps", column);
-        inputs = new Row(Catalog.INPUTS, "Inputs", column);
+        apps = new Row(Catalog.APPS, "Apps", column, false);
+        inputs = new Row(Catalog.INPUTS, "Inputs", column, false);
         return root;
+    }
+
+    /**
+     * Header with the time at the top right, then the top shelf: the focused tile's art large,
+     * its name beside it, over a blur of the same art. Apps in a grid below, inputs last.
+     */
+    private void buildGrid(LinearLayout column) {
+        int edge = dp(GRID_EDGE);
+        LinearLayout head = new LinearLayout(this);
+        head.setGravity(Gravity.CENTER_VERTICAL);
+        head.setPadding(edge, 0, edge, 0);
+        clock = Ui.text(this, 24, Ui.TEXT, Ui.MEDIUM);
+        date = Ui.text(this, 15, Ui.MUTED, Ui.MEDIUM);
+        date.setVisibility(View.GONE);
+        head.addView(new View(this), new LinearLayout.LayoutParams(0, 1, 1f));
+        LinearLayout.LayoutParams at = new LinearLayout.LayoutParams(WRAP, WRAP);
+        at.rightMargin = dp(8);
+        head.addView(clock, at);
+        head.addView(chip("Options", v -> startActivity(new Intent(this, Options.class))));
+        head.addView(chip("Settings", v -> openSettings()));
+        column.addView(head, new LinearLayout.LayoutParams(MATCH, WRAP));
+
+        int screenW = getResources().getDisplayMetrics().widthPixels;
+        int screenH = getResources().getDisplayMetrics().heightPixels;
+        LinearLayout shelf = new LinearLayout(this);
+        shelf.setGravity(Gravity.BOTTOM);
+        shelf.setClipChildren(false);
+        shelf.setClipToPadding(false);
+        shelf.setPadding(edge, 0, edge, dp(18));
+        int artW = screenW * 30 / 100;
+        shelfArt = new ImageView(this);
+        shelfArt.setScaleType(ImageView.ScaleType.CENTER_CROP);
+        shelfArt.setBackground(Ui.round(Ui.SURFACE, dp(14)));
+        shelfArt.setClipToOutline(true);
+        shelfArt.setElevation(dp(16));
+        shelf.addView(shelfArt, new LinearLayout.LayoutParams(artW, artW * 9 / 16));
+        shelfName = Ui.text(this, 34, Ui.TEXT, Ui.LIGHT);
+        shelfName.setSingleLine();
+        shelfName.setPadding(dp(28), 0, 0, dp(4));
+        shelf.addView(shelfName, new LinearLayout.LayoutParams(0, WRAP, 1f));
+        column.addView(shelf, new LinearLayout.LayoutParams(MATCH, screenH * 40 / 100));
+
+        apps = new Row(Catalog.APPS, "Apps", column, true);
+        inputs = new Row(Catalog.INPUTS, "Inputs", column, false);
+    }
+
+    /** Puts {@code t} on the top shelf and blurs its art into the backdrop. */
+    private void feature(Tile t) {
+        if (!grid) return;
+        featured = t.item;
+        shelfName.setText(Catalog.label(cfg, t.item));
+        Drawable art = t.item.banner != null ? t.item.banner : t.item.icon;
+        boolean banner = t.item.banner != null;
+        if (art == null) {
+            shelfArt.setVisibility(Catalog.APPS.equals(t.kind) ? View.INVISIBLE : View.GONE);
+        } else {
+            // A copy: the tile sets bounds on its own drawable at every draw.
+            Drawable.ConstantState cs = art.getConstantState();
+            shelfArt.setImageDrawable(cs != null ? cs.newDrawable(getResources()).mutate() : art);
+            shelfArt.setScaleType(banner ? ImageView.ScaleType.CENTER_CROP : ImageView.ScaleType.CENTER_INSIDE);
+            int pad = banner ? 0 : dp(28);
+            shelfArt.setPadding(pad, pad, pad, pad);
+            shelfArt.setVisibility(View.VISIBLE);
+        }
+        backdrop(art);
+    }
+
+    /** A 16×9 copy of {@code art} scaled up with filtering: a cheap, soft blur. */
+    private void backdrop(Drawable art) {
+        if (wallKey != null) return;
+        Drawable next;
+        if (art == null) {
+            next = new ColorDrawable(cfg.background());
+        } else {
+            Bitmap b = Bitmap.createBitmap(16, 9, Bitmap.Config.ARGB_8888);
+            Canvas c = new Canvas(b);
+            c.drawColor(cfg.background());
+            Drawable copy = art.getConstantState() != null
+                    ? art.getConstantState().newDrawable(getResources()).mutate() : art;
+            Rect keep = copy.copyBounds();
+            copy.setBounds(0, 0, 16, 9);
+            copy.draw(c);
+            copy.setBounds(keep);
+            BitmapDrawable d = new BitmapDrawable(getResources(), b);
+            d.setFilterBitmap(true);
+            next = d;
+        }
+        Drawable now = wall.getDrawable();
+        if (now instanceof TransitionDrawable) now = ((TransitionDrawable) now).getDrawable(1);
+        if (now == null) {
+            wall.setImageDrawable(next);
+            return;
+        }
+        TransitionDrawable fade = new TransitionDrawable(new Drawable[] {now, next});
+        fade.setCrossFadeEnabled(true);
+        wall.setImageDrawable(fade);
+        fade.startTransition(280);
+    }
+
+    /** Darkens the backdrop toward the bottom, where the grid sits. */
+    private static Drawable gridShade() {
+        return new GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM,
+                new int[] {0x33000000, 0x8C000000, 0xE6000000, 0xF7000000});
+    }
+
+    private int gridCols() {
+        switch (cfg.get(Config.TILES)) {
+            case "small":
+                return 6;
+            case "large":
+                return 4;
+            default:
+                return 5;
+        }
+    }
+
+    /** Card size that fits {@link #gridCols} across the screen. */
+    private int[] gridCard() {
+        int cols = gridCols();
+        int w = (getResources().getDisplayMetrics().widthPixels - 2 * dp(GRID_EDGE)
+                - (cols - 1) * dp(GRID_GAP)) / cols;
+        return new int[] {w, w * 9 / 16};
     }
 
     /** The child of {@code strip} horizontally closest to {@code from}, or null when empty. */
@@ -476,6 +688,10 @@ public final class Home extends Activity {
     }
 
     private void apply() {
+        if (grid != "grid".equals(cfg.get(Config.LAYOUT))) {
+            recreate();
+            return;
+        }
         applied = cfg.version();
         int accent = cfg.accent();
         for (TextView c : chips) Ui.focusStyle(c, accent, 0x14FFFFFF, dp(18));
@@ -517,34 +733,36 @@ public final class Home extends Activity {
         View focused = getCurrentFocus();
         String keep = focused instanceof Tile && ((Tile) focused).kind.equals(row.kind)
                 ? ((Tile) focused).item.id : null;
-        row.strip.removeAllViews();
 
         boolean enabled = !Catalog.INPUTS.equals(row.kind) || "on".equals(cfg.get(Config.INPUTS));
         List<Item> shown = enabled ? Catalog.visible(cfg, row.kind, row.all) : new ArrayList<>();
-        int[] size = cardSize();
+        int[] size = grid ? gridCard() : cardSize();
         int w = size[0], h = Catalog.APPS.equals(row.kind) ? size[1] : Math.round(size[1] * 0.56f);
         String labels = cfg.get(Config.LABELS);
         int accent = cfg.accent();
         int index = 0, restore = -1;
+        List<Tile> tiles = new ArrayList<>();
         for (Item it : shown) {
-            Tile t = new Tile(this, it, row.kind, Catalog.label(cfg, it), w, h, labels, accent);
+            Tile t = new Tile(this, it, row.kind, Catalog.label(cfg, it), w, h, labels, accent, grid);
             t.setOnClickListener(v -> open((Tile) v));
             t.setOnLongClickListener(v -> {
                 menu((Tile) v);
                 return true;
             });
-            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(WRAP, WRAP);
-            lp.rightMargin = dp(18);
-            row.strip.addView(t, lp);
+            t.setOnFocusChangeListener((v, has) -> {
+                if (has) feature((Tile) v);
+            });
+            tiles.add(t);
             if (it.id.equals(keep)) restore = index;
             index++;
             if (Catalog.APPS.equals(row.kind) && !it.artRequested) loadArt(it);
         }
+        row.place(tiles);
         row.setVisible(!shown.isEmpty());
         if (restore >= 0) {
-            row.strip.getChildAt(restore).requestFocus();
-        } else if (keep != null && row.strip.getChildCount() > 0) {
-            row.strip.getChildAt(0).requestFocus();
+            tiles.get(restore).requestFocus();
+        } else if (keep != null && !tiles.isEmpty()) {
+            tiles.get(0).requestFocus();
         } else if (getCurrentFocus() == null || !landed) {
             focusFirst();
         }
@@ -555,7 +773,10 @@ public final class Home extends Activity {
         io.execute(() -> {
             Catalog.art(getPackageManager(), it);
             ui.post(() -> {
-                for (int i = 0; i < apps.strip.getChildCount(); i++) apps.strip.getChildAt(i).invalidate();
+                for (Tile t : apps.tiles()) {
+                    t.invalidate();
+                    if (t.item == it && it == featured && t.isFocused()) feature(t);
+                }
             });
         });
     }
@@ -572,11 +793,11 @@ public final class Home extends Activity {
     }
 
     private void focusFirst() {
-        apps.scroll.scrollTo(0, 0);
+        if (apps.scroll != null) apps.scroll.scrollTo(0, 0);
         inputs.scroll.scrollTo(0, 0);
-        View first = apps.strip.getChildAt(0);
-        if (first == null) first = inputs.strip.getChildAt(0);
-        landed = apps.strip.getChildCount() > 0;
+        List<Tile> appTiles = apps.tiles();
+        View first = appTiles.isEmpty() ? inputs.strip.getChildAt(0) : appTiles.get(0);
+        landed = !appTiles.isEmpty();
         if (first == null) first = chips.get(0);
         first.requestFocus();
     }
@@ -603,6 +824,16 @@ public final class Home extends Activity {
         boolean image = "image".equals(cfg.get(Config.BACKGROUND));
         File file = image ? cfg.wallpaper() : null;
         root.setBackgroundColor(cfg.background());
+        if (grid && file == null) {
+            shade.setBackground(gridShade());
+            if (wallKey != null) {
+                wallKey = null;
+                wall.setImageDrawable(null);
+                View f = getCurrentFocus();
+                if (f instanceof Tile) feature((Tile) f);
+            }
+            return;
+        }
         int dim = Integer.parseInt(cfg.get(Config.DIM));
         shade.setBackgroundColor(file == null ? Color.TRANSPARENT : Color.argb(dim * 255 / 100, 0, 0, 0));
         String key = file == null ? null : file.getPath() + ":" + file.lastModified();
@@ -714,13 +945,18 @@ public final class Home extends Activity {
         d.show();
     }
 
+    private Row rowOf(Tile t) {
+        return Catalog.APPS.equals(t.kind) ? apps : inputs;
+    }
+
     private void shift(int by) {
-        LinearLayout strip = (LinearLayout) moving.getParent();
-        int from = strip.indexOfChild(moving), to = from + by;
-        if (to < 0 || to >= strip.getChildCount()) return;
-        ViewGroup.LayoutParams lp = moving.getLayoutParams();
-        strip.removeViewAt(from);
-        strip.addView(moving, to, lp);
+        Row row = rowOf(moving);
+        List<Tile> tiles = row.tiles();
+        int from = tiles.indexOf(moving), to = from + by;
+        if (from < 0 || to < 0 || to >= tiles.size()) return;
+        tiles.remove(from);
+        tiles.add(to, moving);
+        row.place(tiles);
         moving.requestFocus();
     }
 
@@ -728,10 +964,9 @@ public final class Home extends Activity {
         Tile t = moving;
         moving = null;
         t.setMoving(false);
-        LinearLayout strip = (LinearLayout) t.getParent();
-        if (strip == null) return;
+        if (t.getParent() == null) return;
         List<String> ids = new ArrayList<>();
-        for (int i = 0; i < strip.getChildCount(); i++) ids.add(((Tile) strip.getChildAt(i)).item.id);
+        for (Tile each : rowOf(t).tiles()) ids.add(each.item.id);
         Catalog.saveOrder(cfg, t.kind, ids);
         applied = cfg.version();
     }

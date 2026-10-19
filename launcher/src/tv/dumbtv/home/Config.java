@@ -52,6 +52,9 @@ final class Config {
         }
     }
 
+    static final Choice LAYOUT = new Choice("layout", "Layout", "rows",
+            new String[] {"rows", "grid"},
+            new String[] {"Rows", "Grid with top shelf"});
     static final Choice ACCENT = new Choice("accent", "Accent color", "blue",
             new String[] {"white", "blue", "cyan", "green", "amber", "red", "pink", "violet"},
             new String[] {"White", "Blue", "Cyan", "Green", "Amber", "Red", "Pink", "Violet"});
@@ -78,7 +81,7 @@ final class Config {
             new String[] {"off", "visit", "hourly", "daily", "daytime"},
             new String[] {"Off", "Every return home", "Every hour", "Every day", "By time of day"});
 
-    static final Choice[] CHOICES = {ACCENT, TILES, LABELS, CLOCK, INPUTS, BACKGROUND, DIM, ROTATE};
+    static final Choice[] CHOICES = {LAYOUT, ACCENT, TILES, LABELS, CLOCK, INPUTS, BACKGROUND, DIM, ROTATE};
 
     /** Folder of wallpapers, next to home.conf, that Background › Image file rotates through. */
     static final String WALLPAPERS = "wallpapers";

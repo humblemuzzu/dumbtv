@@ -73,17 +73,24 @@ update one with the other: `install.sh` says so and tells you to
 |---|---|
 | OK | open the app, or switch to the input |
 | Hold OK, or ☰ Menu | Move, Rename, Hide, App info |
-| Move mode | ◀ ▶ moves the tile, any other key drops it |
+| Move mode | ◀ ▶ moves the tile (in the grid, ▲ ▼ move it a line), any other key drops it |
 | Up from the top row | Options and Settings |
 | Back on the home screen | jump to the first tile |
 | Hold HOME | Fire OS quick menu (Amazon's, unchanged) |
 
-**Options** cycles each setting with ◀ ▶ or OK: accent color, tile size, app names
+**Options** cycles each setting with ◀ ▶ or OK: layout, accent color, tile size, app names
 (on focus / always / never), clock format, inputs row, background (black, graphite,
 midnight, or an image), image dim and wallpaper rotation, and **Next wallpaper**
 steps to the next image. It also lists which apps and inputs appear on
 the home screen. Apps without a TV banner, like the Appstore or Downloads, start
 hidden; tick them there to add them.
+
+**Layout › Grid with top shelf** is the Apple TV arrangement: the focused tile's art
+shows large on a shelf at the top, over a soft blur of the same art, and apps fill a
+grid below it (tile size picks 6, 5 or 4 per line). Focus lifts a tile on a shadow
+instead of drawing a ring. Moving past the first line scrolls the shelf away, so more
+lines fit on screen. The blur is the art drawn at 16×9 and scaled up, so it needs no
+library and no network. **Rows** is the original single row of apps.
 
 ## The settings file
 
@@ -94,6 +101,8 @@ Everything is stored in one plain text file on the TV:
 ```
 
 ```
+# rows grid
+layout=rows
 # white blue cyan green amber red pink violet, or #RRGGBB
 accent=blue
 # small medium large
@@ -177,8 +186,8 @@ until another app is opened.
 
 | File | What it is |
 |---|---|
-| `src/.../Home.java` | the home screen: clock, Apps row, Inputs row, tile menu, move mode |
-| `src/.../Tile.java` | one tile, drawn in a single `onDraw`: banner or icon, focus ring |
+| `src/.../Home.java` | the home screen: clock, Apps row or grid with top shelf, Inputs row, tile menu, move mode |
+| `src/.../Tile.java` | one tile, drawn in a single `onDraw`: banner or icon, focus ring or lift |
 | `src/.../Catalog.java` | which apps and inputs exist, and which are shown in what order |
 | `src/.../Config.java` | the `home.conf` reader and writer |
 | `src/.../Options.java` | the settings screen |
