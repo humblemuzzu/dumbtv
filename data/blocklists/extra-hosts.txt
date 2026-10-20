@@ -16,7 +16,10 @@ dubri19p4y5b.cloudfront.net
 distro-download.amazon.com
 amzdigital-a.akamaihd.net
 amzdigitaldownloads.edgesuite.net
-device-messaging-na.amazon.com
+# device-messaging-na.amazon.com
+#   Amazon Device Messaging. Prime Video will NOT START without it: avod logs
+#   'ADMRegistrationProvider: Registration not found' and the process exits
+#   immediately. Unblocked on AFTDCT31 / Fire OS 7.7.1.7 so Prime keeps working.
 
 # device telemetry and registration
 arcus-uswest.amazon.com

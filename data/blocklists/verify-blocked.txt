@@ -5,4 +5,4 @@ arcus-uswest.amazon.com
 unagi-zaz.amazon.com
 unagi-na.amazon.com
 api.amazonalexa.com
-device-messaging-na.amazon.com
+# device-messaging-na.amazon.com  — allowed: Prime Video needs ADM to start
