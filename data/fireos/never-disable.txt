@@ -22,6 +22,10 @@ com.amazon.tv.oobe                     # first-run setup, needed after a factory
 com.amazon.tv.ooberesource
 com.amazon.webview.chromium            # webview, many apps break without it
 com.amazon.venezia                     # app store
+com.amazon.firebat                     # Prime Video itself on Fire OS 7 too, not an OTA
+                                       # helper: it owns com.amazon.pyrocore.IgnitionActivity,
+                                       # the tile the user presses. com.amazon.avod is only the
+                                       # backing service and its own activity opens nothing.
 com.amazon.vizzini                     # do not disable: it is a persistent priv-app that
                                        # then draws an undismissable "Unable to Detect Your
                                        # Remote" window over the TV. Block its domains instead.

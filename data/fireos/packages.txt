@@ -50,7 +50,6 @@ com.amazon.rtcsessioncontroller        # Alexa calling
 
 # --- OTA helpers (the real updater is protected, see protected.txt) ---
 com.amazon.tv.forcedotaupdater.v2
-com.amazon.firebat
 
 # --- bloat, stubs, leftover UIs ---
 com.amazon.gamehub
