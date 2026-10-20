@@ -1,0 +1,31 @@
+id: fire-os-7-aftdct31
+title: "Amazon AFTDCT31"
+platform: fireos
+status: partial
+tested_on: "PS7715.5585N"
+models:
+  - "AFTDCT31 (codename duckie)"
+adb:
+  port: 5555
+  transport: wifi
+developer_mode: >-
+  Settings > My Fire TV > About > click the device name 7 times, then My Fire TV > Developer Options > ADB debugging: ON
+ip_location: "Settings > My Fire TV > About > Network"
+prompts:
+  - name: "USB debugging authorization"
+    blocks_automation: true
+    fix: "human presses Allow on the TV; tick Always allow"
+data:
+  packages: data/fireos/packages.txt
+  protected: data/fireos/protected.txt
+  never_disable: data/fireos/never-disable.txt
+  user_apps: data/fireos/user-apps.txt
+quirks:
+  - "Physical remote Alexa microphone button: disabling com.amazon.aca (listed in packages.txt) breaks voice search on the remote. To preserve the remote microphone while debloating, set KEEP_APPS with com.amazon.aca, com.amazon.vizzini.ftvcds, and com.amazon.whad in dumbtv.conf"
+  - "Stock launcher autoplay banners: setting com.amazon.tv.settings.featured_item_video_enabled=0 and featured_item_video_volume=0.0 in global settings disables autoplaying video/audio banners"
+  - "com.amazon.media.recommendations can be safely disabled to remove sponsored and promotional recommendation rows from the home screen"
+  - "com.amazon.tv.acr (Automatic Content Recognition) is enabled by default on this build and safely disabled to prevent screen fingerprinting telemetry"
+notes: "Fire OS 7.7.1.5 (Android 9, kernel 4.9.118++): debloat, netpolicy lockdown and settings tweaks verified. Preserving remote voice mic requires keeping com.amazon.aca."
+verify:
+  blocked: data/blocklists/verify-blocked.txt
+  allowed: data/blocklists/verify-allowed.txt
