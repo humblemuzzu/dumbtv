@@ -460,6 +460,8 @@ public final class Home extends Activity {
         scroll.addView(column, new FrameLayout.LayoutParams(MATCH, WRAP));
 
         LinearLayout head = new LinearLayout(this);
+        head.setClipChildren(false);
+        head.setClipToPadding(false);
         head.setGravity(Gravity.TOP);
         head.setPadding(dp(56), 0, dp(56), dp(12));
         LinearLayout when = new LinearLayout(this);
