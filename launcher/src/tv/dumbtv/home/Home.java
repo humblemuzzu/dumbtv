@@ -57,7 +57,11 @@ public final class Home extends Activity {
     private Config cfg;
     private TvInputManager tv;
     private int applied = -1, appsGeneration;
-    private boolean resumed, landed;
+        private String lastFocusedKind;
+        private String lastFocusedId;
+        private String lastAppId;
+        private String lastInputId;
+        private boolean resumed, landed;
     private FrameLayout root;
     private ImageView wall;
     private View shade;
@@ -447,8 +451,57 @@ public final class Home extends Activity {
             @Override
             public View focusSearch(View focused, int direction) {
                 if (direction == View.FOCUS_DOWN && chips.contains(focused)) {
+                    View remembered = rememberedTile(lastFocusedKind);
+                    if (remembered != null) return remembered;
                     View below = nearest(apps.tiles(), focused);
                     if (below != null) return below;
+                }
+                if (chips.contains(focused) && (direction == View.FOCUS_LEFT || direction == View.FOCUS_RIGHT)) {
+                    int idx = chips.indexOf(focused);
+                    if ((direction == View.FOCUS_LEFT && idx == 0) || (direction == View.FOCUS_RIGHT && idx == chips.size() - 1)) {
+                        return focused;
+                    }
+                }
+                    if (focused instanceof Tile) {
+                        ViewGroup edgeParent = (ViewGroup) focused.getParent();
+                        if (!(edgeParent instanceof Grid)) {
+                            int idx = edgeParent.indexOfChild(focused);
+                            int count = edgeParent.getChildCount();
+                            if (direction == View.FOCUS_LEFT && idx == 0) return focused;
+                            if (direction == View.FOCUS_RIGHT && idx == count - 1) return focused;
+                        }
+                        Tile tf = (Tile) focused;
+                    boolean gridMode = "grid".equals(cfg.get(Config.LAYOUT));
+                    if (direction == View.FOCUS_DOWN && Catalog.APPS.equals(tf.kind)) {
+                        ViewGroup parent = (ViewGroup) tf.getParent();
+                        boolean hasBelow = false;
+                        if (parent instanceof Grid) {
+                            int cols = ((Grid) parent).columns();
+                            int idx = parent.indexOfChild(tf);
+                            hasBelow = idx + cols < parent.getChildCount();
+                        }
+                        if (!hasBelow) {
+                            View remembered = rememberedTile(Catalog.INPUTS);
+                            if (remembered != null) return remembered;
+                            View below = nearest(inputs.tiles(), focused);
+                            if (below != null) return below;
+                        }
+                    }
+                    if (direction == View.FOCUS_UP && Catalog.INPUTS.equals(tf.kind)) {
+                        ViewGroup parent = (ViewGroup) tf.getParent();
+                        boolean hasAbove = false;
+                        if (parent instanceof Grid) {
+                            int cols = ((Grid) parent).columns();
+                            int idx = parent.indexOfChild(tf);
+                            hasAbove = idx - cols >= 0;
+                        }
+                        if (!hasAbove) {
+                            View remembered = rememberedTile(Catalog.APPS);
+                            if (remembered != null) return remembered;
+                            View above = nearest(apps.tiles(), focused);
+                            if (above != null) return above;
+                        }
+                    }
                 }
                 return super.focusSearch(focused, direction);
             }
@@ -590,7 +643,13 @@ public final class Home extends Activity {
             Tile t = new Tile(this, it, row.kind, Catalog.label(cfg, it), w, h, labels, accent);
             t.setOnClickListener(v -> open((Tile) v));
             t.setOnFocusChangeListener((v, has) -> {
-                if (has) focusBackground(((Tile) v).item);
+                if (has) {
+                    lastFocusedKind = ((Tile) v).kind;
+                    lastFocusedId = ((Tile) v).item.id;
+                    if (Catalog.APPS.equals(((Tile) v).kind)) lastAppId = ((Tile) v).item.id;
+                    else lastInputId = ((Tile) v).item.id;
+                    focusBackground(((Tile) v).item);
+                }
             });
             t.setOnLongClickListener(v -> {
                 menu((Tile) v);
@@ -608,6 +667,10 @@ public final class Home extends Activity {
             if (Catalog.APPS.equals(row.kind) && !it.artRequested) loadArt(it);
         }
         row.setVisible(!shown.isEmpty());
+        if (shown.isEmpty()) {
+            if (Catalog.APPS.equals(row.kind)) lastAppId = null;
+            else lastInputId = null;
+        }
         if (restore >= 0) {
             target.getChildAt(restore).requestFocus();
         } else if (keep != null && target.getChildCount() > 0) {
@@ -686,6 +749,28 @@ public final class Home extends Activity {
             default:
                 return new int[] {dp(180), dp(101)};
         }
+    }
+
+    private View rememberedTile(String kind) {
+        String id = Catalog.APPS.equals(kind) ? lastAppId : lastInputId;
+        if (id == null) return null;
+        View v = findTile(kind, id);
+        if (v == null) {
+            if (Catalog.APPS.equals(kind)) lastAppId = null;
+            else lastInputId = null;
+        }
+        return v;
+    }
+
+    private View findTile(String kind, String id) {
+        if (kind == null || id == null) return null;
+        Row row = Catalog.APPS.equals(kind) ? apps : inputs;
+        ViewGroup tiles = row.tiles();
+        for (int i = 0; i < tiles.getChildCount(); i++) {
+            View v = tiles.getChildAt(i);
+            if (v instanceof Tile && ((Tile) v).kind.equals(kind) && ((Tile) v).item.id.equals(id)) return v;
+        }
+        return null;
     }
 
     private void focusFirst() {
