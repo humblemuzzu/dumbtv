@@ -1,0 +1,41 @@
+id: fireos-toshiba-aftkmst12
+title: "Toshiba 4K Fire TV Edition TV (AFTKMST12)"
+contributors:
+  - ryanlucht
+platform: fireos
+status: tested
+tested_on: "NS6708"
+models:
+  - "50LF621U19 (AFTKMST12, codename keira, Toshiba 4K Fire TV Edition 2018)"
+adb:
+  port: 5555
+  transport: wifi
+developer_mode: >-
+  Settings > Device & Software > About > press OK on Your TV 7 times, then back > Developer options > ADB debugging
+ip_location: "Settings > Device & Software > About > Network"
+prompts:
+  - name: "Allow USB debugging?"
+    blocks_automation: true
+    fix: "tick Always allow from this computer, press OK on the remote"
+  - name: "Add New Remote: Press SELECT on your old remote to confirm"
+    blocks_automation: true
+    fix: "press SELECT on the real remote (its IR buttons work while Bluetooth is unpaired); adb input keyevent is ignored on this screen"
+  - name: "We cannot detect your remote (after the debloat reboot)"
+    blocks_automation: true
+    fix: "press any button on the remote; it is still paired and reconnects on the first press"
+data:
+  packages: data/fireos6/packages.txt
+  protected: data/fireos6/protected.txt
+  never_disable: data/fireos6/never-disable.txt
+  user_apps: data/fireos/user-apps.txt
+quirks:
+  - "Voice remote would not pair after 5 days of uptime (logcat: initate direct connection fail, topology limitation; bond state reason 39). A plain reboot fixed it and pairing then succeeded first try."
+  - "Remote buttons arrive over IR (MStar Smart TV IR Receiver) even when the Bluetooth remote is unpaired, so the TV stays controllable while re-pairing; only voice needs Bluetooth."
+  - "lockdown.sh: restrict-background and its blacklist only apply on metered networks. On Wi-Fi, dumpsys netpolicy shows Metered ifaces: {}, so 'data blocked' has no effect; RUN_IN_BACKGROUND ignore does apply."
+  - "dumbtv home's Settings chip opens com.amazon.tv.launcher/.ui.MainSettingsActivity drawn off the top of the screen, hiding the first row (Inputs, Notifications, Profiles, Account, Network). Issue #77."
+  - "adb shell input keyevent HOME while dumbtv home is in front lands on Amazon's home; a short HOME press on the real remote stays on dumbtv home."
+  - "com.amazon.tv.launcher is protected (cannot be force-stopped) and stays resident at about 100 MB PSS out of 1.5 GB RAM."
+notes: "Full pass with PRIME=1 ALEXA=1 LAUNCHER=1 DNSFILTER=0: 31 disabled, 0 protected, 5 absent, 0 suspect; verify.sh exits 0. Afterwards Echo control (TV off/on from standby, open app, volume), Spotify Connect, the voice remote, HDMI inputs and Prime Video all work."
+verify:
+  blocked: data/blocklists/verify-blocked.txt
+  allowed: data/blocklists/verify-allowed.txt
