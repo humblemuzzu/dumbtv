@@ -1,0 +1,157 @@
+id: androidtv-benq-gp01
+title: "BenQ GP520 projector (BenQGP01, Google TV, Android 11)"
+contributors:
+  - KasperHonore
+platform: androidtv
+# Manual ADB session; all.sh and verify.sh are Fire OS only and were not run.
+status: partial
+tested_on: "RTMA.250416.017 (Android 11, sdk 30), security patch 2025-05-01"
+models:
+  - "BenQ GP520 (retail model on the box)"
+  - "BenQGP01 (ro.product.model; device khandala, made by SDMC)"
+adb:
+  port: 5555
+  transport: wifi
+  first_connection_prompt: >-
+    adb devices lists the projector as unauthorized until "Allow USB
+    debugging?" is accepted on screen. Tick "Always allow from this computer"
+    and press Allow; no adb command works before that, not even getprop.
+developer_mode: >-
+  Settings > System > About > Android TV OS build, press OK repeatedly until
+  developer mode is on (the owner recalls about seven presses; it was already on
+  for this session). Developer options then appears under Settings > System,
+  below Power & Energy; turn on USB debugging there. Both menu entries were
+  confirmed on screen on this unit.
+ip_location: >-
+  Settings > Network & Internet, highlight the connected Wi-Fi network; the IP
+  address is shown under it.
+prompts:
+  - name: "Allow USB debugging?"
+    when: "first adb connect from a new computer"
+    blocks_automation: true
+    fix: >-
+      Tick "Always allow from this computer" and press Allow on the remote.
+data:
+  packages: data/androidtv/packages.txt
+  protected: data/androidtv/protected.txt
+  never_disable: data/androidtv/never-disable.txt
+  user_apps: data/androidtv/user-apps.txt
+launcher:
+  mechanism: set_home_activity
+  package: tv.dumbtv.home
+  reason: >-
+    dumbtv home 1.2 release APK (checksum-verified) installed with adb install
+    -r. The Google TV launcher (launcherx) and setupwraith were already
+    disabled, and a previously installed third-party launcher answered HOME at the same
+    priority 0. Disabling that launcher with pm disable-user --user 0 and running
+    cmd package set-home-activity tv.dumbtv.home/.Home made dumbtv home the HOME
+    screen. It came up by itself after a reboot, and HOME from inside an app
+    returned to it.
+  fallback: >-
+    com.android.tv.settings/.system.FallbackHome (priority -1000) stays as the
+    HOME of last resort.
+  quirk: >-
+    launcher/install.sh was not used: its HOME takeover (accessibility Guard,
+    alarm min_futurity) targets Fire OS and is not needed here. The vendor
+    already runs its own accessibility service
+    (com.sdmc.remotecontrolservice/.service.SdmcAccessibilityService) for the
+    remote; leave it in enabled_accessibility_services.
+quirks:
+  - >-
+    pm disable-user changes were lost when the projector was rebooted right
+    after the commands: after boot every package was back to enabled=0 (the
+    default). Timed with com.android.printspooler: disabled then adb reboot
+    after 2 s and after 6 s, the change was lost both times; after 12 s it was
+    kept. That fits Android writing package state about 10 s after a change.
+    Wait at least 15 s before rebooting or cutting power after any package
+    change.
+  - >-
+    Disabled with pm disable-user --user 0 and held across reboots, with the
+    home screen, remote and apps still working: com.google.android.feedback,
+    com.google.android.partnersetup, com.google.android.apps.tv.dreamx,
+    com.android.printspooler and com.google.android.play.games.
+    com.google.android.katniss (Assistant, voice search and the remote's mic
+    button) also survived reboots but not the Input button; see below.
+  - >-
+    Remote buttons checked with dumbtv home as HOME: Netflix and YouTube open
+    their apps, HOME returns to dumbtv home from both, and Input opens the
+    MediaTek inputs panel (com.mediatek.wwtv.tvcenter). With katniss disabled
+    the mic button sends android.speech.action.WEB_SEARCH, nothing handles it,
+    and nothing appears on screen. The gear (settings) button does nothing: it
+    sends android.app.action.TOGGLE_NOTIFICATION_HANDLER_PANEL, which only
+    launcherx's DashboardHandler answers, and launcherx is disabled
+    ("Could not resolve activityInfo" in logcat). Settings stays reachable from
+    dumbtv home (Up from the top row).
+  - >-
+    pm disable-user on com.google.android.katniss does not hold. Pressing Input
+    when com.mediatek.wwtv.tvcenter is not running cold-starts it, and within
+    about 1 s katniss is enabled=1 (explicitly enabled, not reset) and running
+    again, with the remote's mic button re-bound to it. Reproduced twice: once
+    by chance, once after am force-stop com.mediatek.wwtv.tvcenter. An Input
+    press with tvcenter already running does not re-enable it. tvcenter runs as
+    uid 1000 and also owns the inputs panel, so it cannot be turned off without
+    losing Input. tvcenter is cold after a reboot or after the system kills it,
+    so expect katniss back after normal use.
+  - >-
+    Revoking the microphone instead does hold: pm revoke
+    com.google.android.katniss android.permission.RECORD_AUDIO plus appops set
+    com.google.android.katniss RECORD_AUDIO ignore. After a cold Input press
+    re-enabled katniss, RECORD_AUDIO stayed granted=false and appops logged a
+    rejected recording. The mic button then showed Android's "Allow Google to
+    record audio?" prompt; Don't allow left it denied (flags USER_SET). Still
+    denied after an adb reboot. Anyone pressing Allow on that prompt gives the
+    mic back.
+  - >-
+    The vendor packages are com.sdmc.* (remote control service, Bluetooth,
+    factory and key tools, media player). None were touched; which of them is
+    safe to disable is unknown.
+  - >-
+    The adb session went offline while the projector sat idle, and commands
+    then failed or returned empty output. adb disconnect and adb connect
+    reconnected it with no new authorization prompt. Check adb devices before
+    trusting an "absent" result.
+  - >-
+    Private DNS set from adb (private_dns_mode hostname, specifier
+    dns.adguard-dns.com) never validated on this home network and every lookup
+    failed, including youtube.com, because TCP 853 was blocked upstream (also
+    unreachable from a laptop on the same network). Turned off again with
+    private_dns_mode off; lookups recovered at once. Whether Private DNS works on
+    this firmware is still unknown: test it on a network where 853 is open.
+  - >-
+    The power button on the remote puts the projector in standby; it does not
+    reboot it. adb drops while it sleeps and needs adb connect again.
+  - >-
+    Remote wake works once it is switched on: Settings > Network & Internet >
+    Wake config. The menu sets persist.odm.status.wow=on (seen in logcat; the
+    global settings network_wow and network_wol stayed 0). With it off, a
+    Wake-on-LAN magic packet did nothing. With it on, the same packet woke the
+    projector from standby over Wi-Fi in about 6 s, picture on and dumbtv home
+    in front. After the wake adb showed the device as offline until adb
+    kill-server and adb connect.
+  - >-
+    discover.sh found 0 candidates out of 119 packages: Google's telemetry
+    packages do not match its name heuristic.
+notes: >-
+  Manual ADB session on 2026-10-23 from Linux. Left disabled with
+  pm disable-user --user 0: the five packages above plus the previously
+  installed third-party launcher. katniss is enabled again (tvcenter
+  re-enables it) with its microphone revoked. dumbtv home 1.2 installed as
+  HOME. Private DNS was tried and turned off again; the DNS filter was not
+  set up.
+known_limits:
+  - "Observed on one GP520 and one build; other BenQ projectors and firmware may differ."
+  - >-
+    The firmware looks shared: the odm and system_ext partitions identify as
+    Dangbei DBOX02 (ro.product.odm.name Dangbei_DBOX02, manufacturer SDMC,
+    board khandala, platform m7632), with only the product layer renamed
+    BenQ_GP01. Other BenQ projectors that report BenQGP01, and Dangbei devices
+    on DBOX02 firmware, will probably behave the same, but none were checked.
+    Compare ro.product.odm.name and the build id before relying on this entry.
+  - >-
+    all.sh, debloat.sh and verify.sh were not run: they are Fire OS only, so
+    verify.sh says nothing about this projector.
+  - "No DNS filtering, so the blocked/allowed host checks were not run."
+  - "Behaviour after pulling the power plug (rather than adb reboot) was not tested."
+verify:
+  blocked: data/blocklists/verify-blocked.txt
+  allowed: data/blocklists/verify-allowed.txt
