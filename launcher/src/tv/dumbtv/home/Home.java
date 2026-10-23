@@ -39,8 +39,10 @@ import android.widget.Toast;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -64,6 +66,7 @@ public final class Home extends Activity {
     private View tint;
     private TextView clock, date;
     private Row apps, inputs;
+    private Map<String, Long> recent = new HashMap<>();
     private Tile moving;
     private String wallKey;
     private String backgroundMode;
@@ -218,6 +221,7 @@ public final class Home extends Activity {
         cfg.visited();
         if (cfg.version() != applied) apply();
         else background();
+        refreshRecent();
         IntentFilter f = new IntentFilter(Intent.ACTION_TIME_TICK);
         f.addAction(Intent.ACTION_TIME_CHANGED);
         f.addAction(Intent.ACTION_TIMEZONE_CHANGED);
@@ -569,6 +573,25 @@ public final class Home extends Activity {
         render(inputs);
     }
 
+    /** The last-used times to sort {@code kind} by, or null when it keeps the user's order. */
+    private Map<String, Long> recentFor(String kind) {
+        return Catalog.APPS.equals(kind) && "recent".equals(cfg.get(Config.ORDER)) ? recent : null;
+    }
+
+    /** With App order › Recently used, re-sorts the apps row on the way back home. */
+    private void refreshRecent() {
+        if (recentFor(Catalog.APPS) == null) return;
+        io.execute(() -> {
+            Map<String, Long> times = Recent.times(this);
+            ui.post(() -> {
+                if (isDestroyed() || recentFor(Catalog.APPS) == null) return;
+                List<Item> before = Catalog.visible(cfg, Catalog.APPS, apps.all, recent);
+                recent = times;
+                if (!before.equals(Catalog.visible(cfg, Catalog.APPS, apps.all, recent))) render(apps);
+            });
+        });
+    }
+
     private void render(Row row) {
         if (moving != null && moving.kind.equals(row.kind)) stopMoving();
         View focused = getCurrentFocus();
@@ -580,7 +603,8 @@ public final class Home extends Activity {
         row.grid.removeAllViews();
 
         boolean enabled = !Catalog.INPUTS.equals(row.kind) || "on".equals(cfg.get(Config.INPUTS));
-        List<Item> shown = enabled ? Catalog.visible(cfg, row.kind, row.all) : new ArrayList<>();
+        List<Item> shown = enabled ? Catalog.visible(cfg, row.kind, row.all, recentFor(row.kind))
+                : new ArrayList<>();
         int[] size = cardSize();
         int w = size[0], h = Catalog.APPS.equals(row.kind) ? size[1] : Math.round(size[1] * 0.56f);
         String labels = cfg.get(Config.LABELS);
@@ -805,6 +829,7 @@ public final class Home extends Activity {
 
     private void launch(Intent i, String pkg) {
         if (Guard.AMAZON.equals(pkg)) Guard.pause();
+        if (pkg != null) Recent.opened(this, pkg);
         try {
             startActivity(i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED));
         } catch (ActivityNotFoundException | SecurityException e) {
@@ -823,6 +848,11 @@ public final class Home extends Activity {
                     switch (which) {
                         case 0:
                             if (t.getParent() == null) break;
+                            if (app && recentFor(t.kind) != null) {
+                                Toast.makeText(this, "App order is Recently used. Pick Your order "
+                                        + "in Options to move tiles.", Toast.LENGTH_LONG).show();
+                                break;
+                            }
                             moving = t;
                             t.setMoving(true);
                             break;

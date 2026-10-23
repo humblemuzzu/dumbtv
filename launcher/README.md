@@ -54,6 +54,7 @@ Undo: `./launcher/install.sh --undo` gives HOME back to Amazon's launcher.
 | Accent | white, blue, cyan, green, amber, red, pink, violet |
 | Tiles | small, medium, large |
 | Layout | rows, or a grid that wraps to as many columns as fit |
+| App order | your order, or recently used: the apps row re-sorts on each return home, newest first. It counts apps opened from dumbtv home, plus apps opened any other way (voice, another app) on Fire OS 6, where the launcher already has usage access. Apps never opened keep your order after the rest |
 | App names | on focus, always, never |
 | Clock | system, 24-hour, 12-hour |
 | Inputs row | shown, hidden |

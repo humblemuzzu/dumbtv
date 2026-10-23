@@ -61,6 +61,9 @@ final class Config {
     static final Choice LAYOUT = new Choice("layout", "Layout", "rows",
             new String[] {"rows", "grid"},
             new String[] {"Rows", "Grid"});
+    static final Choice ORDER = new Choice("order", "App order", "custom",
+            new String[] {"custom", "recent"},
+            new String[] {"Your order", "Recently used"});
     static final Choice LABELS = new Choice("labels", "App names", "focus",
             new String[] {"focus", "always", "never"},
             new String[] {"On focus", "Always", "Never"});
@@ -84,7 +87,7 @@ final class Config {
             new String[] {"off", "visit", "hourly", "daily", "daytime"},
             new String[] {"Off", "Every return home", "Every hour", "Every day", "By time of day"});
 
-    static final Choice[] CHOICES = {ACCENT, TILES, LAYOUT, LABELS, CLOCK, INPUTS, SWITCH, BACKGROUND, DIM, ROTATE};
+    static final Choice[] CHOICES = {ACCENT, TILES, LAYOUT, ORDER, LABELS, CLOCK, INPUTS, SWITCH, BACKGROUND, DIM, ROTATE};
 
     /** Folder of wallpapers, next to home.conf, that Background › Image file rotates through. */
     static final String WALLPAPERS = "wallpapers";
