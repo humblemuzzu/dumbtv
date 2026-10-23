@@ -1,0 +1,41 @@
+id: fireos-amazon-aftss
+title: "Amazon Fire TV Stick HD, 2024 (AFTSS), Fire OS 7.7.1.7"
+contributors:
+  - RabeJonas
+platform: fireos
+status: partial
+tested_on: "PS7717.5741N"
+models:
+  - "AFTSS (sold as Fire TV Stick HD, 2024)"
+adb:
+  port: 5555
+  transport: wifi
+  first_connection_prompt: "Allow USB debugging? Tick Always allow from this computer, press OK"
+developer_mode: >-
+  Settings > My Fire TV > About > press OK on the device name 7 times, then My Fire TV >
+  Developer Options > ADB debugging: ON (German menus: Einstellungen > Mein Fire TV > Info,
+  then Entwickleroptionen > ADB-Debugging)
+ip_location: "Settings > My Fire TV > About > Network"
+prompts:
+  - name: "USB debugging authorization"
+    blocks_automation: true
+    fix: "tick Always allow from this computer, press OK on the remote"
+data:
+  packages: data/fireos/packages.txt
+  protected: data/fireos/protected.txt
+  never_disable: data/fireos/never-disable.txt
+  user_apps: data/fireos/user-apps.txt
+launcher:
+  mechanism: accessibility_service
+  package: tv.dumbtv.home
+quirks:
+  - "com.amazon.tahoe is Amazon Kids on this build (FreeTimeFTVApp v3.53: Kids profiles, PIN screens, FreeTime activities). packages.txt disables it as the ad-tile painter, so Amazon Kids goes with it"
+  - "com.amazon.spiderpork is Amazon Luna on this build: it owns the luna: URL scheme and the luna.amazon.* app links and has a launcher activity. packages.txt calls it a metrics transport; disabling it removes Luna"
+  - "svc power reboot did not restart the stick on the first request in either reboot (debloat.sh and dnsfilter.sh): reboot_wait printed 'the TV is still up from before; asking again', and the second request worked"
+  - "With ALEXA=1, voice_disabled and alexa_wake_word_disabled were still 0 after debloat.sh. Alexa voice search, opening apps by voice and the search results all worked with dumbtv home holding HOME"
+  - "Keeping OTA updates (OTA section taken out of extra-hosts.txt, the two OTA packages out of protected.txt) makes the dnsfilter.sh self-test fail on its hard-coded softwareupdates.amazon.com check and exit 1, although the filter blocks everything else; verify.sh passes once that host is also taken out of verify-blocked.txt"
+  - "Protected 0. Absent: com.amazon.tv.democontent.provider only. com.android.nfc ships disabled by the system. com.amazon.neo.minerva.logcat kept running after its disable and was starved"
+notes: "Fire OS 7.7.1.7 on a Fire TV Stick HD (2024): debloat (37 disabled, 0 suspect), lockdown, the DNS filter and the dumbtv home takeover all ran, and verify.sh exited 0. Partial because the owner kept OTA updates, so the stock update block was not verified. Prime Video, YouTube, the Appstore and Alexa voice all work."
+verify:
+  blocked: data/blocklists/verify-blocked.txt
+  allowed: data/blocklists/verify-allowed.txt
