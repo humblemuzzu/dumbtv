@@ -2,35 +2,43 @@ id: fireos-amazon-aftkrt
 title: "Amazon Fire TV Stick 4K Max, 2nd gen (AFTKRT)"
 contributors:
   - gerardo-galvez-hl
+  - derkstample
 platform: fireos
-status: partial
-tested_on: "RS8182.3811N"
+status: tested
+tested_on: "RS8182.3811N (first unit, partial); RS8185.3891N (second unit, full pass)"
 models:
   - "AFTKRT (Fire TV Stick 4K Max 2nd gen; codename karat)"
 adb:
   port: 5555
   transport: wifi
 developer_mode: >-
-  ADB debugging was already enabled from an earlier session (Settings > My Fire TV > Developer Options > ADB debugging: ON); the click count to unlock Developer Options was not recorded
-ip_location: "not recorded this session: the address was read from the router's DHCP leases"
+  Settings > My Fire TV > About > click the device name 7 times, then My Fire TV > Developer Options > ADB debugging: ON (second unit; on the first it was already enabled)
+ip_location: "Settings > My Fire TV > About > Network"
 prompts:
   - name: "USB debugging authorization"
     blocks_automation: true
     fix: "human presses Allow on the TV on the first adb connect from a new machine; tick Always allow"
+  - name: "Fire TV full-screen keyboard"
+    blocks_automation: true
+    fix: "com.amazon.tv.ime opens over personalDNSfilter's text fields and swallows remote input. Tap the right end of the field, send the deletes in one adb shell input keyevent 67 67 67 call, type with adb shell input text, then KEYCODE_BACK before the next tap"
 data:
   packages: data/fireos/packages.txt
   protected: data/fireos/protected.txt
   never_disable: data/fireos/never-disable.txt
   user_apps: data/fireos/user-apps.txt
 quirks:
-  - "Different model from catalog/devices/fireos-amazon-aftkm.yaml (issue #8) but the same codename (karat) and build (RS8182.3811N, Fire OS 8.1.8.2), so the Fire OS 8 findings there (Android/data unreachable from adb) most likely apply here too. dnsfilter.sh and launcher.sh were not run on this unit. The Fire OS 8 HOME fix in launcher 1.2 was confirmed on an AFTKRT by its author (PR #49)"
+  - "Different model from catalog/devices/fireos-amazon-aftkm.yaml (issue #8) but the same codename (karat) and build (RS8182.3811N, Fire OS 8.1.8.2), so the Fire OS 8 findings there (Android/data unreachable from adb) most likely apply here too. dnsfilter.sh and launcher.sh were not run on the first unit; the second unit (below) confirms the Android/data finding. The Fire OS 8 HOME fix in launcher 1.2 was confirmed on an AFTKRT by its author (PR #49)"
   - "debloat.sh printed 'no cmd package install-existing' although the command exists (line 120 of cmd package help): need_device runs adb shell 'cmd package help' | grep -q install-existing under set -o pipefail; grep -q exits on the first match, adb gets a broken pipe and returns 255, so REINSTALL=0. Reproduced 5/5 with pipefail, 3/3 succeed without it. Timing-dependent: the issue #8 run on the same build detected it (10 removed). Harmless here, every package was disabled instead of uninstalled"
   - "debloat.sh: 0 removed, 58 disabled, 0 protected, 0 suspect, 9 absent (none of the regional user apps are installed). com.amazon.ceviche and com.amazon.neo.minerva.logcat kept running after disable-user and were starved; after a reboot ceviche stays stopped but minerva.logcat is running again while still disabled"
   - "Unlike issue #8, com.amazon.dummy.settings and com.android.traceur were still disabled after a reboot here (both were disabled, not uninstalled)"
   - "lockdown.sh: device.metrics, crashmanager, ftvads.deeplinking, tv.csapp, software.ota and ota.override all accepted RUN_ANY_IN_BACKGROUND ignore and the background-data blacklist; device.rdmapplication is absent"
   - "com.amazon.vizzini had been disabled weeks earlier with pm disable-user by another debloat tool and was found enabled again, consistent with keeping it in never-disable.txt"
   - "Not caused by dumbtv, but easy to blame on it: Plex for Fire TV 2026.20.0 (targetSdk 36) is denied the sticky HDMI_AUDIO_PLUG broadcast (Permission Denial ... DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION), cannot detect passthrough, bans the audio codec ('Audio codec banned on device') and transcodes TrueHD to EAC3. Fix in the app: Settings > Audio > Passthrough: HDMI with TrueHD and EAC3 enabled"
-notes: "Fire OS 8.1.8.2 (Android 11): debloat.sh and lockdown.sh ran clean and verify.sh passed with the DNS and home checks skipped. dnsfilter.sh and launcher.sh were not run by choice (DNS filtering is done network-wide by Pi-hole), so status is partial"
+  - "Second unit, Fire OS 8.1.8.5 (RS8185.3891N): all.sh with PRIME=1, ALEXA=0, LAUNCHER=0. debloat.sh: 51 disabled, 0 protected, 0 suspect; com.amazon.neo.minerva.logcat, com.amazon.tv.developer.dataservice and com.amazon.whad kept running after disable-user and were starved"
+  - "DNS filter on Fire OS 8: Android/data is hidden from adb, so dnsfilter.sh pushes the list to /sdcard/Android/media/dnsfilter.android/ and stops at its one manual step. The app had written its default config (1Hosts-light, StevenBlack ad&malware and HageziPro active, 7-day interval), and nothing was blocked: softwareupdates.amazon.com resolved to a public address"
+  - "personalDNSfilter renders its portrait phone layout on this stick and the remote cannot reliably move through it. It was driven over adb instead: uiautomator dump for the bounds, adb shell input tap at the 1920x1080 override size. Advanced settings > Configure filter update: interval 3650; untick 1Hosts-light, ad&malware and HageziPro; the Category arrows to All categories, scroll to the end, the edit button on the <new> row; category custom, name dumbtv, URL file:///storage/emulated/0/Android/media/dnsfilter.android/dumbtv-blocklist.txt, tick Active, OK. Collapse both panels, then RESTART. The log reads Building index for 410 entries, 397 unique, next filter reload in 2036"
+  - "The filter survived a reboot: tun0 was up and always_on_vpn_app still dnsfilter.android within a minute of boot, without opening the app"
+notes: "Two units. Fire OS 8.1.8.5 (RS8185.3891N): debloat, lockdown and the DNS filter through the file:/// list, verify.sh exit 0 before and after a reboot; launcher.sh not run (LAUNCHER=0 by the owner's choice). Fire OS 8.1.8.2 (RS8182.3811N): debloat and lockdown only, DNS filtering done network-wide by Pi-hole"
 verify:
   blocked: data/blocklists/verify-blocked.txt
   allowed: data/blocklists/verify-allowed.txt
