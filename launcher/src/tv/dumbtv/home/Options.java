@@ -68,6 +68,8 @@ public final class Options extends Activity {
                 + "\nOne wallpaper: name it exactly wallpaper.jpg (or .png) and put it in that folder"
                 + "\nSeveral wallpapers: put them in " + Config.WALLPAPERS + "/ with any names, and pick a rotation"
                 + "\nThen pick Background › Image file or Adaptive wallpaper tint. No permission is needed"
+                + "\nOn Fire OS 8 adb cannot reach that folder; use /sdcard/Android/media/"
+                + getPackageName() + "/ instead"
                 + "\nAdaptive wallpaper tint shows graphite until you add a wallpaper"
                 + "\nNo internet permission. No tracking, no ads, no accounts.");
         list.addView(about);
@@ -117,7 +119,8 @@ public final class Options extends Activity {
             boolean off = (c == Config.DIM || c == Config.ROTATE)
                     && !"image".equals(cfg.get(Config.BACKGROUND))
                     && !"adaptive-tint".equals(cfg.get(Config.BACKGROUND))
-                    || c == Config.SWITCH && "off".equals(cfg.get(Config.INPUTS));
+                    || c == Config.SWITCH && "off".equals(cfg.get(Config.INPUTS))
+                    || c == Config.CLOCK && "none".equals(cfg.get(Config.CLOCKDATE));
             row.setAlpha(off ? 0.4f : 1f);
         };
         row.setOnFocusChangeListener((v, has) -> show.run());

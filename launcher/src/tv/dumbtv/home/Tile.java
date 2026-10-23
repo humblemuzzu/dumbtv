@@ -15,7 +15,7 @@ import android.view.View;
 
 /** A card drawn in one pass: banner, or icon plus name, or an input name; focus ring on top. */
 final class Tile extends View {
-    private static final float FOCUS_SCALE = 1.08f;
+    static final float FOCUS_SCALE = 1.08f;
 
     final Item item;
     final String kind;
@@ -42,9 +42,11 @@ final class Tile extends View {
         this.cardW = cardW;
         this.cardH = cardH;
         boolean app = Catalog.APPS.equals(kind);
-        labelH = app ? Ui.dp(c, 26) : 0;
         labelAlways = "always".equals(labels);
         labelOnFocus = "focus".equals(labels);
+        // With names off the reserved strip under every card is empty; reclaim it so the row sits
+        // where the cards look anchored rather than floating a label-height above the margin.
+        labelH = app && (labelAlways || labelOnFocus) ? Ui.dp(c, 26) : 0;
         radius = Ui.dp(c, 10);
         stroke = Ui.dp(c, 2.5f);
 
@@ -98,12 +100,15 @@ final class Tile extends View {
     @Override
     protected void onDraw(Canvas canvas) {
         Drawable banner = item.banner, icon = item.icon;
+        boolean wide = banner == null && icon != null && item.wideIcon;
         canvas.save();
         canvas.clipPath(clip);
         canvas.drawRect(card, fill);
         if (banner != null) {
             banner.setBounds(0, 0, cardW, cardH);
             banner.draw(canvas);
+        } else if (wide) {
+            drawWide(canvas, icon);
         } else if (icon != null) {
             int size = cardH * 46 / 100;
             int left = (cardW - size) / 2, top = cardH * 12 / 100;
@@ -126,10 +131,28 @@ final class Tile extends View {
             canvas.drawRoundRect(half, half, cardW - half, cardH - half, radius - half, radius - half, ring);
         }
         if (moving) drawArrows(canvas);
-        boolean label = banner != null && (labelAlways || labelOnFocus && isFocused());
+        boolean label = (banner != null || wide) && (labelAlways || labelOnFocus && isFocused());
         if (labelH > 0 && label) {
             drawLine(canvas, under, cardW / 2f, cardH + labelH - Ui.dp(getContext(), 6));
         }
+    }
+
+    /**
+     * Fills the card with the app icon, centre-cropped to the card's wide shape. Used when the
+     * app's android:banner is really a launch splash: the icon carries the current branding and
+     * the crop keeps the banner-sized tile, with the wordmark in the icon's middle left intact.
+     */
+    private void drawWide(Canvas canvas, Drawable icon) {
+        int iw = icon.getIntrinsicWidth(), ih = icon.getIntrinsicHeight();
+        if (iw <= 0 || ih <= 0) {
+            icon.setBounds(0, 0, cardW, cardH);
+            icon.draw(canvas);
+            return;
+        }
+        float scale = Math.max((float) cardW / iw, (float) cardH / ih);
+        int w = Math.round(iw * scale), h = Math.round(ih * scale);
+        icon.setBounds((cardW - w) / 2, (cardH - h) / 2, (cardW + w) / 2, (cardH + h) / 2);
+        icon.draw(canvas);
     }
 
     private void drawLine(Canvas canvas, TextPaint paint, float x, float baseline) {

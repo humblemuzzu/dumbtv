@@ -3,7 +3,7 @@ title: "Amazon Fire TV Stick 4K Plus (AFTMA08C15)"
 contributors:
   - edrmundy
 platform: fireos
-status: partial
+status: tested
 tested_on: "RS8185.3891N"
 models:
   - "AFTMA08C15 (codename karat)"
@@ -23,18 +23,28 @@ data:
   protected: data/fireos/protected.txt
   never_disable: data/fireos/never-disable.txt
   user_apps: data/fireos/user-apps.txt
+launcher:
+  mechanism: accessibility_service
+  package: tv.dumbtv.home
+  reason: "Android 11 caps the intent-filter priority of every non-privileged app to 0, so a third-party launcher can never out-rank Amazon's launcher (priority 950, privileged) and cmd package set-home-activity is ignored. The Guard accessibility service waits for Amazon's home window and swaps to dumbtv home; launcher 1.2 made the launch wait for the Guard's cover window, which is the visible window Android 11 requires before it allows the swap"
+  fallback: "none: on Fire OS 8 the swap is the only way to take the HOME button"
+  quirk: "Verified with launcher 1.2 on this stick: HOME from Settings lands on tv.dumbtv.home/.Home in about 0.5 s, before and after a cold reboot"
 quirks:
   - "DNS filter on Fire OS 8 (Android 11): the app folder is not writable over adb, so dnsfilter.sh pushes the blocklist to /sdcard/Android/media/dnsfilter.android/ and the app has to be pointed at it by hand. Advanced settings > Configure filter update > the row labelled <new> > edit it: category custom, name dumbtv, URL file:///storage/emulated/0/Android/media/dnsfilter.android/dumbtv-blocklist.txt (three slashes - the app strips file:// and needs the leading slash), untick every built-in entry, set the update interval to 3650 days, then RELOAD FILTER. The log then reads Building index for 415 entries"
   - "personalDNSfilter writes a default config on first start with 1Hosts-light, StevenBlack and HageziPro active (381269 entries) and refreshes on its own, so the built-in entries must be unticked by hand and the update interval raised to 3650 days, otherwise the pushed list is overwritten"
   - "The Fire TV on-screen keyboard (com.amazon.tv.ime) swallows key events while a text field is focused: KEYCODE_DEL lands only every few tries unless the deletes are batched into one adb shell input keyevent 67 67 67 call, KEYCODE_MOVE_HOME and the D-pad never arrive, and taps on other fields land one field behind. To clear a field: tap its left edge so the cursor sits at position 0, then a batched KEYCODE_DEL, then adb shell input text"
-  - "Launcher 1.1: the Guard was bound and its alarm fired, but Android 11 never started dumbtv home and HOME stayed on Amazon's. Launcher 1.2 fixes this (the launch waits for the Guard's cover window to draw); not yet re-tested on this stick. Every HOME press also logs an SELinux denial for see_home_task from com.amazon.tv.devicecontrol, which is Amazon's own and harmless. fosservices.jar contains CustomHomeButtonHandler, which reads the manifest metadata com.amazon.metadata.CUSTOM_HOME: a possible second route"
+  - "Launcher settings and wallpapers on Fire OS 8: /sdcard/Android/data/tv.dumbtv.home/files/ is closed to adb (Permission denied on ls, pull and push), so home.conf and the wallpapers cannot be pushed there. The launcher also reads them from /sdcard/Android/media/tv.dumbtv.home/, which adb can write: a home.conf there is applied once and remembered in home.conf.applied, so the same push is not applied twice (adb push copies the source timestamp) and a later change in Options is not overwritten. Wallpapers go in wallpapers/ under that folder and are read in name order from both folders. Eight public domain or CC0 forest photos were pushed this way and rotate=daytime picks them: every one of the eight was confirmed on screen by comparing a screencap with the source image"
+  - "The HOME swap's other blocker, if the cover window ever stops being enough: Android refuses activity starts from an app with no visible window, and its own switch for it is the DeviceConfig flag activity_manager/default_background_activity_starts_enabled. Setting it as a device default (adb shell cmd device_config put activity_manager default_background_activity_starts_enabled true default) makes the swap work on launcher 1.1, survives reboots and needs no launcher change. Launcher 1.2 does not need it"
+  - "A non-privileged launcher cannot win HOME by resolution on Android 11: the platform caps every such app's intent-filter priority to 0 (PackageManagerService/ComponentResolver.adjustPriority) while Amazon's launcher declares 950 and is privileged, so cmd package set-home-activity prints Success and is ignored and HOME always resolves to com.amazon.tv.launcher/.ui.HomeActivity_vNext"
+  - "The custom-home route is closed: /system/framework/fosservices.jar holds com.amazon.policy.keypolicymanager.CustomHomeButtonHandler, which would send ACTION_CUSTOM_HOME when the manifest metadata com.amazon.metadata.CUSTOM_HOME is set, but the receiver wants the signature|amazon permission, so a third-party app cannot use it. ActivityOptions.setPendingIntentBackgroundActivityLaunchAllowed does not help either: the flag that decides who may start in the background is set by the sender of the PendingIntent"
+  - "Every HOME press logs E SELinux: avc: denied { see_home_task } for scontext=u:r:platform_app tclass=amazon_policies; the denial comes from com.amazon.tv.devicecontrol (platform-signed), not from the launcher, and it does not stop the swap"
   - "com.amazon.firebat is Prime Video on this model too (versionName PVFTV-324.0104-L, real app in /data, stub in /system/system_ext/priv-app). It is on never-disable.txt"
   - "The filter VPN is revoked when personalDNSfilter is killed. The RESTART button in the app brings it back; always_on_vpn_app plus the Autostart checkbox bring it back after a reboot. Do not am force-stop the filter app"
   - "No package in packages.txt was refused (protected 0). Absent on this model: tv.fw.metrics, katoch, vizzini.ftvcds, tv.democontent.provider, tv.localgallery, wha.mediabrowserservice, printspooler, bips, nfc; device.rdmapplication from protected.txt; whisperjoin.middleware.np from never-disable.txt"
   - "com.amazon.device.software.ota and .ota.override share one UID (10087)"
   - "cmd package help exits 255 on this build, so the scripts cannot tell whether install-existing exists. It no longer matters for a new run: debloat.sh only disables Amazon packages"
   - "A third-party VPN client is installed on this TV and competes for the single VPN slot with the DNS filter: connecting it takes the filter offline"
-notes: "Fire OS 8 (Android 11), build RS8185.3891N: debloat (58 disabled, 0 protected, 0 suspect), lockdown and the DNS filter (415 entries) all work and verify.sh exits 0. HOME stayed on Amazon's home with launcher 1.1; 1.2 carries the fix"
+notes: "Fire OS 8 (Android 11), build RS8185.3891N: debloat (58 disabled, 0 protected, 0 suspect), lockdown, the DNS filter (415 entries) and the HOME takeover all work and verify.sh exits 0. HOME lands on dumbtv home through the accessibility Guard with launcher 1.2, before and after a cold reboot. The home screen shows a wallpaper: eight public domain or CC0 forest photos (Wikimedia Commons), cropped to 1920x1080, pushed to /sdcard/Android/media/tv.dumbtv.home/wallpapers/ and picked by rotate=daytime"
 verify:
   blocked: data/blocklists/verify-blocked.txt
   allowed: data/blocklists/verify-allowed.txt

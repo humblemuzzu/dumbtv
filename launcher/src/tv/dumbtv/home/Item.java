@@ -14,6 +14,8 @@ final class Item {
     int state = -1;
     volatile boolean artRequested;
     volatile Drawable banner, icon;
+    /** True when the app's banner was a launch splash and the icon stands in for it. */
+    volatile boolean wideIcon;
     volatile int backgroundColor;
     volatile boolean colorRequested;
 

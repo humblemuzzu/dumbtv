@@ -14,6 +14,10 @@ A home screen for Fire TV that does one job: show your apps and your HDMI inputs
   order, boot completed), each limited to Android 8.1 and earlier, for the Fire OS 6
   Keeper below. Check: `aapt2 dump permissions dumbtv-home.apk`.
 - **No ads, no recommended rows, no account, no analytics, no update checks.**
+- **One font family.** Options (sliders) and Settings (gear), the clock and the date
+  use a 51 KB subset of Ubuntu Nerd Font Regular, bundled as `assets/dumbtv-font.ttf`.
+  The TV's own fonts have no Nerd Font glyphs, so the subset is bundled. Ubuntu Font
+  Licence 1.0 and Nerd Fonts' licences are in `assets/`.
 - About 60–70 MB of memory with the home screen showing, about 37 MB while an app
   plays (measured on a Fire TV Edition television with 1.4 GB of RAM).
 
@@ -55,7 +59,9 @@ Undo: `./launcher/install.sh --undo` gives HOME back to Amazon's launcher.
 | Tiles | small, medium, large |
 | Layout | rows, or a grid that wraps to as many columns as fit |
 | App names | on focus, always, never |
-| Clock | system, 24-hour, 12-hour |
+| Clock format | system, 24-hour, 12-hour |
+| Clock display | clock and date, clock only, none |
+| Screen saver | off, or a dim clock after 1, 5, 15, 30 or 60 minutes |
 | Inputs row | shown, hidden |
 | Open inputs with | Automatic, the TV's app, dumbtv home (see below) |
 | Background | black, graphite, midnight, image, adaptive, adaptive tint |
@@ -64,6 +70,10 @@ Undo: `./launcher/install.sh --undo` gives HOME back to Amazon's launcher.
 Below them: Next wallpaper, which apps and inputs appear on the home screen, a
 reset for order, names and hidden tiles, and **Open Amazon's home screen**. Apps
 without a TV banner, like the Appstore, start hidden; tick them to add them.
+
+**Clock display** puts the date beside the clock and hides it with the clock when set
+to none. **Screen saver** fades to a dim clock and date over black after the chosen
+idle time; any remote key wakes it and returns to the tile that was focused.
 
 | Grid layout | Adaptive background | Adaptive tint |
 |---|---|---|
@@ -102,6 +112,10 @@ layout=rows
 labels=focus
 # auto 24h 12h
 clock=auto
+# both clock none
+clockdate=both
+# off 1 5 15 30 60 (minutes)
+saver=off
 # on off
 inputs=on
 # auto tv home
@@ -135,6 +149,29 @@ No permission is needed: the launcher reads its own folder.
 adb shell mkdir -p /sdcard/Android/data/tv.dumbtv.home/files/wallpapers
 adb push *.jpg /sdcard/Android/data/tv.dumbtv.home/files/wallpapers/
 ```
+
+### Fire OS 8: where adb can write
+
+On Fire OS 8 (Android 11) `/sdcard/Android/data/<app>` is closed to `adb`: listing,
+reading and pushing all fail with `Permission denied`, so none of the commands above
+work there. The launcher also looks in its own media folder, which `adb` can still
+write:
+
+```
+/sdcard/Android/media/tv.dumbtv.home/home.conf
+/sdcard/Android/media/tv.dumbtv.home/wallpapers/
+```
+
+```sh
+adb shell mkdir -p /sdcard/Android/media/tv.dumbtv.home/wallpapers
+adb push *.jpg /sdcard/Android/media/tv.dumbtv.home/wallpapers/
+adb push home.conf /sdcard/Android/media/tv.dumbtv.home/home.conf
+```
+
+Wallpapers are read from both folders, in name order. A settings file pushed there
+is applied once, the next time the home screen comes back, and wins over what the TV
+has; what was applied is remembered, so the same push is not applied twice and a
+later change in Options is not overwritten by it.
 
 `rotate=daytime` matches wallpapers to the time of day by name: `morning` or `day`
 (06:00 to 13:00), `afternoon` or `evening` (13:00 to 20:00), `night` (the rest), as

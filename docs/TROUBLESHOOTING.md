@@ -205,6 +205,12 @@ level and switch to `data/fireos6/` on their own.
 - **The on-screen keyboard swallows keys** while a text field is focused. Batch
   deletes into one call (`input keyevent 67 67 67`), and close the keyboard with
   BACK before tapping another field.
+- **The launcher's own folder is closed to adb too,** so `home.conf` and the
+  wallpapers cannot be pushed to `/sdcard/Android/data/tv.dumbtv.home/files/`.
+  Write them to `/sdcard/Android/media/tv.dumbtv.home/` instead: the launcher reads
+  both, wallpapers in name order, and a settings file pushed to the media folder is
+  applied once, then remembered, so it does not overwrite a later change made in
+  Options. [launcher/README.md](../launcher/README.md) has the commands.
 - **HOME stays on Amazon's home with launcher 1.1.** Android 11 needs the
   launcher to have a visible window first; 1.2 waits for its cover window. Update
   with `./launcher/install.sh`.

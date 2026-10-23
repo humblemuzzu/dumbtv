@@ -32,6 +32,11 @@
             android:screenOrientation="landscape"
             android:windowSoftInputMode="adjustNothing"
             android:configChanges="keyboard|keyboardHidden|navigation|orientation|screenSize|screenLayout|uiMode">
+            <!-- No android:priority here on purpose. Amazon's launcher declares HOME with
+                 priority 950, but Android 11 caps the priority of every non-privileged app
+                 to 0 (PackageManagerService/ComponentResolver.adjustPriority), so a third
+                 party launcher can never out-rank it. The HOME key is taken by the
+                 accessibility Guard instead - see launcher/README.md. -->
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.HOME" />

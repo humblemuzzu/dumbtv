@@ -64,7 +64,7 @@ mkdir -p "$WORK/gen" "$WORK/classes" build
 
 "$BT/aapt2" compile --dir res -o "$WORK/res.zip"
 "$BT/aapt2" link -I "$JAR" --manifest AndroidManifest.xml "$WORK/res.zip" \
-  --min-sdk-version "$MIN_SDK" --target-sdk-version 28 \
+  -A assets --min-sdk-version "$MIN_SDK" --target-sdk-version 28 \
   --version-code "$VERSION_CODE" --version-name "$VERSION_NAME" \
   --java "$WORK/gen" -o "$WORK/app.apk"
 

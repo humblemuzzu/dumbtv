@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
+import android.content.res.Resources;
 import android.media.tv.TvContract;
 import android.media.tv.TvInputInfo;
 import android.media.tv.TvInputManager;
@@ -15,6 +16,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 /** Where tiles come from, and which of them the user wants on the home screen. */
@@ -54,7 +56,27 @@ final class Catalog {
     static void art(PackageManager pm, Item it) {
         if (it.info == null) return;
         it.banner = it.info.loadBanner(pm);
+        it.wideIcon = it.banner != null && splashScreen(pm, it);
+        if (it.wideIcon) it.banner = null;
         if (it.banner == null) it.icon = it.info.loadIcon(pm);
+    }
+
+    /**
+     * Some Fire TV apps point android:banner at their full-screen launch splash. Drawn as a
+     * tile that is a tiny logo on a black card, not the current app icon the Fire TV launcher
+     * shows; BBC iPlayer ships {@code amazon_firetv_splash_screen} this way. The package
+     * exposes no flag for it, so the resource name is the only clue.
+     */
+    private static boolean splashScreen(PackageManager pm, Item it) {
+        int id = it.info.banner;
+        if (id == 0 && it.info.applicationInfo != null) id = it.info.applicationInfo.banner;
+        if (id == 0) return false;
+        try {
+            String name = pm.getResourcesForApplication(it.id).getResourceName(id);
+            return name.toLowerCase(Locale.ROOT).contains("splash");
+        } catch (PackageManager.NameNotFoundException | Resources.NotFoundException e) {
+            return false;
+        }
     }
 
     /**

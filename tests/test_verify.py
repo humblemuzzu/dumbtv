@@ -11,28 +11,58 @@ LABEL = 'Service[label=dumbtv home button, feedbackType[FEEDBACK_GENERIC]]'
 
 
 class VerifyTests(unittest.TestCase):
+    BLOCKED = ['softwareupdates.amazon.com', 'arcus-uswest.amazon.com',
+               'unagi-zaz.amazon.com', 'unagi-na.amazon.com']
+    ALLOWED = ['www.youtube.com', 'i.ytimg.com',
+               'appstore-tv-prod-na.amazon.com', 'm.media-amazon.com']
+
     def run_verify(self, dump, *, component='tv.dumbtv.home/.Guard', enabled='1',
-                   user='0', launcher='1', dump_code=0, alarms='min_futurity=0'):
+                   user='0', launcher='1', dump_code=0, alarms='min_futurity=0',
+                   landed='tv.dumbtv.home/.Home',
+                   away='com.amazon.tv.launcher/.ui.MainSettingsActivity',
+                   dnsfilter='0', extra=None):
+        def resumed(app):
+            return 'mResumedActivity: ActivityRecord{x u0 ' + app + '}'
         replies = {
-            'getprop ro.build.version.sdk': '34',
-            'dumpsys activity activities': 'mResumedActivity: ActivityRecord{x u0 example.player/.Main}',
-            'dumpsys power': 'mWakefulness=Awake',
-            'settings get global alarm_manager_constants': alarms,
-            'am get-current-user': user,
-            f'settings --user {user} get secure enabled_accessibility_services': component,
-            f'settings --user {user} get secure accessibility_enabled': enabled,
-            'dumpsys accessibility': dump,
-            'pm list packages -d': '',
+            'getprop ro.build.version.sdk': {'out': '34'},
+            # Asked three times: what is in front now, what the check moved to, and
+            # where HOME landed.
+            'dumpsys activity activities': [
+                {'out': resumed('example.player/.Main')},
+                {'out': resumed(away)},
+                {'out': resumed(landed)},
+            ],
+            'dumpsys power': {'out': 'mWakefulness=Awake'},
+            'settings get global alarm_manager_constants': {'out': alarms},
+            'am get-current-user': {'out': user},
+            f'settings --user {user} get secure enabled_accessibility_services': {'out': component},
+            f'settings --user {user} get secure accessibility_enabled': {'out': enabled},
+            'dumpsys accessibility': {'out': dump, 'code': dump_code},
+            'pm list packages -d': {'out': ''},
+            'am start -a android.intent.action.MAIN -c android.intent.category.LEANBACK_SETTINGS': {'out': ''},
+            'input keyevent KEYCODE_HOME': {'out': ''},
         }
-        replies = {k: {'out': v} for k, v in replies.items()}
-        replies['dumpsys accessibility']['code'] = dump_code
+        if dnsfilter == '1':
+            for h in self.BLOCKED:
+                replies[f'ping -c1 -W2 {h}'] = {'out': f'ping: unknown host {h}'}
+            for h in self.ALLOWED:
+                replies[f'ping -c1 -W2 {h}'] = {'out': f'PING {h} (142.250.1.1) 56(84) bytes of data.'}
+            replies.update({
+                'pm path dnsfilter.android': {'out': 'package:/data/app/dnsfilter.android/base.apk'},
+                'dumpsys package dnsfilter.android': {'out': '    userId=10251'},
+                'dumpsys connectivity': {'out': 'NetworkAgentInfo{ ni{[type: VPN[], state: CONNECTED]} nc{[ Uid: 10251 OwnerUid: 10251 ]} }'},
+                'ip addr show': {'out': '18: tun0: <POINTOPOINT,UP,LOWER_UP> mtu 1280'},
+                'settings get secure always_on_vpn_app': {'out': 'null'},
+                'grep -c . /sdcard/Android/data/dnsfilter.android/files/PersonalDNSFilter/FILTERHOSTS.TXT 2>/dev/null': {'out': '415'},
+            })
+        replies.update(extra or {})
         with tempfile.TemporaryDirectory() as tmp:
             tmp = Path(tmp)
             data, log = tmp / 'responses.json', tmp / 'calls.jsonl'
             data.write_text(json.dumps(replies))
             env = dict(os.environ, ADB=str(ROOT / 'tests/fake_verify_adb.py'),
                        SERIAL='test-tv', CONF=str(tmp / 'absent.conf'),
-                       DNSFILTER='0', LAUNCHER=launcher, FAKE_ADB_LOG=str(log),
+                       DNSFILTER=dnsfilter, LAUNCHER=launcher, FAKE_ADB_LOG=str(log),
                        FAKE_ADB_RESPONSES=str(data))
             result = subprocess.run(['bash', str(ROOT / 'scripts/verify.sh')],
                                     env=env, text=True, capture_output=True)
@@ -118,6 +148,59 @@ class VerifyTests(unittest.TestCase):
         result, _ = self.run_verify(self.modern(LABEL), alarms='null')
         self.assertEqual(result.returncode, 1)
         self.assertIn('min_futurity=0 missing', result.stdout)
+
+    def test_home_key_proves_the_takeover(self):
+        result, _ = self.run_verify(self.modern(LABEL))
+        self.assertEqual(result.returncode, 0, result.stdout)
+        self.assertIn('ok         home-key', result.stdout)
+        self.assertIn('HOME lands on tv.dumbtv.home/.Home', result.stdout)
+
+    def test_home_key_on_another_launcher_is_a_failure(self):
+        # The service can be bound and the alarm can fire while HOME stays on
+        # Amazon's launcher, so the key itself is the only proof.
+        result, _ = self.run_verify(self.modern(LABEL),
+                                    landed='com.amazon.tv.launcher/.ui.HomeActivity_vNext')
+        self.assertEqual(result.returncode, 1)
+        self.assertIn('FAIL       home-key', result.stdout)
+
+    def test_home_key_is_skipped_when_the_home_screen_cannot_be_left(self):
+        # Nothing to prove: the check never got away from our own home.
+        result, _ = self.run_verify(self.modern(LABEL), away='tv.dumbtv.home/.Home')
+        self.assertEqual(result.returncode, 0, result.stdout)
+        self.assertIn('skip       home-key', result.stdout)
+
+    def test_nxdomain_from_a_router_is_blocked(self):
+        # Blocky and Unbound answer NXDOMAIN for a denylisted host where
+        # personalDNSfilter answers 0.0.0.0; both mean the lookup was filtered.
+        result, _ = self.run_verify(self.modern(LABEL), dnsfilter='1')
+        self.assertEqual(result.returncode, 0, result.stdout)
+        self.assertIn('blocked (NXDOMAIN)', result.stdout)
+        self.assertIn('ok         vpn', result.stdout)
+
+    def test_nxdomain_from_a_dead_resolver_is_not_blocked(self):
+        # If nothing resolves, "unknown host" proves the resolver is down, not
+        # that the blocklist works, so it must not pass as blocked.
+        dead = {f'ping -c1 -W2 {h}': {'out': f'ping: unknown host {h}'}
+                for h in self.BLOCKED + self.ALLOWED}
+        result, _ = self.run_verify(self.modern(LABEL), dnsfilter='1', extra=dead)
+        self.assertEqual(result.returncode, 1)
+        self.assertIn('no answer from the resolver', result.stdout)
+
+    def test_public_address_is_still_not_blocked(self):
+        resolving = {f'ping -c1 -W2 {h}': {'out': f'PING {h} (52.1.2.3) 56(84) bytes of data.'}
+                     for h in self.BLOCKED}
+        result, _ = self.run_verify(self.modern(LABEL), dnsfilter='1', extra=resolving)
+        self.assertEqual(result.returncode, 1)
+        self.assertIn('NOT BLOCKED', result.stdout)
+
+    def test_another_vpns_tunnel_is_not_the_filter(self):
+        # The owner's Surfshark tunnel was reported as personalDNSfilter before.
+        result, _ = self.run_verify(self.modern(LABEL), dnsfilter='1',
+                                    extra={'pm path dnsfilter.android': {'out': ''}})
+        self.assertEqual(result.returncode, 1)
+        self.assertIn('FAIL       vpn', result.stdout)
+        self.assertIn('personalDNSfilter is not installed', result.stdout)
+        self.assertNotIn('ok         vpn', result.stdout)
 
 
 if __name__ == '__main__':
