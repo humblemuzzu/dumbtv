@@ -1,0 +1,54 @@
+id: fireos-redmi-aftmv00
+title: "Redmi Smart Fire TV 32 (AFTMV00)"
+contributors:
+  - NeutronZero
+platform: fireos
+status: partial
+tested_on: "Redmi Smart Fire TV 32 (L32R8-FVIN), Fire OS 7.7.1.7 (sdk 28): debloat (20 packages), lockdown (5 protected), privacy settings, DNS filter (382 entries); verify passed; HOME lands on Amazon launcher; launcher not tested; boot ~45 s"
+models:
+  - AFTMV00
+  - TTE_L32R8-FVIN
+adb:
+  port: 5555
+  transport: wifi
+  first_connection_prompt: "Allow USB debugging? — must be accepted on the TV with the remote"
+developer_mode: >-
+  Settings > My Fire TV > About > press OK on the device name 7 times, then
+  Developer Options > ADB debugging: ON
+ip_location: Settings > Network > (connected network) — IP shown on the network details screen
+prompts:
+  - name: USB debugging authorization
+    when: first adb connect from a new machine
+    blocks_automation: true
+    fix: human presses Allow on the TV (tick "Always allow")
+  - name: personalDNSfilter start screen
+    when: dnsfilter.sh opens the app once before the reboot
+    blocks_automation: false
+    fix: "nothing to press; the script sends HOME after 8 s"
+data:
+  packages: data/fireos/packages.txt
+  protected: data/fireos/protected.txt
+  never_disable: data/fireos/never-disable.txt
+  user_apps: data/fireos/user-apps.txt
+  settings: data/fireos/settings.txt
+  settings_restore: data/fireos/settings.restore.txt
+launcher:
+  mechanism: none
+  package: com.amazon.tv.launcher
+  reason: "Launcher not tested on this device. Amazon's home screen kept. Onida and Hisense confirm accessibility_service works on Fire OS 7.7.1.x; not verified on this unit."
+quirks:
+  - "Fire TV Edition TV (Redmi/MI TV), not a stick — has TV tuner and HDMI inputs"
+  - "OEM model TTE_L32R8-FVIN, ADB model AFTMV00"
+  - "All 20 debloat packages disabled successfully (none were PROTECTED)"
+  - "5 protected packages locked down (background + data blocked)"
+  - "DNS filter works: blocked hosts resolve to 127.0.0.1, YouTube allowed"
+  - "Prime Video kept: device-messaging-na.amazon.com left unblocked (PRIME=1)"
+  - "Alexa kept: api.amazonalexa.com left unblocked (ALEXA=1)"
+  - "Animation scales set to 0 (personal preference; dumbtv default is 0.5)"
+known_limits:
+  - "third-party launcher not tested on this device"
+  - "protected packages can only be starved, not disabled"
+  - "Prime Video stops working unless its CDN is left unblocked (PRIME=1)"
+verify:
+  blocked: data/blocklists/verify-blocked.txt
+  allowed: data/blocklists/verify-allowed.txt
