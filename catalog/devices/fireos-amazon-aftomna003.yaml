@@ -1,0 +1,39 @@
+id: fireos-amazon-aftomna003
+title: "Amazon Ember 55 (Fire TV Omni Mini-LED), Fire OS 8.0"
+contributors:
+  - zaco-tm
+platform: fireos
+status: tested
+tested_on: "RS8185.3885N"
+models:
+  - "AFTOMNA003 (Ember 55 / Fire TV Omni Mini-LED; codename grove)"
+adb:
+  port: 5555
+  transport: wifi
+developer_mode: >-
+  Settings > My Fire TV > About > click the device name 7 times, then My Fire TV > Developer Options > ADB debugging: ON
+ip_location: "Settings > Device & Software > About > Network"
+prompts:
+  - name: "USB debugging authorization"
+    blocks_automation: true
+    fix: "human presses Allow on the TV; tick Always allow from this computer"
+data:
+  packages: data/fireos/packages.txt
+  protected: data/fireos/protected.txt
+  never_disable: data/fireos/never-disable.txt
+  user_apps: data/fireos/user-apps.txt
+quirks:
+  - "DNS filter on Fire OS 8: adb cannot write the app's own folder (Android 11 hides Android/data, the shell gets Permission denied), so dnsfilter.sh pushes the blocklist to /sdcard/Android/media/dnsfilter.android/ and personalDNSfilter has to be pointed at it on screen: Advanced settings > Configure filter update, one row with the file:// URL and Active ticked, the other rows unticked"
+  - "The app saves its filter list to disk only when the activity is left (onBackPressed, or any click on the main screen). Editing the row, pressing OK and then rebooting loses the change, and the app goes on using the previous list"
+  - "The filter service caches the filter URL at startup, so a list saved in the app is ignored until the service is restarted: tap RESTART on the main screen, then RELOAD FILTER. The proof in the app log is 'Building index for 394 entries!'"
+  - "The file:// URL needs three slashes: the app does urlStr.substring(7), so file:///storage/... becomes /storage/... and is read correctly, while two slashes leave a broken relative path"
+  - "Driving that screen over adb: the on-screen keyboard is a floating overlay over the right half of the dialog, so screen taps land on the keyboard. Use input keyevent 61 (TAB) to move focus between the fields and 62 (SPACE) for the Active checkbox; clear a field with small batches of input keyevent 67 and check the result with uiautomator dump"
+  - "36 of the 40 Amazon packages in data/fireos/packages.txt were disabled; absent on this set: com.amazon.shoptv.firetv.client, com.amazon.tv.fw.metrics, com.amazon.tigris and com.android.nfc. Nothing came back PROTECTED and nothing came back SUSPECT"
+  - "com.amazon.neo.minerva.logcat and com.amazon.tv.developer.dataservice keep running after their disable; the residual-process pass turns their ops off and blocks their data"
+  - "This is a television: the four HDMI inputs, the tuner and the MediaTek input packages are all in never-disable.txt and were left untouched, and the launcher HOME takeover (accessibility service plus min_futurity=0) works as on Fire OS 7/8"
+  - "The on-TV input row resolves to Amazon's Live TV app, which drops into a channel-scan screen when no channels are scanned; launcher 1.2 opens inputs on its own screen instead, via Options > Open inputs with"
+  - "Plex for Fire TV 2026.20.0 reports 'Audio codec banned on device' and transcodes TrueHD down to EAC3 on this hardware. Fix inside Plex: Settings > Audio > Passthrough: HDMI with TrueHD and EAC3 enabled"
+notes: "Fire OS 8.0 (Android 11) on an Ember 55 television: debloat, lockdown, the DNS filter and the dumbtv home takeover all work and verify.sh exits 0. The DNS filter needs the on-screen step in the quirks, because Android 11 hides the app's folder from adb."
+verify:
+  blocked: data/blocklists/verify-blocked.txt
+  allowed: data/blocklists/verify-allowed.txt
