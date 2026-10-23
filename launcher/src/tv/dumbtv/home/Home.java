@@ -464,11 +464,17 @@ public final class Home extends Activity {
                 }
                     if (focused instanceof Tile) {
                         ViewGroup edgeParent = (ViewGroup) focused.getParent();
-                        if (!(edgeParent instanceof Grid)) {
-                            int idx = edgeParent.indexOfChild(focused);
-                            int count = edgeParent.getChildCount();
-                            if (direction == View.FOCUS_LEFT && idx == 0) return focused;
-                            if (direction == View.FOCUS_RIGHT && idx == count - 1) return focused;
+                        int edgeIdx = edgeParent.indexOfChild(focused);
+                        int count = edgeParent.getChildCount();
+                        if (edgeParent instanceof Grid) {
+                            int cols = ((Grid) edgeParent).columns();
+                            if (cols > 0) {
+                                if (direction == View.FOCUS_LEFT && edgeIdx % cols == 0) return focused;
+                                if (direction == View.FOCUS_RIGHT && ((edgeIdx + 1) % cols == 0 || edgeIdx == count - 1)) return focused;
+                            }
+                        } else {
+                            if (direction == View.FOCUS_LEFT && edgeIdx == 0) return focused;
+                            if (direction == View.FOCUS_RIGHT && edgeIdx == count - 1) return focused;
                         }
                         Tile tf = (Tile) focused;
                     boolean gridMode = "grid".equals(cfg.get(Config.LAYOUT));
