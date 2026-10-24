@@ -1,0 +1,42 @@
+id: fireos-amazon-aftn
+title: "Amazon Fire TV, 3rd gen (AFTN Pendant)"
+contributors:
+  - adi-c
+platform: fireos
+status: tested
+tested_on: "Fire TV 3rd gen (pendant), Fire OS 6.2.8.0 / NS6709: debloat, lockdown, DNS filter and Keeper launcher; verify.sh passed"
+models:
+  - AFTN
+adb:
+  port: 5555
+  transport: wifi
+  first_connection_prompt: "Allow USB debugging? — must be accepted on the TV with the remote"
+developer_mode: >-
+  Settings > My Fire TV > About > click the device name 7 times, then My Fire TV > Developer Options > ADB debugging: ON
+ip_location: "Settings > My Fire TV > About > Network"
+prompts:
+  - name: USB debugging authorization
+    blocks_automation: true
+    fix: "tick 'Always allow from this computer' and press OK with the TV remote"
+data:
+  packages: data/fireos6/packages.txt
+  protected: data/fireos6/protected.txt
+  never_disable: data/fireos6/never-disable.txt
+  user_apps: data/fireos/user-apps.txt
+  settings: data/fireos/settings.txt
+  settings_restore: data/fireos/settings.restore.txt
+launcher:
+  mechanism: usage_stats_keeper
+  package: tv.dumbtv.home
+  reason: "Fire OS 6 refuses third-party accessibility services (A11yAuthorizer); the Keeper reads UsageStats and calls moveTaskToFront, skipping the 5 s app-switch delay"
+  fallback: "holding HOME opens Fire OS's quick menu; Options > Open Amazon's home screen pauses the Keeper"
+quirks:
+  - "Fire OS 6 refuses third-party accessibility services; HOME is managed by dumbtv home Keeper via GET_USAGE_STATS and moveTaskToFront"
+  - "no cmd package install-existing: system apps are only disabled, never uninstalled"
+  - "no RUN_ANY_IN_BACKGROUND app-op; RUN_IN_BACKGROUND ignore blocks background starts only"
+  - "always_on_vpn_app is dropped at boot; the DNS filter starts from its own boot receiver once it has been opened"
+  - "com.amazon.vizzini re-enables itself at every boot"
+notes: "Fire TV 3rd gen (pendant 2017), Fire OS 6 (Android 7.1.2, sdk 25, kernel 3.14.29)"
+verify:
+  blocked: data/blocklists/verify-blocked.txt
+  allowed: data/blocklists/verify-allowed.txt
