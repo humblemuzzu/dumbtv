@@ -91,6 +91,23 @@ always-on VPN and the app's own boot start are racing (seen on an AFTTI43, issue
 again. Fire OS 6 needs the app's own start, so the script ignores this setting
 there.
 
+### Use resolvers other than the router
+
+`DNS_UPSTREAM` in `dumbtv.conf` is a space-separated list of resolver IPs. The
+filter still answers its own list with `127.0.0.1`, and forwards everything else
+to those resolvers instead of the router:
+
+```sh
+./scripts/configure.sh --dns-upstream "76.76.2.45 76.76.10.45"
+./scripts/dnsfilter.sh
+```
+
+Leave it empty and re-run `dnsfilter.sh` to go back to the router. A resolver
+that serves its own blocklist will also block names that are not in dumbtv's
+list, and taking a host out of `extra-hosts.txt` does not bring those back.
+Re-running `configure.sh` keeps a list already saved unless you pass
+`--dns-upstream ""`.
+
 ### The filter stopped working after the TV changed network
 
 The config pins `detectDNS = false`, an explicit `fallbackDNS` and

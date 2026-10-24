@@ -95,7 +95,9 @@ people take them.
 
 `--keep "pkg pkg"` keeps a package that would otherwise be disabled, for an owner
 who wants a specific Amazon feature. Fire OS 6 has one more question
-(`--system-dns`); its default is right for almost everyone.
+(`--system-dns`); its default is right for almost everyone. `--dns-upstream` is
+not one of the questions: leave it unset unless the owner names resolver IPs.
+Empty means the filter forwards unknown names to the router.
 
 Record the answers:
 

@@ -37,6 +37,11 @@ step "plan"
 note "filter         personalDNSfilter, runs as a local VPN on the TV"
 note "gateway        $GW (put inside the tunnel so apps cannot bypass the filter)"
 note "list           HaGeZi Amazon trackers + data/blocklists/extra-hosts.txt"
+if [[ -n ${DNS_UPSTREAM:-} ]]; then
+  note "upstream       $DNS_UPSTREAM"
+else
+  note "upstream       the router"
+fi
 if [[ $PRIME == 1 ]]; then
   note "prime video    kept: its video CDN and push service stay out of the list"
 else
@@ -92,11 +97,17 @@ if [[ $DRY_RUN == 0 ]]; then
   # downloads a blocklist and cannot end up with a half-written one.
   # previousAutoUpdateURL must match the (now empty) update URL: the template ships "<none>",
   # and a mismatch makes the app "update" at start and write an empty list over the pushed one.
+  # DNS_UPSTREAM replaces the router. Empty keeps the same router line as before.
+  fb=$(fallback_dns) || exit 1
+  fb=${fb%$'\r'}
+  if [[ -z $fb ]]; then
+    fb="\\#router; [$GW]::53::UDP"
+  fi
   sed -i.dumbtv \
     -e 's|^filterAutoUpdateURL = |#filterAutoUpdateURL = |' \
     -e 's|^previousAutoUpdateURL = .*|previousAutoUpdateURL = |' \
     -e 's|^detectDNS = .*|detectDNS = false|' \
-    -e "s|^fallbackDNS = .*|fallbackDNS = \\#router; [$GW]::53::UDP|" \
+    -e "s|^fallbackDNS = .*|fallbackDNS = $fb|" \
     -e "s|^routeIPs =.*|routeIPs = $GW|" \
     -e 's|^routeUnderlyingDNS = .*|routeUnderlyingDNS = true|' \
     -e 's|^showInitialInfoPopUp = .*|showInitialInfoPopUp = false|' \
@@ -129,6 +140,10 @@ if [[ $DRY_RUN == 0 ]]; then
   fi
   grep -Fqx "routeIPs = $GW" "$CONF_OUT" ||
     die "config template changed upstream (routeIPs did not take) — update scripts/dnsfilter.sh"
+  if [[ -n ${DNS_UPSTREAM:-} ]]; then
+    grep -Fqx "fallbackDNS = $fb" "$CONF_OUT" ||
+      die "config template changed upstream (fallbackDNS did not take) — update scripts/dnsfilter.sh"
+  fi
   # Fire OS 6 forgets always_on_vpn_app at boot, so there the app's own boot start is the
   # only thing that brings the filter up. Opt-out for TVs where both starts race (issue #58).
   if [[ $FILTER_AUTOSTART == 0 && $SDK -lt 28 ]]; then

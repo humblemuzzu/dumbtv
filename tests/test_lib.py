@@ -51,6 +51,26 @@ def lib(script, env=None):
     )
 
 
+class FallbackDnsTest(unittest.TestCase):
+    def line(self, upstream):
+        result = lib('fallback_dns', {"DNS_UPSTREAM": upstream})
+        self.assertEqual(result.returncode, 0, result.stderr)
+        return result.stdout.strip()
+
+    def test_empty_keeps_the_router(self):
+        self.assertEqual(self.line(""), "")
+
+    def test_v4_and_v6(self):
+        self.assertEqual(
+            self.line("76.76.2.45 2606:1a40::45"),
+            "76.76.2.45::53::UDP; [2606:1a40::45]::53::UDP",
+        )
+
+    def test_a_name_is_refused(self):
+        result = lib('fallback_dns', {"DNS_UPSTREAM": "one.one.one.one"})
+        self.assertNotEqual(result.returncode, 0)
+
+
 class FireOsNameTest(unittest.TestCase):
     def name(self, sdk):
         return lib("fireos_name", {"SDK": str(sdk)}).stdout.strip()

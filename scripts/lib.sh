@@ -33,11 +33,13 @@ load_conf() {
   DNSFILTER=${DNSFILTER:-1}
   SYSTEM_DNS=${SYSTEM_DNS:-0}
   FILTER_AUTOSTART=${FILTER_AUTOSTART:-1}
+  DNS_UPSTREAM=${DNS_UPSTREAM:-}
   [[ -f $CONF ]] && source "$CONF"
   KEEP_APPS=${KEEP_APPS:-}; REMOVE_EXTRA=${REMOVE_EXTRA:-}
   PRIME=${PRIME:-1}; ALEXA=${ALEXA:-1}; LAUNCHER=${LAUNCHER:-1}; DNSFILTER=${DNSFILTER:-1}
   SYSTEM_DNS=${SYSTEM_DNS:-0}
   FILTER_AUTOSTART=${FILTER_AUTOSTART:-1}
+  DNS_UPSTREAM=${DNS_UPSTREAM:-}
 }
 
 # What debloat.sh disables: the ads and tracking list, plus Alexa only with ALEXA=0.
@@ -158,6 +160,32 @@ fireos_name() {
   elif [[ $SDK -ge 28 ]]; then echo "Fire OS 7"
   elif [[ $SDK -ge 25 ]]; then echo "Fire OS 6"
   else echo "Fire OS 5 or older (unsupported)"; fi
+}
+
+# What personalDNSfilter asks for a name that is not on the local list.
+# DNS_UPSTREAM is a space-separated list of resolver IPs. Empty keeps the router,
+# which is the default: a second blocklist at the resolver also sinks hosts the
+# local list deliberately left alone.
+fallback_dns() {
+  local ip item out=""
+  if [[ -z ${DNS_UPSTREAM:-} ]]; then
+    return 0
+  fi
+  for ip in $DNS_UPSTREAM; do
+    case $ip in
+      *[!0-9A-Fa-f:.]*) die "DNS_UPSTREAM entry '$ip' is not an IP address" ;;
+    esac
+    case $ip in
+      *:*)
+        case $ip in *.*) die "DNS_UPSTREAM entry '$ip' is not an IP address" ;; esac
+        item="[$ip]::53::UDP"
+        ;;
+      *.*.*.*) item="$ip::53::UDP" ;;
+      *) die "DNS_UPSTREAM entry '$ip' is not an IP address" ;;
+    esac
+    if [[ -z $out ]]; then out=$item; else out="$out; $item"; fi
+  done
+  printf '%s\n' "$out"
 }
 
 # The package lists and app-op calls are written for Fire OS 6 and later.

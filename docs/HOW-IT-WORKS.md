@@ -77,7 +77,10 @@ Three settings keep the filter in the path:
 - `routeIPs = <gateway>` puts the router's resolver inside the tunnel, so an app
   that asks the router directly is still filtered.
 - `detectDNS = false` with an explicit `fallbackDNS` stops the filter falling out
-  of the path when the TV changes network.
+  of the path when the TV changes network. That fallback is the router. Set
+  `DNS_UPSTREAM` in `dumbtv.conf` only when those unknown names should go to
+  other resolvers instead; a public blocklist resolver then sinks hosts this
+  list deliberately left alone.
 - `always_on_vpn_app` and a Doze exemption bring it back after a reboot. The app's
   own boot start is a second way back, and the only one on Fire OS 6, which forgets
   the always-on setting at boot.

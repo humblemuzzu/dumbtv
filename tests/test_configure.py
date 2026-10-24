@@ -76,6 +76,46 @@ class ConfigureKeepTest(unittest.TestCase):
             "--keep", "com.netflix.ninja", "--remove", "com.netflix.ninja")
         self.assertEqual(result.returncode, 0, result.stderr)
 
+    def test_dns_upstream_is_saved_and_kept_on_the_next_run(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            conf = Path(tmp) / "dumbtv.conf"
+            env = dict(os.environ, CONF=str(conf))
+            first = subprocess.run(
+                ["bash", str(ROOT / "scripts" / "configure.sh"), "-y",
+                 "--dns-upstream", "76.76.2.45 2606:1a40::45"],
+                env=env, capture_output=True, text=True,
+            )
+            self.assertEqual(first.returncode, 0, first.stderr)
+            self.assertIn('DNS_UPSTREAM="76.76.2.45 2606:1a40::45"', conf.read_text())
+            second = subprocess.run(
+                ["bash", str(ROOT / "scripts" / "configure.sh"), "-y"],
+                env=env, capture_output=True, text=True,
+            )
+            self.assertEqual(second.returncode, 0, second.stderr)
+            self.assertIn('DNS_UPSTREAM="76.76.2.45 2606:1a40::45"', conf.read_text())
+
+    def test_dns_upstream_rejects_a_name(self):
+        result, conf = self.configure("--dns-upstream", "dns.example")
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIsNone(conf)
+
+    def test_empty_dns_upstream_clears_a_saved_list(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            conf = Path(tmp) / "dumbtv.conf"
+            env = dict(os.environ, CONF=str(conf))
+            subprocess.run(
+                ["bash", str(ROOT / "scripts" / "configure.sh"), "-y",
+                 "--dns-upstream", "76.76.2.45"],
+                env=env, capture_output=True, text=True, check=True,
+            )
+            cleared = subprocess.run(
+                ["bash", str(ROOT / "scripts" / "configure.sh"), "-y",
+                 "--dns-upstream", ""],
+                env=env, capture_output=True, text=True,
+            )
+            self.assertEqual(cleared.returncode, 0, cleared.stderr)
+            self.assertIn('DNS_UPSTREAM=""', conf.read_text())
+
 
 if __name__ == "__main__":
     unittest.main()
