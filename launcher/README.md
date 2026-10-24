@@ -61,7 +61,7 @@ Undo: `./launcher/install.sh --undo` gives HOME back to Amazon's launcher.
 | App names | on focus, always, never |
 | Clock format | system, 24-hour, 12-hour |
 | Clock display | clock and date, clock only, none |
-| Screen saver | off, or a dim clock after 1, 5, 15, 30 or 60 minutes |
+| Screen saver | off, or a wallpaper slideshow after 1, 5, 15, 30 or 60 minutes |
 | Inputs row | shown, hidden |
 | Open inputs with | Automatic, the TV's app, dumbtv home (see below) |
 | Background | black, graphite, midnight, image, adaptive, adaptive tint |
@@ -72,8 +72,10 @@ reset for order, names and hidden tiles, and **Open Amazon's home screen**. Apps
 without a TV banner, like the Appstore, start hidden; tick them to add them.
 
 **Clock display** puts the date beside the clock and hides it with the clock when set
-to none. **Screen saver** fades to a dim clock and date over black after the chosen
-idle time; any remote key wakes it and returns to the tile that was focused.
+to none. **Screen saver** crossfades through the wallpapers every 15 seconds after the
+chosen idle time. The clock and date stay where they are on the home screen, and the
+chips and app and input rows fade out; any remote key wakes it and returns to the tile
+that was focused.
 
 | Grid layout | Adaptive background | Adaptive tint |
 |---|---|---|

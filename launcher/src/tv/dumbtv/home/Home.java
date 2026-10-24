@@ -53,8 +53,14 @@ public final class Home extends Activity {
     private static final float TILE_SCALE = 0.75f;
     /** Match the pill (chips) height. */
     private static final float CLOCK_SP = 32f;
+
+    /** How long each wallpaper stays on screen before the next crossfade. */
+    private static final long SAVER_SLIDE_MS = 15_000L;
     /** Shared top inset so the clock and chips line up along their top edge. */
     private static final int HEAD_INSET = 6;
+
+    /** Crossfade between two wallpapers. */
+    private static final long SAVER_FADE_MS = 1_000L;
 
     private final Handler ui = new Handler(Looper.getMainLooper());
     private final ExecutorService io = Executors.newSingleThreadExecutor();
@@ -73,12 +79,12 @@ public final class Home extends Activity {
     private View tint;
     private TextView clock;
     private TextView date;
-    private FrameLayout saver;
-    private TextView saverClock;
-    private TextView saverDate;
+    private FrameLayout saverWall;
+    private ImageView saverA, saverB, saverFront;
+    private final List<File> saverFiles = new ArrayList<>();
+    private int saverIndex, saverGeneration;
     private boolean saverShown;
     private boolean wakingSaver;
-    private View focusBeforeSaver;
     private Row apps, inputs;
     private Tile moving;
     private String wallKey;
@@ -89,6 +95,10 @@ public final class Home extends Activity {
 
     private final Runnable saverTask = () -> {
         if (resumed && !saverShown) showSaver();
+    };
+
+    private final Runnable saverSlideTask = () -> {
+        if (saverShown) nextSaver();
     };
 
     private final BroadcastReceiver packages = new BroadcastReceiver() {
@@ -193,6 +203,13 @@ public final class Home extends Activity {
             scroll.setVisibility(on && !gridMode ? View.VISIBLE : View.GONE);
             grid.setVisibility(on && gridMode ? View.VISIBLE : View.GONE);
         }
+
+        /** Fades the whole row, including its heading, for the screen saver. */
+        void fade(float alpha, long duration) {
+            if (title != null) title.animate().alpha(alpha).setDuration(duration).start();
+            scroll.animate().alpha(alpha).setDuration(duration).start();
+            grid.animate().alpha(alpha).setDuration(duration).start();
+        }
     }
 
     @Override
@@ -292,6 +309,7 @@ public final class Home extends Activity {
     @Override
     protected void onDestroy() {
         ui.removeCallbacks(saverTask);
+        ui.removeCallbacks(saverSlideTask);
         unregisterReceiver(packages);
         if (tv != null) tv.unregisterCallback(inputWatch);
         io.shutdownNow();
@@ -476,6 +494,18 @@ public final class Home extends Activity {
         tint = new View(this);
         root.addView(tint, new FrameLayout.LayoutParams(MATCH, MATCH));
 
+        // Sits above the home background's dim and tint, below the clock and rows: the screen
+        // saver crossfades wallpapers here while the clock and date stay exactly where they are.
+        saverWall = new FrameLayout(this);
+        saverWall.setVisibility(View.GONE);
+        saverWall.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
+        saverA = saverImage();
+        saverB = saverImage();
+        saverFront = saverA;
+        saverWall.addView(saverA, new FrameLayout.LayoutParams(MATCH, MATCH));
+        saverWall.addView(saverB, new FrameLayout.LayoutParams(MATCH, MATCH));
+        root.addView(saverWall, new FrameLayout.LayoutParams(MATCH, MATCH));
+
         ScrollView scroll = new ScrollView(this) {
             /** Scrolls in whole rows: the focused row shows complete, and a row starts at the top edge. */
             @Override
@@ -549,7 +579,9 @@ public final class Home extends Activity {
         date.setPadding(dp(14), 0, 0, 0);
         when.addView(date);
         head.addView(when, new LinearLayout.LayoutParams(0, WRAP, 1f));
-        head.addView(chip("\uF1DE", "Options", v -> { forceFirstAppOnResume = true; startActivity(new Intent(this, Options.class)); }));
+        // Add chips with explicit width and left/right margins to align edges
+        int chipWidth = dp(92); // Matches clock's visual width roughly
+        head.addView(chip("\uF1DE", "Options", v -> { forceFirstAppOnResume = true; startActivity(new Intent(this, Options.class)); }), new LinearLayout.LayoutParams(WRAP, WRAP, dp(8)));
         head.addView(chip("\uF013", "Settings", v -> { forceFirstAppOnResume = true; openSettings(); }));
         column.addView(head, new LinearLayout.LayoutParams(MATCH, WRAP));
 
@@ -558,25 +590,14 @@ public final class Home extends Activity {
         inputs = new Row(Catalog.INPUTS, "Inputs", column);
         apps = new Row(Catalog.APPS, null, column);
 
-        saver = new FrameLayout(this);
-        saver.setBackgroundColor(Color.BLACK);
-        saver.setFocusable(true);
-        saver.setClickable(true);
-        saver.setOnClickListener(v -> hideSaver());
-        LinearLayout box = new LinearLayout(this);
-        box.setOrientation(LinearLayout.VERTICAL);
-        box.setGravity(Gravity.CENTER);
-        saverClock = Ui.text(this, 64, Ui.MUTED, Ui.font(this));
-        saverClock.setGravity(Gravity.CENTER);
-        saverDate = Ui.text(this, 24, Ui.MUTED, Ui.font(this));
-        saverDate.setGravity(Gravity.CENTER);
-        saverDate.setPadding(0, dp(10), 0, 0);
-        box.addView(saverClock);
-        box.addView(saverDate);
-        saver.addView(box, new FrameLayout.LayoutParams(WRAP, WRAP, Gravity.CENTER));
-        saver.setVisibility(View.GONE);
-        root.addView(saver, new FrameLayout.LayoutParams(MATCH, MATCH));
         return root;
+    }
+
+    private ImageView saverImage() {
+        ImageView v = new ImageView(this);
+        v.setScaleType(ImageView.ScaleType.CENTER_CROP);
+        v.setAlpha(0f);
+        return v;
     }
 
     /**
@@ -597,20 +618,23 @@ public final class Home extends Activity {
         TextView v = Ui.text(this, 18, Ui.TEXT, Ui.icons(this));
         v.setText(glyph);
         v.setContentDescription(label);
-        v.setGravity(Gravity.CENTER);
-        v.setPadding(dp(18), dp(9), dp(18), dp(9));
+        v.setGravity(Gravity.CENTER_HORIZONTAL);
+        v.setPadding(dp(0), dp(9), dp(0), dp(9));
         v.setFocusable(true);
         v.setClickable(true);
         v.setOnClickListener(click);
         v.setOnFocusChangeListener((view, has) -> {
+            // Only show highlight on the focused chips; unfocused ones have no background pill
             view.animate().scaleX(has ? 1.06f : 1f).scaleY(has ? 1.06f : 1f)
                     .alpha(has ? 0.6f : 1f).setDuration(110).start();
-            if (has) focusBackground(null);
+            if (has && chips.size() <= 1) focusBackground(null);
         });
+        // Chips align edges with screen padding for consistent vertical alignment
         LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(WRAP, WRAP);
-        lp.leftMargin = dp(10);
+        lp.gravity = Gravity.CENTER_HORIZONTAL;
         lp.topMargin = dp(HEAD_INSET);
         v.setLayoutParams(lp);
+        head.addView(v);
         chips.add(v);
         return v;
     }
@@ -618,7 +642,6 @@ public final class Home extends Activity {
     private void apply() {
         applied = cfg.version();
         int accent = cfg.accent();
-        for (TextView c : chips) Ui.focusStyle(c, accent, 0x0AFFFFFF, dp(18));
         render(apps);
         render(inputs);
         background();
@@ -804,15 +827,11 @@ public final class Home extends Activity {
     private void tick() {
         Date now = new Date();
         showTime(clock, now);
-        showTime(saverClock, now);
         String day = DateFormat.format("EEEE, d MMMM", now).toString();
         date.setText(day);
-        saverDate.setText(day);
         String mode = cfg.get(Config.CLOCKDATE);
         clock.setVisibility("none".equals(mode) ? View.GONE : View.VISIBLE);
         date.setVisibility("both".equals(mode) ? View.VISIBLE : View.GONE);
-        saverClock.setVisibility("none".equals(mode) ? View.GONE : View.VISIBLE);
-        saverDate.setVisibility("both".equals(mode) ? View.VISIBLE : View.GONE);
         // hourly and time-of-day rotations change while the screen stays open; a no-op otherwise
         background();
     }
@@ -847,13 +866,26 @@ public final class Home extends Activity {
     }
 
     private void showSaver() {
-        if (saverShown || saver == null) return;
+        if (saverShown || saverWall == null) return;
         saverShown = true;
-        focusBeforeSaver = getCurrentFocus();
-        saver.setAlpha(0f);
-        saver.setVisibility(View.VISIBLE);
-        saver.animate().alpha(1f).setDuration(500).start();
-        saver.requestFocus();
+        saverFiles.clear();
+        saverFiles.addAll(saverPictures());
+        saverIndex = saverStart();
+        saverGeneration++;
+        saverFront = saverA;
+        saverA.animate().cancel();
+        saverB.animate().cancel();
+        saverA.setImageDrawable(null);
+        saverB.setImageDrawable(null);
+        saverA.setAlpha(0f);
+        saverB.setAlpha(0f);
+        saverWall.animate().cancel();
+        saverWall.setAlpha(0f);
+        saverWall.setVisibility(View.VISIBLE);
+        saverWall.animate().alpha(1f).setDuration(SAVER_FADE_MS).start();
+        fadeHome(false);
+        if (!saverFiles.isEmpty()) loadSaver(saverA, saverFiles.get(saverIndex));
+        scheduleSaverSlide();
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
     }
 
@@ -862,21 +894,98 @@ public final class Home extends Activity {
         scheduleSaver();
     }
 
-    private void hideSaver(boolean restoreFocus) {
+    private void hideSaver(boolean animate) {
         if (!saverShown) return;
         saverShown = false;
-        saver.animate().cancel();
-        saver.setAlpha(1f);
-        saver.setVisibility(View.GONE);
+        ui.removeCallbacks(saverSlideTask);
+        saverGeneration++;
+        saverA.animate().cancel();
+        saverB.animate().cancel();
+        saverWall.animate().cancel();
+        if (animate) {
+            saverWall.animate().alpha(0f).setDuration(SAVER_FADE_MS).withEndAction(() -> {
+                if (saverShown) return;
+                clearSaver();
+            }).start();
+        } else {
+            clearSaver();
+        }
+        fadeHome(true);
         getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
-        if (restoreFocus) {
-            if (focusBeforeSaver != null && focusBeforeSaver.isAttachedToWindow()) {
-                focusBeforeSaver.requestFocus();
-            } else {
-                focusFirst();
+    }
+
+    private void clearSaver() {
+        saverWall.setVisibility(View.GONE);
+        saverWall.setAlpha(0f);
+        saverA.setImageDrawable(null);
+        saverB.setImageDrawable(null);
+        saverA.setAlpha(0f);
+        saverB.setAlpha(0f);
+    }
+
+    /** Wallpapers to rotate through; a single Background › Image file is a one-picture show. */
+    private List<File> saverPictures() {
+        List<File> pool = new ArrayList<>(cfg.wallpapers());
+        if (pool.isEmpty()) {
+            File one = cfg.wallpaper();
+            if (one != null) pool.add(one);
+        }
+        return pool;
+    }
+
+    /** Start on the wallpaper already on screen, so the saver does not jump to a new one. */
+    private int saverStart() {
+        File current = cfg.wallpaper();
+        if (current != null) {
+            for (int i = 0; i < saverFiles.size(); i++) {
+                if (saverFiles.get(i).getPath().equals(current.getPath())) return i;
             }
         }
-        focusBeforeSaver = null;
+        return 0;
+    }
+
+    private void scheduleSaverSlide() {
+        ui.removeCallbacks(saverSlideTask);
+        if (saverShown && saverFiles.size() > 1) ui.postDelayed(saverSlideTask, SAVER_SLIDE_MS);
+    }
+
+    private void nextSaver() {
+        if (!saverShown || saverFiles.size() < 2) return;
+        saverIndex = (saverIndex + 1) % saverFiles.size();
+        ImageView target = saverFront == saverA ? saverB : saverA;
+        saverFront = target;
+        loadSaver(target, saverFiles.get(saverIndex));
+        scheduleSaverSlide();
+    }
+
+    private void loadSaver(ImageView target, File file) {
+        int generation = ++saverGeneration;
+        int w = getResources().getDisplayMetrics().widthPixels;
+        int h = getResources().getDisplayMetrics().heightPixels;
+        io.execute(() -> {
+            Bitmap b = decode(file, w, h);
+            ui.post(() -> {
+                if (!saverShown || generation != saverGeneration) {
+                    if (b != null) b.recycle();
+                    return;
+                }
+                target.animate().cancel();
+                target.setAlpha(0f);
+                target.bringToFront();
+                target.setImageBitmap(b);
+                target.animate().alpha(1f).setDuration(SAVER_FADE_MS).start();
+            });
+        });
+    }
+
+    /** Fades the chips and app/input rows out for the saver, and back in on wake. */
+    private void fadeHome(boolean visible) {
+        for (TextView c : chips) {
+            float alpha = visible ? (c.isFocused() ? 0.6f : 1f) : 0f;
+            c.animate().alpha(alpha).setDuration(SAVER_FADE_MS).start();
+        }
+        apps.fade(visible ? 1f : 0f, SAVER_FADE_MS);
+        inputs.fade(visible ? 1f : 0f, SAVER_FADE_MS);
     }
 
     private void background() {
