@@ -48,6 +48,14 @@ Undo: `./launcher/install.sh --undo` gives HOME back to Amazon's launcher.
 | On an input: ☰ Menu | show the input's name again |
 | Hold HOME | Fire OS quick menu (Amazon's, unchanged) |
 
+**Settings on Fire OS 6** opens a short list, because Amazon's own settings page draws its first row
+off the top of the screen there (#77). The list has the sections an app other than Amazon's may open
+directly: Notifications, Network, Applications, Equipment Control, Controllers & Bluetooth Devices
+and Device & Software. Any of them the TV lacks is left out. Below them, **All settings…** opens
+Amazon's settings row for the rest (Display & Sounds, Preferences, Accessibility and more), which need
+Amazon's own signature to open. Like Options › Open Amazon's home screen, that stays on Amazon's home until
+you open an app. On Fire OS 7 and 8 the Settings button opens Amazon's settings page as before.
+
 **Options** cycles each setting with ◀ ▶ or OK:
 
 | Setting | Choices |
