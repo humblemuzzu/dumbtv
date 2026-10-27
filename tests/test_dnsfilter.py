@@ -26,6 +26,10 @@ androidAppWhiteList = com.android.vending
 AUTOSTART = true
 """
 
+# A feed the size of HaGeZi's: dnsfilter.sh refuses one with fewer than 50 entries.
+FEED = "# list\ndevice-metrics-us.amazon.com\n" + "".join(
+    f"t{i}.tracker.example.com\n" for i in range(60))
+
 # Stands in for curl: answers each download with the file named like the URL's last part.
 CURL = """#!/usr/bin/env bash
 while [[ $# -gt 1 ]]; do [[ $1 == -o ]] && { out=$2; shift; }; shift; done
@@ -35,12 +39,18 @@ cp "$FAKE_CURL_DIR/${1##*/}" "$out"
 
 class RouteTest(unittest.TestCase):
     def route_ips(self, props):
+        result, conf = self.run_filter(props)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        return [line for line in conf if line.startswith("routeIPs")]
+
+    def run_filter(self, props, feed=FEED):
+        """Runs dnsfilter.sh; returns the result and the dnsfilter.conf it pushed, if any."""
         with tempfile.TemporaryDirectory() as tmp:
             tmp = Path(tmp)
             files = tmp / "downloads"
             files.mkdir()
             (files / "dnsfilter.conf").write_text(TEMPLATE)
-            (files / "native.amazon-onlydomains.txt").write_text("# list\ndevice-metrics-us.amazon.com\n")
+            (files / "native.amazon-onlydomains.txt").write_text(feed)
             bin_dir = tmp / "bin"
             bin_dir.mkdir()
             (bin_dir / "curl").write_text(CURL)
@@ -65,9 +75,20 @@ class RouteTest(unittest.TestCase):
                 ["bash", str(ROOT / "scripts" / "dnsfilter.sh"), "-y", "--no-reboot"],
                 env=env, capture_output=True, text=True, timeout=120,
             )
-            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
-            conf = (tmp / "pushed" / "dnsfilter.conf").read_text().splitlines()
-        return [line for line in conf if line.startswith("routeIPs")]
+            pushed = tmp / "pushed" / "dnsfilter.conf"
+            conf = pushed.read_text().splitlines() if pushed.exists() else None
+            touched = [c for c in log.read_text().splitlines()
+                       if c.startswith(("pm ", "appops set", "settings put", "am start"))]
+        self.touched = touched
+        return result, conf
+
+    def test_a_sign_in_page_instead_of_the_feed_changes_nothing(self):
+        result, conf = self.run_filter({"net.dns1": GATEWAY},
+                                       feed="<html><body>Sign in to the Wi-Fi</body></html>\n")
+        self.assertEqual(result.returncode, 1)
+        self.assertIn("does not look right", result.stderr)
+        self.assertIsNone(conf)
+        self.assertEqual(self.touched, [])
 
     def test_ipv6_and_extra_dns_servers_go_inside_the_tunnel(self):
         # A router that hands out an IPv6 resolver by router advertisement, plus a public
