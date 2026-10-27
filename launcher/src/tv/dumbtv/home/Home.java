@@ -952,13 +952,32 @@ public final class Home extends Activity {
 
     /**
      * Fire OS answers the generic settings action with a stub that reopens Amazon's home, which
-     * Guard then replaces with ours. The TV settings entry point opens the real settings screen.
+     * Guard then replaces with ours. The TV settings entry point opens the real settings screen,
+     * except on Fire OS 6, where that page draws off the top of the screen: see FireSettings.
      */
     private void openSettings() {
         Intent tvSettings = new Intent(Intent.ACTION_MAIN)
                 .addCategory("android.intent.category.LEANBACK_SETTINGS");
+        if (FireSettings.applies(getPackageManager(), tvSettings)) {
+            settingsList();
+            return;
+        }
         boolean found = tvSettings.resolveActivity(getPackageManager()) != null;
         launch(found ? tvSettings : new Intent(Settings.ACTION_SETTINGS), null);
+    }
+
+    private void settingsList() {
+        List<Item> sections = FireSettings.sections(this);
+        CharSequence[] labels = new CharSequence[sections.size()];
+        for (int i = 0; i < labels.length; i++) labels[i] = sections.get(i).label;
+        new AlertDialog.Builder(this, Ui.DIALOG)
+                .setTitle("Settings")
+                .setItems(labels, (d, which) -> {
+                    Item s = sections.get(which);
+                    if (Guard.AMAZON.equals(s.id)) Guard.pause();
+                    launch(new Intent(s.intent), null);
+                })
+                .show();
     }
 
     private void open(Tile t) {
