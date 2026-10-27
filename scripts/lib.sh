@@ -52,12 +52,24 @@ cleanup_list() {
 # Prime Video and Alexa need some of those hosts, so the owner's answers decide.
 compose_blocklist() {
   {
-    grep -v '^#' "$1"
+    tr -d '\r' < "$1" | grep -v '^#'
     list_of "$DATA/blocklists/extra-hosts.txt"
     if [[ $ALEXA == 0 ]]; then list_of "$DATA/blocklists/alexa-hosts.txt"; fi
   } | awk 'NF' | if [[ $PRIME == 1 ]]; then
     grep -viE 'aiv-delivery|aiv-cdn|^device-messaging-na\.amazon\.com$' || true
   else cat; fi
+}
+
+# The downloaded tracker feed $1 is fit to push: at least FEED_MIN entries, every one a
+# domain name. A captive portal or CDN error page can arrive as a 200, and pushed as-is it
+# would leave the TV filtering little more than extra-hosts.txt without saying so.
+check_feed() {
+  local n bad
+  n=$(tr -d '\r' < "$1" | grep -v '^#' | awk 'NF' | wc -l | tr -d ' ')
+  bad=$(tr -d '\r' < "$1" | grep -v '^#' | awk 'NF' |
+    grep -vE '^(\*\.)?([A-Za-z0-9_]([A-Za-z0-9_-]*[A-Za-z0-9])?\.)+[A-Za-z][A-Za-z0-9-]*$' | head -1)
+  [[ -z $bad ]] || { note "the tracker list has a line that is not a domain: ${bad:0:60}"; return 1; }
+  [[ $n -ge ${FEED_MIN:-50} ]] || { note "the tracker list has only $n entries"; return 1; }
 }
 
 # Hosts verify.sh and the filter's self-test expect to be blocked.

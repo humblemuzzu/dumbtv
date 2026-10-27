@@ -73,6 +73,7 @@ if [[ $DRY_RUN == 1 ]]; then
   note "[dry-run] download, compose and push a blocklist"
 else
   fetch "$RAW" "$HAGEZI_URL" || die "could not download the tracker list"
+  check_feed "$RAW" || die "the tracker list from $HAGEZI_URL does not look right, so it was not pushed; try again later"
   compose_blocklist "$RAW" > "$LIST"
   note "$(grep -c . "$LIST") entries"
 fi

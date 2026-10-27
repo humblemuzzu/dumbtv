@@ -66,6 +66,18 @@ class ConfigureKeepTest(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertIn('REMOVE_EXTRA="in.startv.hotstar"', conf)
 
+    def test_only_package_names_reach_the_config(self):
+        # dumbtv.conf is sourced by every script: a quote breaks them all, and $(...) would run.
+        with tempfile.TemporaryDirectory() as tmp:
+            marker = Path(tmp) / "ran"
+            for bad in ('com.netflix.ninja"', f"com.x$(touch {marker})", "Netflix"):
+                with self.subTest(bad=bad):
+                    result, conf = self.configure("--remove", bad)
+                    self.assertNotEqual(result.returncode, 0)
+                    self.assertIn("is not a package name", result.stderr)
+                    self.assertIsNone(conf)
+            self.assertFalse(marker.exists())
+
     def test_a_package_the_tv_needs_cannot_be_removed(self):
         result, conf = self.configure("--remove", "com.amazon.tv.launcher")
         self.assertNotEqual(result.returncode, 0)

@@ -186,6 +186,13 @@ with only a header. `dnsfilter.sh` prevents both cases (it empties
 `previousAutoUpdateURL`, writes `FILTERHOSTS.TXT.DLD_CNT` and grants the storage
 permission the Fire OS 8 import needs). Run it again.
 
+### `dnsfilter.sh` says the tracker list does not look right
+
+The HaGeZi download came back as something other than a list of domains (a
+captive portal's sign-in page, a CDN error) or with fewer than 50 entries. The
+script stops before touching the TV, so the filter keeps its previous list. Run it
+again once the network is working; behind a sign-in page, sign in first.
+
 ### Edits to the block list did nothing
 
 The app rebuilds its index only at boot. Change `data/blocklists/extra-hosts.txt`

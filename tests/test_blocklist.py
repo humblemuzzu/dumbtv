@@ -24,6 +24,51 @@ def lib(script, **env):
     return result.stdout.split()
 
 
+def check_feed(text):
+    with tempfile.TemporaryDirectory() as tmp:
+        feed = Path(tmp) / "feed.txt"
+        feed.write_text(text)
+        return subprocess.run(
+            ["bash", "-c", 'source "$1"; check_feed "$2"', "bash",
+             str(ROOT / "scripts" / "lib.sh"), str(feed)],
+            capture_output=True, text=True,
+        )
+
+
+DOMAINS = "".join(f"t{i}.tracker-{i}.example.com\n" for i in range(60))
+
+
+class FeedTest(unittest.TestCase):
+    def test_a_normal_feed_passes(self):
+        result = check_feed("# Title: Amazon\n# Number of entries: 61\n\n" + DOMAINS + "*.wild.example.net\n")
+        self.assertEqual(result.returncode, 0, result.stderr)
+
+    def test_windows_line_endings_pass_and_are_not_pushed(self):
+        crlf = DOMAINS.replace("\n", "\r\n")
+        self.assertEqual(check_feed(crlf).returncode, 0)
+        with tempfile.TemporaryDirectory() as tmp:
+            feed = Path(tmp) / "feed.txt"
+            feed.write_text(crlf)
+            out = subprocess.run(
+                ["bash", "-c", 'source "$1"; compose_blocklist "$2"', "bash",
+                 str(ROOT / "scripts" / "lib.sh"), str(feed)],
+                env=dict(os.environ, PRIME="1", ALEXA="1"), capture_output=True, text=True).stdout
+        self.assertNotIn("\r", out)
+
+    def test_an_error_page_is_refused(self):
+        result = check_feed("<!DOCTYPE html>\n<html><body>Sign in to the Wi-Fi</body></html>\n" + DOMAINS)
+        self.assertEqual(result.returncode, 1)
+        self.assertIn("not a domain", result.stderr)
+
+    def test_a_cut_off_feed_is_refused(self):
+        result = check_feed("".join(f"t{i}.example.com\n" for i in range(10)))
+        self.assertEqual(result.returncode, 1)
+        self.assertIn("only 10 entries", result.stderr)
+
+    def test_an_empty_feed_is_refused(self):
+        self.assertEqual(check_feed("").returncode, 1)
+
+
 class BlocklistTest(unittest.TestCase):
     def test_defaults_keep_prime_and_alexa_working(self):
         hosts = lib("compose_blocklist", PRIME="1", ALEXA="1")
