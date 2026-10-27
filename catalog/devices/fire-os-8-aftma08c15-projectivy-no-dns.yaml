@@ -1,0 +1,36 @@
+id: fire-os-8-aftma08c15-projectivy-no-dns
+title: "Amazon AFTMA08C15"
+platform: fireos
+status: tested
+tested_on: "RS8185.3891N"
+models:
+  - "Fire TV Stick 4K Plus"
+adb:
+  port: 5555
+  transport: wifi
+developer_mode: >-
+  Not recorded: ADB debugging was already enabled before setup.
+ip_location: "Network screen, labeled Dirección IP; exact menu path not recorded."
+prompts:
+  - name: "USB debugging authorization"
+    blocks_automation: true
+    fix: "Owner selects Allow."
+  - name: "Projectivy channel-list access"
+    blocks_automation: true
+    fix: "Selected 'Denegar y no volver a preguntar'; verified denied with USER_FIXED."
+data:
+  packages: data/fireos/packages.txt
+  protected: data/fireos/protected.txt
+  never_disable: data/fireos/never-disable.txt
+  user_apps: data/fireos/user-apps.txt
+quirks:
+  - "If the TV screen goes to sleep, wake it before continuing ADB-controlled setup."
+  - "Keep com.amazon.firebat: it is Prime Video on this build."
+  - "Projectivy keeps its default visual layout. Its top Ajustes > Ajustes de Android menu opens native Fire TV Settings; the screen stayed open for five seconds and HOME returned to Projectivy. No Settings helper is needed."
+  - "After force-stopping Projectivy, restore its accessibility service before testing HOME or reboot. With the service bound, Projectivy opened automatically after reboot without input."
+  - "The pass initially disabled 57 listed components. After reboot, 44 packages remained disabled including stock YouTube; 14 listed packages re-enabled themselves."
+  - "DNSFILTER=0 and SYSTEM_DNS=0 leave the DNS app and VPN unconfigured. LAUNCHER=0 skips dumbtv home; Projectivy is configured separately."
+notes: "Fire OS 8.1.8.5 (Android 11, SDK 30, ARMv7). Projectivy 4.72, Stremio Android TV 1.10.4 and SmartTube 32.68 installed. Existing streaming apps stay enabled. DNS filtering is intentionally off. verify.sh exited 0 with DNS and built-in launcher checks skipped; separate runtime tests verified Projectivy HOME, startup after reboot, and native Settings. Playback and audio were not tested."
+verify:
+  blocked: data/blocklists/verify-blocked.txt
+  allowed: data/blocklists/verify-allowed.txt
