@@ -522,7 +522,24 @@ public final class Home extends Activity {
                         }
                     }
                 }
-                return super.focusSearch(focused, direction);
+                View next = super.focusSearch(focused, direction);
+                if (next == null && direction == View.FOCUS_UP && !chips.isEmpty()) {
+                    int[] at = new int[2];
+                    focused.getLocationOnScreen(at);
+                    int x = at[0] + focused.getWidth() / 2;
+                    TextView best = null;
+                    int bestGap = Integer.MAX_VALUE;
+                    for (TextView c : chips) {
+                        c.getLocationOnScreen(at);
+                        int gap = Math.abs(at[0] + c.getWidth() / 2 - x);
+                        if (gap < bestGap) {
+                            bestGap = gap;
+                            best = c;
+                        }
+                    }
+                    return best != null ? best : chips.get(0);
+                }
+                return next;
             }
         };
         column.setOrientation(LinearLayout.VERTICAL);
@@ -739,6 +756,7 @@ public final class Home extends Activity {
                     || "afterglow".equals(cfg.get(Config.TILE_STYLE)) && it.icon == null)) loadArt(it);
         }
         row.setVisible(!shown.isEmpty());
+        adjustAppRowPosition();
         if (shown.isEmpty()) {
             // Nothing is left to come back to: forget the tile that used to be here.
             if (Catalog.APPS.equals(row.kind)) lastAppId = null;
@@ -750,6 +768,36 @@ public final class Home extends Activity {
             target.getChildAt(0).requestFocus();
         } else if (getCurrentFocus() == null || !landed) {
             focusFirst();
+        }
+    }
+
+    private boolean isInputsHidden() {
+        if (inputs == null || !"on".equals(cfg.get(Config.INPUTS))) return true;
+        return inputs.title.getVisibility() != View.VISIBLE;
+    }
+
+    private int appRowShift() {
+        int titleH = apps.title.getHeight();
+        if (titleH <= 0) {
+            apps.title.measure(
+                    View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED),
+                    View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED));
+            titleH = apps.title.getMeasuredHeight();
+        }
+        if (titleH <= 0) titleH = dp(38);
+        int scrollH = cardSize()[1] + dp(46);
+        return titleH + scrollH;
+    }
+
+    private void adjustAppRowPosition() {
+        if (apps == null || apps.title == null) return;
+        ViewGroup.LayoutParams params = apps.title.getLayoutParams();
+        if (!(params instanceof LinearLayout.LayoutParams)) return;
+        LinearLayout.LayoutParams lp = (LinearLayout.LayoutParams) params;
+        int targetMargin = (!"grid".equals(cfg.get(Config.LAYOUT)) && isInputsHidden()) ? appRowShift() : 0;
+        if (lp.topMargin != targetMargin) {
+            lp.topMargin = targetMargin;
+            apps.title.setLayoutParams(lp);
         }
     }
 
