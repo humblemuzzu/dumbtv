@@ -1,0 +1,28 @@
+id: fireos-amazon-aftr-ps7699
+title: "Amazon Fire TV Cube, 2nd gen (AFTR)"
+contributors:
+  - sant1ago
+platform: fireos
+status: partial
+tested_on: "PS7699.4896N"
+models: []
+adb:
+  port: 5555
+  transport: wifi
+developer_mode: >-
+  Settings > My Fire TV > About > click the device name row 7 times, then My Fire TV > Developer Options > ADB debugging: ON
+ip_location: "Settings > My Fire TV > About > Network"
+prompts:
+  - name: "Allow USB debugging?"
+    blocks_automation: true
+    fix: "On the TV, tick Always allow from this computer and press Allow"
+data:
+  packages: data/fireos/packages.txt
+  protected: data/fireos/protected.txt
+  never_disable: data/fireos/never-disable.txt
+  user_apps: data/fireos/user-apps.txt
+quirks: []
+notes: "Fire TV Cube 2nd gen (AFTR) on Fire OS 7.6.9.9: debloat + lockdown + launcher (dumbtv home 1.6), DNS filter skipped by choice; verify.sh all checks passed"
+verify:
+  blocked: data/blocklists/verify-blocked.txt
+  allowed: data/blocklists/verify-allowed.txt
