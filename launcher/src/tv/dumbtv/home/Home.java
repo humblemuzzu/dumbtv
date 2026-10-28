@@ -69,6 +69,7 @@ public final class Home extends Activity {
     private ImageView wall;
     private View shade;
     private View tint;
+    private LinearLayout head;
     private TextView clock, date;
     private Meter meter;
     private Row apps, inputs;
@@ -548,7 +549,7 @@ public final class Home extends Activity {
         column.setPadding(0, dp(40), 0, dp(32));
         scroll.addView(column, new FrameLayout.LayoutParams(MATCH, WRAP));
 
-        LinearLayout head = new LinearLayout(this);
+        head = new LinearLayout(this);
         head.setClipChildren(false);
         head.setClipToPadding(false);
         head.setGravity(Gravity.TOP);
@@ -786,7 +787,19 @@ public final class Home extends Activity {
         }
         if (titleH <= 0) titleH = dp(38);
         int scrollH = cardSize()[1] + dp(46);
-        return titleH + scrollH;
+        int desired = Math.round((titleH + scrollH) * 0.70f);
+
+        int screenH = getResources().getDisplayMetrics().heightPixels;
+        int headH = head != null && head.getHeight() > 0 ? head.getHeight() : 0;
+        if (headH <= 0 && head != null) {
+            head.measure(
+                    View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED),
+                    View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED));
+            headH = head.getMeasuredHeight();
+        }
+        if (headH <= 0) headH = dp(96);
+        int maxShift = Math.max(0, screenH - dp(40) - headH - titleH - scrollH - dp(32));
+        return Math.min(desired, maxShift);
     }
 
     private void adjustAppRowPosition() {
