@@ -497,16 +497,20 @@ public final class Home extends Activity {
                         if (edge) return focused;
                     }
 
+                    // Down goes to the tile below; only the last line can be shorter, and a
+                    // tile with nothing under it takes the nearest tile of that line.
                     // Down from the last line of the apps row lands on the input that was
                     // focused last, not on whichever one happens to be closest.
                     if (direction == View.FOCUS_DOWN
                             && Catalog.APPS.equals(tile.kind)) {
-                        boolean hasBelow = grid && belowInGrid(parent, tile);
-                        if (!hasBelow) {
+                        int target = grid ? belowInGrid(parent, tile) : -1;
+                        if (target < 0) {
                             View remembered = rememberedTile(Catalog.INPUTS);
                             if (remembered != null) return remembered;
                             View below = nearest(inputs.tiles(), focused);
                             if (below != null) return below;
+                        } else {
+                            return parent.getChildAt(target);
                         }
                     }
                     // Up from the first line of the inputs row goes back to the app that was
@@ -559,10 +563,16 @@ public final class Home extends Activity {
         return root;
     }
 
-    /** True when the grid has another line below {@code tile}. */
-    private static boolean belowInGrid(ViewGroup parent, Tile tile) {
+    /**
+     * The index of the tile below {@code tile}, or -1 when it is in the last line. Only the
+     * last line of a grid can be shorter than the others: a tile with no tile directly under
+     * it takes the last tile of the line below, the nearest one in that line.
+     */
+    private static int belowInGrid(ViewGroup parent, Tile tile) {
         int cols = ((Grid) parent).columns();
-        return parent.indexOfChild(tile) + cols < parent.getChildCount();
+        int index = parent.indexOfChild(tile), count = parent.getChildCount();
+        if (index / cols >= (count - 1) / cols) return -1;
+        return Math.min(index + cols, count - 1);
     }
 
     /** True when the grid has another line above {@code tile}. */
