@@ -2,6 +2,7 @@ id: fireos-insignia-aftdct31
 title: "Insignia 50\" F30 Fire TV (NS-50F301NA24, AFTDCT31)"
 contributors:
   - timcunningham-sv
+  - twwebb3
 platform: fireos
 status: tested
 tested_on: "PS7717.5741N"
@@ -12,7 +13,7 @@ adb:
   port: 5555
   transport: wifi
 developer_mode: >-
-  Settings > Device & Software > About > click the device name row 7x. On this unit it answered 'you are already a developer', so no Developer Options row was discoverable from that screen; the ADB debugging toggle had to be found separately and switched on by hand. Until it is on, port 5555 ACTIVELY REFUSES - developer mode alone does not start the daemon.
+  Settings > Device & Software > About > click the device name row 7x. On this unit it answered 'you are already a developer', so no Developer Options row was discoverable from that screen; the ADB debugging toggle had to be found separately and switched on by hand. Until it is on, port 5555 ACTIVELY REFUSES - developer mode alone does not start the daemon. On a second unit (same build) the presses had to go on the About row itself (SELECT 7x), not the device name; Developer Options then appeared normally.
 ip_location: "Settings > Network > the connected network > SELECT for details. Note the details screen also lists the gateway; the IP Address row is the one needed. This unit was on wired Ethernet, not Wi-Fi."
 prompts:
   - name: "USB debugging authorization"
@@ -25,7 +26,7 @@ data:
   user_apps: data/fireos/user-apps.txt
 quirks:
   - "Windows/Git Bash: adb push rewrites the Android destination into a Windows path (observed: C:/Program Files/Git/sdcard/Android/data/...), so dnsfilter.sh dies with 'remote secure_mkdirs failed'. It prints '1 file pushed' immediately before the error. Fix: run adb through a wrapper exporting MSYS2_ARG_CONV_EXCL='/sdcard;/data;/storage;/system' - excluding every path instead breaks curl's output file"
-  - "dnsfilter.sh force-stops the filter before pushing, and Android does not deliver BOOT_COMPLETED to a force-stopped app, so after the script's own reboot the filter never starts and the self-test reports 'the filter is not in the DNS path' on a correct install. Opening it once (monkey -p dnsfilter.android -c android.intent.category.LAUNCHER 1) clears the stopped flag; always_on_vpn_app then persists across reboots. The 'open it once' branch is gated to SDK<28 but is needed on SDK 28 too"
+  - "dnsfilter.sh force-stops the filter before pushing, and Android does not deliver BOOT_COMPLETED to a force-stopped app, so after the script's own reboot the filter never starts and the self-test reports 'the filter is not in the DNS path' on a correct install. Opening it once (monkey -p dnsfilter.android -c android.intent.category.LAUNCHER 1) clears the stopped flag; always_on_vpn_app then persists across reboots. The 'open it once' branch is gated to SDK<28 but is needed on SDK 28 too. On a second unit opening it alone was not enough: blocked hosts still resolved to public addresses until one more reboot, after which they answered 127.0.0.1 and verify.sh passed"
   - "com.amazon.firebat IS Prime Video here, as on Fire OS 6: it owns com.amazon.pyrocore.IgnitionActivity, the tile the user presses. With it disabled com.amazon.avod stays installed and enabled, so nothing looks removed, but starting avod's own activity opens nothing, with no crash and no app log. It is on never-disable.txt since this report (PR #52)"
   - "com.amazon.avod and com.tubitv.ott declare CATEGORY_LAUNCHER but no LEANBACK_LAUNCHER, so dumbtv home hides them and they never appear in Options. Do NOT work around this by adding avod to apps.show: its tile opens nothing and the real tile belongs to com.amazon.firebat, which is leanback and appears on its own once firebat is left enabled. Tubi does need an apps.show entry"
   - "com.android.nfc reports SUSPECT: 'Security exception: Shell cannot change component state'. Harmless - it stays enabled"
