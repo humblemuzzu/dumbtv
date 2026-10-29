@@ -1,0 +1,48 @@
+id: fireos-amazon-aftna67200
+title: "Amazon Fire TV 4-Series television (AFTNA67200), Fire OS 8.1.8.5"
+contributors:
+  - Chartmann96
+platform: fireos
+status: partial
+tested_on: "RS8185.3885N"
+models:
+  - "AFTNA67200 (codename shinagawaeu; Amazon Fire TV 4-Series 55\" 4K55N402D, EU, Amlogic)"
+adb:
+  port: 5555
+  transport: wifi
+developer_mode: >-
+  Enabled by the owner before the session; the menu path was not re-verified here.
+ip_location: "The owner supplied the address; the menu path was not re-verified"
+prompts:
+  - name: "USB debugging authorization"
+    blocks_automation: true
+    fix: "human presses Allow on the TV and ticks Always allow"
+data:
+  packages: data/fireos/packages.txt
+  protected: data/fireos/protected.txt
+  never_disable: data/fireos/never-disable.txt
+  user_apps: data/fireos/user-apps.txt
+launcher:
+  mechanism: accessibility_service
+  package: tv.dumbtv.home
+  reason: "Fire OS 8 protects Amazon's launcher; the Guard accessibility service bound at once"
+  fallback: ""
+  quirk: "Amazon's Live TV cannot be opened from dumbtv home, see known_limits"
+quirks:
+  - "Amlogic, not MediaTek: HDMI 1-4 and the tuner are com.droidlogic.tvinput (Hdmi1-4InputService/HW5-HW8, ADTVInputService/HW16). None of the MediaTek packages in never-disable.txt exist here; the droidlogic, amlogic and vewd packages were added to it"
+  - "EU set with HbbTV: com.vewd.core.* (cable, terrestrial and satellite HbbTV inputs, Vewd TV Application with its own EPG), CI+ (com.amazon.tv.conditionalaccess), Freeview Play signing (uk.co.freeview.signaidl); all on never-disable.txt"
+  - "com.amazon.hedwig registers a TV input here (HedwigTvInputService). On this set it was left enabled as a precaution, so whether disabling it is safe on Amlogic is untested (on AFTOLCBC82 it was)"
+  - "debloat.sh: 33 entries of packages.txt disabled (hedwig left on, see above), absent: shoptv.firetv.client, tv.fw.metrics, tigris, android.nfc. protected 0, suspect 0. Absent from protected.txt: device.rdmapplication; from alexa.txt: vizzini.ftvcds, wha.mediabrowserservice, whasettings"
+  - "com.amazon.neo.minerva.logcat keeps running after its disable; the residual-process pass handled it"
+  - "com.amazon.comms.starktachyon was already disabled out of the box"
+  - "After debloat, HDMI, the tuner, HbbTV, Live TV, the remote and Alexa were confirmed working by the owner"
+  - "Vewd shows two launcher tiles nobody needs (Vewd FVP Player, Vewd OpApp Example); hide them in dumbtv home (hold OK > Hide), do not disable them"
+  - "Vewd TV Application (com.vewd.core.tvapp) has a TV and an EPG activity; dumbtv home shows one tile per package, here the EPG. Its channel list is its own raw scan numbering (starts around 800, unsorted); Amazon's Live TV keeps the sorted list"
+  - "A VIEW intent on content://android.media.tv/channel offers a chooser between Amazon Live TV and Vewd TV Application"
+known_limits:
+  - "Amazon's Live TV cannot be started from a sideloaded launcher: content://android.media.tv/channel opens only LiveTvSettings, the launcher's own intent (livetv://tuneByProvider/?provider=local.tifid&providerId=N to .TvChannelsPlayerActivity) needs com.amazon.tv.livetv.permission.TUNE_CHANNEL (signature|privileged), and com.amazon.tv.action.NAVIGATE_TO_INPUTS lands on Amazon's home, which the Guard replaces at once. The remote's Guide button opens Live TV directly and is the practical way in; Alexa and Amazon's home (Live tab) work too"
+  - "The shell cannot read the TV provider's channels (content query on content://android.media.tv/channel returns nothing)"
+notes: "Fire OS 8.1.8.5 on an EU 4-Series. debloat.sh and the dumbtv home takeover (1.6) ran and work; the DNS filter was deliberately not installed yet, so verify.sh has not been run and status stays partial."
+verify:
+  blocked: data/blocklists/verify-blocked.txt
+  allowed: data/blocklists/verify-allowed.txt
