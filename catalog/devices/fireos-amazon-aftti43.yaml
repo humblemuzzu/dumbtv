@@ -1,0 +1,42 @@
+id: fireos-amazon-aftti43
+title: "Amazon Fire TV 4-Series (2021), 43-inch (AFTTI43)"
+contributors:
+  - ScottDavidCA
+platform: fireos
+status: tested
+tested_on: "PS7717.5741N"
+models:
+  - "AFTTI43 (Amazon Fire TV 4-Series, 2021, sold in 43/50/55-inch)"
+adb:
+  port: 5555
+  transport: wifi
+developer_mode: >-
+  not recorded this session: ADB debugging was already on and this machine was already authorized. The documented path is Settings > My Fire TV > About > click the device name 7 times, then My Fire TV > Developer Options > ADB debugging
+ip_location: "Settings > My Fire TV > About > Network (not recorded this session)"
+prompts:
+  - name: "USB debugging authorization"
+    blocks_automation: true
+    fix: "a human presses Allow on the TV and ticks Always allow from this computer"
+data:
+  packages: data/fireos/packages.txt
+  protected: data/fireos/protected.txt
+  never_disable: data/fireos/never-disable.txt
+  user_apps: data/fireos/user-apps.txt
+launcher:
+  mechanism: accessibility_service
+  package: tv.dumbtv.home
+  reason: "what launcher.sh used on this build: the Guard accessibility service plus alarm_manager_constants min_futurity=0"
+  fallback: "Amazon's launcher stays installed: Options > Open Amazon's home screen, or hold HOME for the Fire OS menu"
+  quirk: "HOME landed on tv.dumbtv.home/.Home straight after launcher.sh, with no flash of Amazon's home. verify.sh: home bound, home-key ok, alarm min_futurity=0."
+quirks:
+  - "Nothing in packages.txt or alexa.txt was refused as protected: 52 disabled, 1 already system-disabled (com.android.nfc, enabled=2), 2 absent (com.amazon.tigris, com.amazon.smarthomemapviewapp), 0 suspect, 0 uninstalled."
+  - "The DNS filter came up on the first reboot with no manual step: tun2 owned by personalDNSfilter, 405 entries live. The ACTIVATE_VPN app-op reset reported on AFTKA did not happen here."
+  - "preflight.sh prints 'home screen <last foreground app>': it said com.amazon.firetv.youtube while HOME was Amazon's launcher. Read HOME with cmd package resolve-activity -a android.intent.action.MAIN -c android.intent.category.HOME."
+  - "Three IPTV players (com.nst.iptvsmarterstvbox, ar.tvplayer.tv, com.ibopro.smsdigitv) plus Plex and Jellyfin keep launching and resolving through the Amazon-only filter; a stock YouTube install is untouched."
+  - "ALEXA=0 disables com.amazon.aca and the remote's voice button stops working; the keys and pairing are unaffected."
+  - "All four HDMI inputs (com.mediatek.tvinput HDMIInputService HW4 to HW7) appear as the INPUTS row on dumbtv home, with HDMI-CEC left on."
+  - "Disabling ads and telemetry freed about 200 MB: MemAvailable went from roughly 450 MB to 650 MB with the launcher running."
+notes: "Amazon Fire TV 4-Series (2021), 43-inch, Fire OS 7.7.1.7 / Android 9: debloat, lockdown, the DNS filter and dumbtv home all worked on the first pass and verify.sh exited 0."
+verify:
+  blocked: data/blocklists/verify-blocked.txt
+  allowed: data/blocklists/verify-allowed.txt
