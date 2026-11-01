@@ -231,6 +231,14 @@ on `never-disable.txt` now; a TV debloated by an older version can get it back
 with `./scripts/restore.sh` or `adb shell pm enable --user 0 com.amazon.firebat`.
 Also check that `PRIME=1` is set in `dumbtv.conf`.
 
+### The Fire TV phone app will not connect on Fire OS 6
+
+The app finds the TV but never pairs, and no PIN appears on screen. logcat shows
+`ActivityNotFoundException ... com.amazon.storm.lightning.tutorial.authentication.SHOW`.
+Despite its name, `com.amazon.storm.lightning.tutorial` holds the PIN screen the app
+pairs with. It is on Fire OS 6's `never-disable.txt` now; a TV debloated by an older
+version gets it back with `adb shell pm enable --user 0 com.amazon.storm.lightning.tutorial`.
+
 ### A package I disabled is still running
 
 Persistent system apps keep their process after `pm disable-user`, and
