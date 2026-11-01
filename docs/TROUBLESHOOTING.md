@@ -231,6 +231,16 @@ on `never-disable.txt` now; a TV debloated by an older version can get it back
 with `./scripts/restore.sh` or `adb shell pm enable --user 0 com.amazon.firebat`.
 Also check that `PRIME=1` is set in `dumbtv.conf`.
 
+### Prime Video says "Internet connection error" on Fire OS 6
+
+Browsing works but nothing plays, and logcat shows `DATA_CONNECTION_UNAVAILABLE_ERROR`.
+Android 7.1 marks a VPN as having internet only when it carries all traffic, and the
+filter carries DNS alone, so Prime decides there is no connection. With `PRIME=1`,
+`dnsfilter.sh` keeps `com.amazon.firebat` and `com.amazon.avod` outside the tunnel on
+Fire OS 6; their lookups go to the router instead. Run `./scripts/dnsfilter.sh -y` again
+to apply it on a TV set up with an older version. Another app with the same symptom
+can be added to `androidAppWhiteList` the same way.
+
 ### A package I disabled is still running
 
 Persistent system apps keep their process after `pm disable-user`, and
