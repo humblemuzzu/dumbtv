@@ -57,6 +57,7 @@ public final class Options extends Activity {
         list.addView(action("Apps on home screen", () -> pick(Catalog.APPS)));
         list.addView(action("Inputs on home screen", () -> pick(Catalog.INPUTS)));
         list.addView(action("Reset order, names and hidden tiles", this::reset));
+        list.addView(action("Export settings for adb pull", this::export));
         list.addView(action("Open Amazon's home screen", () -> {
             Guard.amazon(this);
             finish();
@@ -70,7 +71,7 @@ public final class Options extends Activity {
                 + "\nSeveral wallpapers: put them in " + Config.WALLPAPERS + "/ with any names, and pick a rotation"
                 + "\nThen pick Background › Image file or Adaptive wallpaper tint. No permission is needed"
                 + "\nOn Fire OS 8 adb cannot reach that folder; use /sdcard/Android/media/"
-                + getPackageName() + "/ instead"
+                + getPackageName() + "/ instead (Export settings puts a copy of the file there)"
                 + "\nAdaptive wallpaper tint shows graphite until you add a wallpaper"
                 + "\nNo internet permission. No tracking, no ads, no accounts.");
         list.addView(about);
@@ -210,6 +211,14 @@ public final class Options extends Activity {
                 .setPositiveButton("Reset", (d, w) -> cfg.removePrefix("name.", "apps.", "inputs."))
                 .setNegativeButton("Cancel", null)
                 .show();
+    }
+
+    /** Copies home.conf into the media folder, where adb can read it on Fire OS 8. */
+    private void export() {
+        String path = cfg.exportPath();
+        boolean ok = cfg.export();
+        Toast.makeText(this, ok ? "Saved to " + path : "Could not write " + path,
+                Toast.LENGTH_LONG).show();
     }
 
     private int dp(float v) {

@@ -32,7 +32,8 @@ import java.util.TimeZone;
  * All settings live in one plain {@code key=value} file in the app's external files dir,
  * so {@code adb pull}/{@code adb push} is the whole export/import story and a hand edit is
  * picked up on the next return to the home screen. Where adb cannot reach that folder
- * (Fire OS 8), the same file can be pushed into the app's media folder instead.
+ * (Fire OS 8), the same file can be pushed into the app's media folder instead. Options › Export
+ * settings writes a copy of home.conf there, for adb pull.
  */
 final class Config {
     static final String FILE = "home.conf";
@@ -162,6 +163,7 @@ final class Config {
         values.clear();
         if (file.isFile()) read();
         if (mergeShared()) save();
+        signature = signature();
         version++;
     }
 
@@ -226,6 +228,30 @@ final class Config {
         signature = signature();
     }
 
+    /** Where {@link #export()} puts the copy, or null if there is no media folder. */
+    String exportPath() {
+        return sharedFile == null ? null : sharedFile.getPath();
+    }
+
+    /**
+     * Writes a copy of home.conf into the media folder, the one place adb can read on Fire OS 8
+     * ({@code adb pull /sdcard/Android/media/<pkg>/home.conf}). The copy is also recorded as
+     * "applied", so mergeShared() does not mistake our own copy for a fresh push.
+     *
+     * @return true if the copy was written
+     */
+    boolean export() {
+        if (sharedFile == null) return false;
+        if (!shared.isDirectory() && !shared.mkdirs()) {
+            Log.w("dumbtv", "could not create " + shared);
+            return false;
+        }
+        writeSettings(sharedFile, values);
+        writeSettings(appliedFile, values);
+        signature = signature();
+        return sharedFile.isFile() && parse(sharedFile).equals(values);
+    }
+
     private static void writeSettings(File target, Map<String, String> settings) {
         File tmp = new File(target.getParentFile(), target.getName() + ".tmp");
         try (Writer w = new OutputStreamWriter(new FileOutputStream(tmp), StandardCharsets.UTF_8)) {
@@ -237,7 +263,20 @@ final class Config {
             Log.w("dumbtv", "could not write " + tmp, e);
             return;
         }
-        if (!tmp.renameTo(target)) Log.w("dumbtv", "could not replace " + target);
+        if (tmp.renameTo(target)) return;
+        // A file pushed by adb may refuse the rename; remove it and try again, else overwrite in place.
+        target.delete();
+        if (tmp.renameTo(target)) return;
+        try (InputStream in = new FileInputStream(tmp);
+             FileOutputStream out = new FileOutputStream(target)) {
+            byte[] buf = new byte[4096];
+            int n;
+            while ((n = in.read(buf)) > 0) out.write(buf, 0, n);
+        } catch (IOException e) {
+            Log.w("dumbtv", "could not replace " + target, e);
+        } finally {
+            tmp.delete();
+        }
     }
 
     String get(String key, String fallback) {
