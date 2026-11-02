@@ -39,7 +39,7 @@ Undo: `./launcher/install.sh --undo` gives HOME back to Amazon's launcher.
 | Remote | Does |
 |---|---|
 | OK | open the app, or switch to the input |
-| Hold OK, or ☰ Menu | Move, Rename, Hide, App info |
+| Hold OK, or ☰ Menu | Move, Rename, Icon (with an icon pack chosen), Hide, App info |
 | With Child lock on: hold ☰ Menu for 3 s | Options |
 | Move mode | ◀ ▶ moves the tile, ▲ ▼ moves it a line in the grid, any other key drops it |
 | Up from the top row | Options and Settings |
@@ -73,9 +73,10 @@ you open an app. On Fire OS 7 and 8 the Settings button opens Amazon's settings 
 | Image dim, wallpaper rotation | for image backgrounds |
 | Child lock | off, on: hides Options and Settings and turns off Hold OK and ☰ Menu on tiles, so the home screen only opens apps and inputs (see below) |
 | App tile style | original (default), Afterglow: uppercase names inside the tile, a brand-color fade into black, a grayscale installed app icon in the corner, and a thin focus border |
+| Icon pack | off, or an installed icon pack; reads "None installed" until one is ([Icon packs](#icon-packs)) |
 
 Below them: Next wallpaper, which apps and inputs appear on the home screen, a
-reset for order, names and hidden tiles, and **Open Amazon's home screen**. Apps
+reset for order, names, picked icons and hidden tiles, and **Open Amazon's home screen**. Apps
 without a TV banner, like the Appstore, start hidden; tick them to add them.
 
 **Afterglow** changes app tiles only, in both rows and grid layouts. Select it in
@@ -122,6 +123,48 @@ Settings button where it has one, still work. A PIN on dumbtv's buttons would le
 those doors open just the same. Fire OS has its own Parental Controls
 under Settings › Preferences, which use your Amazon PIN; dumbtv leaves them alone.
 
+## Icon packs
+
+dumbtv home can show your apps with the pictures of an installed icon pack: TV icon
+packs in the ADW/Nova format, like those made for launchers such as Projectivy.
+Nothing changes until you install one; dumbtv itself ships and downloads no icons.
+
+1. Install the pack, for example with Downloader or `adb install`.
+2. Pick it under **Options › Icon pack**. Until a pack is installed, the row reads
+   "None installed".
+
+Each app then gets the pack's picture, found by the app's activity, then its package,
+then a picture named after the app (`YouTube` → `youtube`). That last step finds icons
+in TV packs mapped for Google TV package names, which Fire TV apps do not share. Apps
+the pack has nothing for keep their own art. The pack's banners fill the tile.
+
+**One app's icon.** Hold OK (or press ☰ Menu) on its tile and pick **Icon**. The picker
+shows every icon of the chosen pack, those named like the app first; type in the filter
+to narrow it down. **Automatic** goes back to the pack's choice; **App's own picture**
+keeps the app's art. The choice is saved in `home.conf` as
+`icon.<package>=<pack>/<icon>`.
+
+**Switching packs.** A picked icon belongs to its pack and only counts while that pack
+is chosen. Pick another pack, or Off, and every tile follows it; nothing needs fixing by
+hand. Go back to the first pack and its picked icons return. If the chosen pack is
+uninstalled, the tiles show their own art and the row shows Off until it is installed
+again.
+
+**What a pack is.** An app that answers a launcher's theme request
+(`org.adw.launcher.THEMES` or `com.novalauncher.THEME`) and carries an appfilter, the
+list that maps apps to its pictures. Both are needed: themes and wallpaper apps answer
+the request too, but have no appfilter.
+
+**Nothing of the pack runs.** dumbtv home only reads its pictures, and still has no
+internet permission. You never need to open the pack's own app, and you can switch it
+off; its pictures still work:
+
+```sh
+adb shell pm disable-user --user 0 <pack package>
+```
+
+The icons are the pack author's, under the pack's licence.
+
 ## The settings file
 
 Everything lives in one text file on the TV:
@@ -157,6 +200,9 @@ dim=40
 rotate=off
 # off on
 lock=off
+# off, or an installed icon pack's package
+icon_pack=off
+icon.com.stremio.one=com.example.iconpack/stremio
 apps.order=com.amazon.firetv.youtube,org.videolan.vlc
 apps.hide=org.videolan.vlc
 apps.show=com.amazon.venezia
@@ -298,6 +344,9 @@ Delete both to stop.
 | `src/.../Input.java` | the built-in input screen (`TvView`) |
 | `src/.../Config.java` | reads and writes `home.conf` |
 | `src/.../Options.java` | the settings screen |
+| `src/.../IconPack.java` | finds installed icon packs and reads their pictures |
+| `src/.../IconPicker.java` | the screen that picks one app's icon |
+| `src/.../IconMatch.java` | the icon pack text rules, kept free of Android for the host test |
 | `src/.../Ui.java` | shared colours, text and sizes |
 | `src/.../Guard.java` | the Fire OS 7 and 8 HOME takeover |
 | `src/.../Keeper.java` | the Fire OS 6 HOME takeover |
@@ -309,6 +358,7 @@ Delete both to stop.
 | `release-check.sh` | checks that the version, the built APK and the GitHub release agree |
 | `tests/FocusColorTest.java` | host-side test for `FocusColor`, run by CI |
 | `tests/RecentTest.java` | host-side test for the Recently used order, run by CI |
+| `tests/IconMatchTest.java` | host-side test for the icon pack text rules, run by CI |
 
 ## Releasing
 

@@ -142,7 +142,8 @@ and what you lose without it.
 
 A home screen that shows your apps and your HDMI inputs, and nothing else. Accent
 colours, tile sizes, rows or a grid, wallpapers, adaptive backgrounds, renaming and
-hiding, all from the remote. HOME lands on it in a fraction of a second.
+hiding, and the icons of an icon pack you install, all from the remote. HOME lands on
+it in a fraction of a second.
 
 It is plain Java with no libraries and no internet permission, so it cannot send
 anything anywhere. On Fire OS 7 and 8 it asks for no permissions at all. It works
@@ -153,8 +154,8 @@ adb connect <tv-ip>:5555
 ./launcher/install.sh
 ```
 
-[launcher/README.md](launcher/README.md) covers the settings, wallpapers and how
-it takes over the HOME button.
+[launcher/README.md](launcher/README.md) covers the settings, wallpapers, icon
+packs and how it takes over the HOME button.
 
 ## Tested on
 

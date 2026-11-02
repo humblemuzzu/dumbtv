@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
+import android.graphics.drawable.Drawable;
 import android.media.tv.TvContract;
 import android.media.tv.TvInputInfo;
 import android.media.tv.TvInputManager;
@@ -50,11 +51,23 @@ final class Catalog {
         }
     }
 
-    /** Loads a banner, plus an icon for Afterglow or when there is no banner. Slow: off the UI thread. */
-    static void art(PackageManager pm, Item it, boolean cornerIcon) {
+    /**
+     * Loads a banner, plus an icon for Afterglow or when there is no banner. A {@code replacement}
+     * (an icon picked for the app, or the icon pack's match) is used instead of the app's own
+     * art: a wide one fills the tile like a banner, any other is drawn as the icon above the
+     * name. Slow: off the UI thread.
+     */
+    static void art(PackageManager pm, Item it, boolean cornerIcon, Drawable replacement) {
         if (it.info == null) return;
-        it.banner = it.info.loadBanner(pm);
-        if (it.banner == null || cornerIcon) it.icon = it.info.loadIcon(pm);
+        boolean wide = replacement != null && isWide(replacement);
+        it.banner = wide ? replacement : replacement == null ? it.info.loadBanner(pm) : null;
+        it.icon = replacement != null && !wide ? replacement
+                : it.banner == null || cornerIcon ? it.info.loadIcon(pm) : null;
+    }
+
+    /** TV banners are 16:9; anything clearly wider than tall is drawn across the whole tile. */
+    static boolean isWide(Drawable d) {
+        return d.getIntrinsicWidth() * 3 > d.getIntrinsicHeight() * 4;
     }
 
     /**
