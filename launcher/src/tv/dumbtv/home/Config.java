@@ -105,7 +105,10 @@ final class Config {
 
     static final Choice TILE_STYLE = new Choice("tile_style", "App tile style", "original",
             new String[] {"original", "afterglow"}, new String[] {"Original", "Afterglow"});
-    static final Choice[] CHOICES = {ACCENT, TILES, LAYOUT, ORDER, LABELS, CLOCK, MEMORY, INPUTS, SWITCH, BACKGROUND, DIM, ROTATE, LOCK, TILE_STYLE};
+    /** The banner of hand-picked titles from {@link Library}; hidden anyway while it has none. */
+    static final Choice LIBRARY = new Choice("library", "Library banner", "on",
+            new String[] {"on", "off"}, new String[] {"Shown", "Hidden"});
+    static final Choice[] CHOICES = {ACCENT, TILES, LAYOUT, ORDER, LABELS, CLOCK, MEMORY, INPUTS, SWITCH, BACKGROUND, DIM, ROTATE, LOCK, TILE_STYLE, LIBRARY};
 
     /** Folder of wallpapers, next to home.conf, that Background › Image file rotates through. */
     static final String WALLPAPERS = "wallpapers";
@@ -364,6 +367,17 @@ final class Config {
             }
         });
         return out;
+    }
+
+    /** The library folder that holds a library.conf: the app's own first, then the media one. */
+    File libraryDir() {
+        File own = new File(dir, Library.DIR);
+        if (new File(own, Library.FILE).isFile()) return own;
+        if (shared != null) {
+            File media = new File(shared, Library.DIR);
+            if (new File(media, Library.FILE).isFile()) return media;
+        }
+        return null;
     }
 
     private static void addPictures(File folder, List<File> out) {

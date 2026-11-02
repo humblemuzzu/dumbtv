@@ -72,6 +72,7 @@ public final class Options extends Activity {
                 + "\nOn Fire OS 8 adb cannot reach that folder; use /sdcard/Android/media/"
                 + getPackageName() + "/ instead"
                 + "\nAdaptive wallpaper tint shows graphite until you add a wallpaper"
+                + "\nLibrary banner: put pictures and " + Library.FILE + " in " + Library.DIR + "/ in that folder"
                 + "\nNo internet permission. No tracking, no ads, no accounts.");
         list.addView(about);
 

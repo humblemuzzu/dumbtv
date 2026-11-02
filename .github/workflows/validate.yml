@@ -34,7 +34,8 @@ jobs:
             launcher/tests/HomeRetryTest.java
           java -cp /tmp/host tv.dumbtv.home.HomeRetryTest
           javac -d /tmp/host -cp "$jar" launcher/src/tv/dumbtv/home/FocusColor.java \
-            launcher/src/tv/dumbtv/home/Config.java launcher/tests/FocusColorTest.java
+            launcher/src/tv/dumbtv/home/Config.java launcher/src/tv/dumbtv/home/Library.java \
+            launcher/src/tv/dumbtv/home/Recent.java launcher/tests/FocusColorTest.java
           java -cp "/tmp/host:$jar" tv.dumbtv.home.FocusColorTest
           javac -d /tmp/host -cp "/tmp/host:$jar" launcher/src/tv/dumbtv/home/Recent.java \
             launcher/tests/RecentTest.java
@@ -42,6 +43,8 @@ jobs:
           javac -d /tmp/host -cp "/tmp/host:$jar" launcher/src/tv/dumbtv/home/Ui.java \
             launcher/src/tv/dumbtv/home/Meter.java launcher/tests/MeterTest.java
           java -cp "/tmp/host:$jar" tv.dumbtv.home.MeterTest
+          javac -d /tmp/host -cp "/tmp/host:$jar" launcher/tests/LibraryTest.java
+          java -cp "/tmp/host:$jar" tv.dumbtv.home.LibraryTest
       - name: the release apk installs on fire os 6
         run: |
           min=$("$ANDROID_HOME/build-tools/34.0.0/aapt2" dump badging launcher/build/dumbtv-home.apk | sed -nE "s/^(minSdkVersion|sdkVersion):'([0-9]+)'.*/\2/p")

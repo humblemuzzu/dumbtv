@@ -68,6 +68,7 @@ public final class Home extends Activity {
     private String lastAppId;
     private String lastInputId;
     private FrameLayout root;
+    private LinearLayout column;
     private ImageView wall;
     private View shade;
     private View tint;
@@ -75,6 +76,8 @@ public final class Home extends Activity {
     private TextView clock, date;
     private Meter meter;
     private Row apps, inputs;
+    private Hero hero;
+    private int libraryGeneration;
     private Map<String, Long> recent = new HashMap<>();
     private Tile moving;
     private String wallKey;
@@ -234,6 +237,8 @@ public final class Home extends Activity {
         if (cfg.version() != applied) apply();
         else background();
         refreshRecent();
+        loadLibrary();
+        hero.start();
         IntentFilter f = new IntentFilter(Intent.ACTION_TIME_TICK);
         f.addAction(Intent.ACTION_TIME_CHANGED);
         f.addAction(Intent.ACTION_TIMEZONE_CHANGED);
@@ -250,6 +255,7 @@ public final class Home extends Activity {
     protected void onPause() {
         super.onPause();
         resumed = false;
+        hero.stop();
         stopColorAnimation();
         targetColor = 0;
         unregisterReceiver(time);
@@ -472,7 +478,16 @@ public final class Home extends Activity {
         LinearLayout column = new LinearLayout(this) {
             @Override
             public View focusSearch(View focused, int direction) {
-                if (direction == View.FOCUS_DOWN && chips.contains(focused)) {
+                // The library banner sits between the chips and the rows; Down from it
+                // goes where Down from the chips goes without it.
+                if (focused == hero && direction == View.FOCUS_UP) {
+                    for (TextView c : chips) if (c.getVisibility() == View.VISIBLE) return c;
+                }
+                if (focused == hero && direction != View.FOCUS_DOWN) return focused;
+                if (direction == View.FOCUS_DOWN && chips.contains(focused) && heroShown()) {
+                    return hero;
+                }
+                if (direction == View.FOCUS_DOWN && (chips.contains(focused) || focused == hero)) {
                     View remembered = rememberedTile(lastFocusedKind);
                     if (remembered != null) return remembered;
                     View below = nearest(apps.tiles(), focused);
@@ -498,6 +513,12 @@ public final class Home extends Activity {
                                 ? (idx + 1) % cols == 0 || idx == count - 1
                                 : idx == count - 1;
                         if (edge) return focused;
+                    }
+
+                    // Up from the first line of the apps row goes to the library banner.
+                    if (direction == View.FOCUS_UP && Catalog.APPS.equals(tile.kind)
+                            && heroShown() && !(grid && aboveInGrid(parent, tile))) {
+                        return hero;
                     }
 
                     // Down goes to the tile below; only the last line can be shorter, and a
@@ -577,6 +598,18 @@ public final class Home extends Activity {
         head.addView(chip("Options", v -> startActivity(new Intent(this, Options.class))));
         head.addView(chip("Settings", v -> openSettings()));
         column.addView(head, new LinearLayout.LayoutParams(MATCH, WRAP));
+
+        hero = new Hero(this, ui, io);
+        hero.setOnClickListener(v -> hero.openCurrent());
+        hero.setOnFocusChangeListener((v, has) -> {
+            if (has) focusBackground(null);
+        });
+        LinearLayout.LayoutParams heroLp = new LinearLayout.LayoutParams(MATCH, dp(220));
+        heroLp.leftMargin = dp(56);
+        heroLp.rightMargin = dp(56);
+        heroLp.topMargin = dp(2);
+        column.addView(hero, heroLp);
+        this.column = column;
 
         apps = new Row(Catalog.APPS, "Apps", column);
         inputs = new Row(Catalog.INPUTS, "Inputs", column);
@@ -666,6 +699,7 @@ public final class Home extends Activity {
         }
         meter.setVisibility("on".equals(cfg.get(Config.MEMORY)) ? View.VISIBLE : View.GONE);
         meter.setAccent(accent);
+        hero.setAccent(accent);
         render(apps);
         render(inputs);
         background();
@@ -691,6 +725,28 @@ public final class Home extends Activity {
                 }
                 apps.all = list;
                 render(apps);
+            });
+        });
+    }
+
+    private boolean heroShown() {
+        return hero.getVisibility() == View.VISIBLE && hero.hasEntries();
+    }
+
+    /** Reads the library folder off the UI thread; the banner hides while it has no titles. */
+    private void loadLibrary() {
+        int generation = ++libraryGeneration;
+        boolean on = "on".equals(cfg.get(Config.LIBRARY));
+        io.execute(() -> {
+            List<Library.Entry> list = on ? Library.load(this, cfg) : new ArrayList<>();
+            ui.post(() -> {
+                if (generation != libraryGeneration || isDestroyed()) return;
+                boolean was = heroShown();
+                hero.setEntries(list);
+                if (was && !heroShown()) focusFirst();
+                // A shorter top keeps the clock, banner and apps row on one screen.
+                column.setPadding(0, heroShown() ? dp(26) : dp(40), 0, column.getPaddingBottom());
+                adjustAppRowPosition();
             });
         });
     }
@@ -819,7 +875,9 @@ public final class Home extends Activity {
         ViewGroup.LayoutParams params = apps.title.getLayoutParams();
         if (!(params instanceof LinearLayout.LayoutParams)) return;
         LinearLayout.LayoutParams lp = (LinearLayout.LayoutParams) params;
-        int targetMargin = (!"grid".equals(cfg.get(Config.LAYOUT)) && isInputsHidden()) ? appRowShift() : 0;
+        // The library banner takes that space when it shows.
+        int targetMargin = (!"grid".equals(cfg.get(Config.LAYOUT)) && isInputsHidden()
+                && !heroShown()) ? appRowShift() : 0;
         if (lp.topMargin != targetMargin) {
             lp.topMargin = targetMargin;
             apps.title.setLayoutParams(lp);
