@@ -1,0 +1,34 @@
+id: fireos-insignia-aftjmst12
+title: "Insignia AFTJMST12"
+contributors:
+  - Muffy0906
+platform: fireos
+status: tested
+tested_on: "NS6711"
+models:
+  - "NS-43DF710NA19 (AFTJMST12"
+  - "codename keira"
+  - "Insignia 43\" 4K Fire TV Edition 2019)"
+adb:
+  port: 5555
+  transport: wifi
+developer_mode: >-
+  Settings > Device & Software > About > press OK on Your TV 7 times, then back > Developer options > ADB debugging
+ip_location: "Settings > Device & Software > About > Network"
+prompts:
+  - name: "Allow USB debugging?"
+    blocks_automation: true
+    fix: "tick Always allow from this computer, press OK on the remote"
+  - name: "We cannot detect your remote (after the debloat reboot)"
+    blocks_automation: true
+    fix: "press any button on the remote; it is still paired and reconnects on the first press"
+data:
+  packages: data/fireos/packages.txt
+  protected: data/fireos/protected.txt
+  never_disable: data/fireos/never-disable.txt
+  user_apps: data/fireos/user-apps.txt
+quirks: []
+notes: "Fire OS 6.7.1.1 (NS6711), Android 7.1.2. Same keira board as AFTKMST12; data/fireos6 lists applied unchanged. discover.sh flagged 6 of 219 packages, all metrics, all already covered by packages.txt or protected.txt."
+verify:
+  blocked: data/blocklists/verify-blocked.txt
+  allowed: data/blocklists/verify-allowed.txt
