@@ -151,8 +151,8 @@ public final class Guard extends AccessibilityService {
         CharSequence pkg = e.getPackageName(), cls = e.getClassName();
         if (pkg == null) return;
         if (!AMAZON.contentEquals(pkg)) {
-            cancelRetry();
             if ("com.android.systemui".contentEquals(pkg) || "android".contentEquals(pkg)) return;
+            cancelRetry();
             onAmazonHome = false;
             paused = false;
             if (!getPackageName().contentEquals(pkg)) arrived(this);
