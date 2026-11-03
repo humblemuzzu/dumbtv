@@ -14,6 +14,7 @@ import android.graphics.Color;
 import android.graphics.Rect;
 import android.media.tv.TvInputManager;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -53,6 +54,7 @@ public final class Home extends Activity {
     static final long UNLOCK_MS = 3000;
     private static final int MATCH = ViewGroup.LayoutParams.MATCH_PARENT;
     private static final int WRAP = ViewGroup.LayoutParams.WRAP_CONTENT;
+    private static final String APPSTORE = "com.amazon.venezia";
 
     private final Handler ui = new Handler(Looper.getMainLooper());
     private final ExecutorService io = Executors.newSingleThreadExecutor();
@@ -1051,9 +1053,23 @@ public final class Home extends Activity {
                 .show();
     }
 
+    /**
+     * On Fire OS 8 the Appstore's launcher entry opens Amazon's home with its apps grid, which
+     * Guard then replaces with ours, so the tile seemed to do nothing (#133). Its store screen is
+     * opened instead. On Fire OS 7 the entry opens the store itself.
+     */
+    private Intent appIntent(Item it) {
+        if (Build.VERSION.SDK_INT >= 30 && APPSTORE.equals(it.id)) {
+            Intent store = new Intent(Intent.ACTION_MAIN)
+                    .setClassName(APPSTORE, APPSTORE + ".ade.ADEHomeActivity");
+            if (store.resolveActivity(getPackageManager()) != null) return store;
+        }
+        return new Intent(it.intent);
+    }
+
     private void open(Tile t) {
         if (Catalog.APPS.equals(t.kind)) {
-            launch(new Intent(t.item.intent), t.item.id);
+            launch(appIntent(t.item), t.item.id);
             return;
         }
         Intent own = Input.intent(this, cfg, t.item, Catalog.label(cfg, t.item));
