@@ -18,6 +18,23 @@ com.mediatek.tis                       # MediaTek HDMI and analog inputs (Fire T
 com.mediatek.dtv.tvinput.atsctuner
 com.amazon.mediatek.livetv
 com.amazon.tv.settings.mediatek
+com.droidlogic                         # Amlogic HDMI and tuner (Fire TV Edition TVs on droidlogic,
+com.droidlogic.tvinput                 # e.g. Amazon 4-Series AFTNA67200): system service,
+com.droidlogic.providers.tv            # HDMI 1-4 and ADTVInputService (tuner), channel database
+com.amazon.tv.settings.amlogic         # picture and panel settings (Amlogic)
+com.amazon.tv.pqsettings
+com.vewd.core.fvpplayer                # HbbTV engine (red button, broadcaster media libraries)
+com.vewd.core.opapp
+com.vewd.core.service
+com.vewd.core.tis                      # HbbTV inputs for cable, terrestrial and satellite
+com.vewd.core.tvapp
+com.amazon.tv.conditionalaccess        # CI+ module
+com.amazon.tv.channelscan              # channel scan
+com.amazon.tv.arc                      # HDMI ARC / eARC
+com.amazon.android.tv.scan             # channel scan service
+uk.co.freeview.signaidl                # Freeview Play signing (UK/EU builds)
+com.android.networkstack.tethering.droidlogic          # Amlogic network stack
+com.android.networkstack.tethering.inprocess.droidlogic
 com.amazon.fireinputdevices            # input devices / remote
 com.amazon.autopairservice             # remote pairing
 com.amazon.device.bluetoothpa
