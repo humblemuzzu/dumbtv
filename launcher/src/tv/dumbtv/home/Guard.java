@@ -152,7 +152,8 @@ public final class Guard extends AccessibilityService {
         if (pkg == null) return;
         if (!AMAZON.contentEquals(pkg)) {
             if ("com.android.systemui".contentEquals(pkg) || "android".contentEquals(pkg)) return;
-            if (!homeRetry.cancelForWindow(getPackageName().contentEquals(pkg))) return;
+            boolean own = getPackageName().contentEquals(pkg);
+            if (!homeRetry.cancelForWindow(homeWindow(own, cls))) return;
             handler.removeCallbacks(retry);
             onAmazonHome = false;
             paused = false;
@@ -166,6 +167,12 @@ public final class Guard extends AccessibilityService {
         }
         homeRetry.request();
         retryHome();
+    }
+
+    /** Only the takeover's cover/Home windows can be late confirmations of our launch. */
+    static boolean homeWindow(boolean own, CharSequence cls) {
+        return own && cls != null
+                && (Home.class.getName().contentEquals(cls) || View.class.getName().contentEquals(cls));
     }
 
     /** Retain a throttled HOME event: Fire OS may leave Amazon Home on top after a burst. */

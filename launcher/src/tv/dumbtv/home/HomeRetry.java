@@ -26,9 +26,9 @@ final class HomeRetry {
         pending = false;
     }
 
-    /** Our earlier launch's window cannot acknowledge a request still waiting to be attempted. */
-    boolean cancelForWindow(boolean ownWindow) {
-        if (ownWindow && pending) return false;
+    /** An earlier cover/Home notification cannot acknowledge a request awaiting its attempt. */
+    boolean cancelForWindow(boolean homeWindow) {
+        if (homeWindow && pending) return false;
         cancel();
         return true;
     }
