@@ -2,6 +2,7 @@ id: fireos-amazon-aftti43
 title: "Amazon Fire TV 4-Series (2021), 43-inch (AFTTI43)"
 contributors:
   - ScottDavidCA
+  - dleslie
 platform: fireos
 status: tested
 tested_on: "PS7717.5741N"
@@ -29,6 +30,7 @@ launcher:
   fallback: "Amazon's launcher stays installed: Options > Open Amazon's home screen, or hold HOME for the Fire OS menu"
   quirk: "HOME landed on tv.dumbtv.home/.Home straight after launcher.sh, with no flash of Amazon's home. verify.sh: home bound, home-key ok, alarm min_futurity=0."
 quirks:
+  - "A second set (PS7717.5741N) with parental controls on: launcher.sh stopped with 'Fire OS did not bind the HOME guard'. With parental controls off, the same run worked (issue #123)."
   - "Nothing in packages.txt or alexa.txt was refused as protected: 52 disabled, 1 already system-disabled (com.android.nfc, enabled=2), 2 absent (com.amazon.tigris, com.amazon.smarthomemapviewapp), 0 suspect, 0 uninstalled."
   - "The DNS filter came up on the first reboot with no manual step: tun2 owned by personalDNSfilter, 405 entries live. The ACTIVATE_VPN app-op reset reported on AFTKA did not happen here."
   - "preflight.sh prints 'home screen <last foreground app>': it said com.amazon.firetv.youtube while HOME was Amazon's launcher. Read HOME with cmd package resolve-activity -a android.intent.action.MAIN -c android.intent.category.HOME."

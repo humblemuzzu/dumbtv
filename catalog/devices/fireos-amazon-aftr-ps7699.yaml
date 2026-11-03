@@ -5,7 +5,8 @@ contributors:
 platform: fireos
 status: partial
 tested_on: "PS7699.4896N"
-models: []
+models:
+  - "AFTR"
 adb:
   port: 5555
   transport: wifi

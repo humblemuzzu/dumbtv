@@ -5,7 +5,8 @@ contributors:
 platform: fireos
 status: tested
 tested_on: "PS7717.5741N.0036408028416"
-models: []
+models:
+  - "AFTSHN02"
 adb:
   port: 5555
   transport: wifi

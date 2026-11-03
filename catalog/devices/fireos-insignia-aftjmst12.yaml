@@ -6,9 +6,7 @@ platform: fireos
 status: tested
 tested_on: "NS6711"
 models:
-  - "NS-43DF710NA19 (AFTJMST12"
-  - "codename keira"
-  - "Insignia 43\" 4K Fire TV Edition 2019)"
+  - "NS-43DF710NA19 (AFTJMST12, codename keira, Insignia 43\" 4K Fire TV Edition 2019)"
 adb:
   port: 5555
   transport: wifi
@@ -23,9 +21,9 @@ prompts:
     blocks_automation: true
     fix: "press any button on the remote; it is still paired and reconnects on the first press"
 data:
-  packages: data/fireos/packages.txt
-  protected: data/fireos/protected.txt
-  never_disable: data/fireos/never-disable.txt
+  packages: data/fireos6/packages.txt
+  protected: data/fireos6/protected.txt
+  never_disable: data/fireos6/never-disable.txt
   user_apps: data/fireos/user-apps.txt
 quirks: []
 notes: "Fire OS 6.7.1.1 (NS6711), Android 7.1.2. Same keira board as AFTKMST12; data/fireos6 lists applied unchanged. discover.sh flagged 6 of 219 packages, all metrics, all already covered by packages.txt or protected.txt."
