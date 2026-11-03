@@ -1,0 +1,58 @@
+id: fireos-amazon-aftkm-rs8185.3898n
+title: "Amazon Fire TV Stick 4K, 2nd gen (AFTKM)"
+contributors:
+  - Rouchekoff
+platform: fireos
+status: tested
+
+tested_on: "RS8185.3898N"
+models:
+  - "AFTKM"
+adb:
+  port: 5555
+  transport: wifi
+  first_connection_prompt: "Accept USB debugging authorization on the TV and select Always allow from this computer."
+
+developer_mode: >-
+  Already enabled: the owner reported the message saying they were already a
+  developer. ADB debugging was then enabled by the owner; the exact menu path
+  was not independently confirmed during this session.
+ip_location: "Not recorded during this session; the owner supplied the address."
+prompts:
+  - name: "USB debugging authorization"
+    blocks_automation: true
+    fix: "The owner accepted the authorization prompt. A later interruption required authorization again."
+
+data:
+  packages: data/fireos/packages.txt
+  protected: data/fireos/protected.txt
+  never_disable: data/fireos/never-disable.txt
+  user_apps: data/fireos/user-apps.txt
+  settings: data/fireos/settings.txt
+launcher:
+  mechanism: accessibility_service
+  package: tv.dumbtv.home
+  reason: "Fire OS HOME takeover through dumbtv home's Guard accessibility service."
+  fallback: "Amazon's launcher remains installed."
+  quirk: "dumbtv home 1.6 passed the HOME-key test after reboot; min_futurity=0 was verified."
+quirks:
+  - "Fire OS 8 / Android 11 (SDK 30). The backup service was off, so adb restore could not import the DNS filter configuration."
+  - >-
+    dnsfilter.sh used the in-app configuration editor. Both attempts ended with
+    "could not press the app's RESTART" and a device-offline error before the
+    fallback file push completed.
+  - "Despite those errors, the app's filter-source screen subsequently showed an active dumbtv entry pointing to the timestamped local blocklist under /storage/emulated/0/Android/media/dnsfilter.android/."
+  - "The initial post-reboot DNS checks failed even though the filter VPN was running. After explicitly setting secure always_on_vpn_app to dnsfilter.android and rebooting, all verify.sh checks passed."
+  - "debloat.sh reported 34 disabled, 0 protected, 4 absent, 0 suspect and 0 apps uninstalled; verify.sh still counted 34 disabled after the final reboot."
+known_limits:
+  - "The filter's private list file was not readable over ADB on Fire OS 8; verification relied on DNS behavior and VPN ownership."
+  - "Prime Video and Alexa were kept in the configuration, but playback and voice control were not manually tested in this session."
+notes: >-
+  Full cleanup completed with a manual recovery of DNS filter setup. Final
+  verify.sh exited 0 and reported all checks passed: four expected domains
+  blocked, four allowed domains resolving, HOME landing on dumbtv home 1.6,
+  34 packages disabled, 13 privacy settings verified, personalDNSfilter VPN
+  active and min_futurity=0. No user apps were removed; YouTube was retained.
+verify:
+  blocked: data/blocklists/verify-blocked.txt
+  allowed: data/blocklists/verify-allowed.txt
