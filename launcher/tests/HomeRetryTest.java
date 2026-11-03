@@ -35,6 +35,12 @@ public final class HomeRetryTest {
             retry.cancel();
             due = -1;
         }
+
+        boolean window(boolean ownWindow) {
+            boolean cancelled = retry.cancelForWindow(ownWindow);
+            if (cancelled) due = -1;
+            return cancelled;
+        }
     }
 
     private static void lostFinalEvent() {
@@ -48,6 +54,31 @@ public final class HomeRetryTest {
         check(q.attempts == 2 && q.due == -1, "recover without another window event");
         q.advance(20000);
         check(q.attempts == 2, "no retry loop after recovery");
+    }
+
+    private static void ownWindowDuringPendingRequest() {
+        for (long time : new long[] {10200, 10999, 11000}) {
+            Queue q = new Queue();
+            q.event(10000);
+            q.event(10100);
+            q.now = time;
+            check(!q.window(true), "pending own window preserves the foreground marker");
+            check(q.due == 11000, "own window keeps the pending deadline " + time);
+            q.advance(11000);
+            check(q.attempts == 2 && q.due == -1, "own window cannot lose the retry " + time);
+            check(q.window(true), "confirmation after the attempt can clear the marker");
+            q.advance(20000);
+            check(q.attempts == 2 && q.due == -1, "confirmation cannot start a retry loop");
+        }
+        Queue navigation = new Queue();
+        navigation.event(10000);
+        navigation.event(10200);
+        check(navigation.window(false), "another app can clear the foreground marker");
+        navigation.advance(11000);
+        check(navigation.attempts == 1 && navigation.due == -1,
+                "another app still cancels a pending request");
+        navigation.event(11100);
+        check(navigation.attempts == 2, "cancellation preserves the last attempt time");
     }
 
     private static void burst() {
@@ -126,11 +157,12 @@ public final class HomeRetryTest {
     }
 
     public static void main(String[] args) {
+        ownWindowDuringPendingRequest();
         lostFinalEvent();
         burst();
         boundaryAndOrdering();
         lateDispatch();
         cancellation();
-        System.out.println("HomeRetryTest passed (lost event, burst, boundaries, ordering, late dispatch, cancellation)");
+        System.out.println("HomeRetryTest passed (lost event, own windows, burst, boundaries, ordering, late dispatch, cancellation)");
     }
 }

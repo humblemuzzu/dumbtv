@@ -25,4 +25,11 @@ final class HomeRetry {
     void cancel() {
         pending = false;
     }
+
+    /** Our earlier launch's window cannot acknowledge a request still waiting to be attempted. */
+    boolean cancelForWindow(boolean ownWindow) {
+        if (ownWindow && pending) return false;
+        cancel();
+        return true;
+    }
 }
