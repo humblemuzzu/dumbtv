@@ -1,0 +1,122 @@
+id: androidtv-hisense-65u8qg
+title: "Hisense 65U8QG (Google TV, Android 14)"
+contributors:
+  - jlaska
+platform: androidtv
+# Live hardware session with manual ADB; not an end-to-end run of all.sh/verify.sh.
+status: partial
+tested_on: "Hisense/wutaishan/wutaishan:14/UKN6.251123.001.049/00.00.00.49:user/release-keys"
+models:
+  - 65U8QG
+adb:
+  transport: wifi
+  first_connection_prompt: >-
+    TCP 5555 never opened on this build, with USB debugging on, toggled, or
+    after a reboot. Wireless debugging works: Pair device with pairing code
+    shows a six-digit code and a pairing port for adb pair, and adb mdns
+    services lists the connect endpoint (_adb-tls-connect). The connect port
+    changes on every reboot; the pairing survives it.
+developer_mode: >-
+  Settings > System > About > Android TV OS build > press OK seven times.
+  Then Settings > System > Developer options > Wireless debugging: ON.
+ip_location: >-
+  Settings > System > Developer options > Wireless debugging shows the IP
+  address and port; adb mdns services finds it too.
+prompts:
+  - name: "Pair device with pairing code"
+    when: "first adb connection from a new computer"
+    blocks_automation: true
+    fix: >-
+      Open Pair device with pairing code on the TV and run adb pair
+      <ip>:<pairing-port> <code> while the dialog is open, then adb connect
+      to the endpoint from adb mdns services. After a reboot the owner
+      sometimes had to switch Wireless debugging on again; no new pairing was
+      needed.
+  - name: "Use the keyboard on your mobile device"
+    when: "typing into any text field, such as renaming a tile in dumbtv home"
+    blocks_automation: false
+    fix: >-
+      The default input method is the Google TV phone bridge
+      (com.google.android.tv.remote.service/.ImeBridgeService). Switch to the
+      on-screen keyboard with ime set
+      com.google.android.inputmethod.latin/com.android.inputmethod.latin.LatinIME.
+      The remote service switched it back within minutes.
+data:
+  packages: data/androidtv/packages.txt
+  protected: data/androidtv/protected.txt
+  never_disable: data/androidtv/never-disable.txt
+  user_apps: data/androidtv/user-apps.txt
+launcher:
+  mechanism: none
+  package: com.google.android.apps.tv.launcherx
+  reason: >-
+    dumbtv home 1.6 (release APK, checksum ok) installed with no Play Protect
+    prompt and took HOME after pm disable-user of
+    com.google.android.tungsten.setupwraith and then
+    com.google.android.apps.tv.launcherx; it survived a reboot. The owner
+    reverted to the stock launcher the same day, because the remote's
+    Settings button stopped working (see quirks).
+  fallback: >-
+    com.android.tv.settings answers HOME at priority -1000. Re-enabling
+    launcherx and setupwraith (user_setup_complete was 1) brought the stock
+    home back without rerunning setup.
+  quirk: >-
+    The remote's Settings button sends
+    android.app.action.TOGGLE_NOTIFICATION_HANDLER_PANEL, which only
+    launcherx (.dashboard.DashboardHandler) handles. With launcherx disabled
+    the key does nothing; the Settings tile in dumbtv home still opens the
+    full settings.
+quirks:
+  - >-
+    Same ro.product.model ("SmartTV 4K FFM") as androidtv-hisense-smarttv-4k-ffm,
+    but a different platform: device wutaishan instead of songshan, Android 14
+    instead of 11, and Hisense packages named com.vt.* instead of
+    com.hisense.*. Lists from that entry do not carry over.
+  - >-
+    Hisense ACR is com.vt.tv.evservice (Vtp_ACR.apk, with ACRService,
+    ConsentActivity and PromotionActivity). Its ACRService had run for 34 days
+    of uptime with settings global acr_service_enable=0. pm disable-user
+    stops it, and it stayed stopped after reboots.
+  - >-
+    The TV dropped Wi-Fi a few seconds after pm disable-user
+    com.google.android.tungsten.setupwraith, before launcherx was disabled,
+    and the owner had to rejoin the network. The signal was weak at the time
+    (-77 dBm on 2.4 GHz), so the cause is not certain. It did not happen
+    again when launcherx was disabled, or when both were re-enabled.
+  - >-
+    Inputs and tuner are com.vt.source.external (HDMI, DisplayPort,
+    composite) and com.vt.source.tuner; Live TV is com.vt.tv.tvcenter. Leave
+    those, com.vt.tvservice, com.vt.tvplayer and com.vt.tv.commonui enabled.
+  - >-
+    tv.mopa.ginga (Brazilian ISDB-Tb middleware) ships enabled on this
+    US-region set.
+notes: >-
+  Tested on a real TV on 2026-10-31 with manual ADB. Disabled for user 0, all
+  re-enableable, and all 17 survived two reboots with inputs, tuner, remote
+  and Wi-Fi working: com.vt.tv.evservice, com.vt.storemode,
+  com.vidaa.oemtabcontentprovider, com.android.adservices.api,
+  com.android.ondevicepersonalization.services,
+  com.android.federatedcompute.services, com.google.android.feedback,
+  com.android.tv.feedbackconsent, com.google.android.partnersetup,
+  com.google.android.play.games, com.hisense.odinbrowser,
+  net.vidaatv.hisense.android.tv, com.vt.hishow, com.vt.tv.ai_sense,
+  com.vt.tv.protector, com.vt.tv.singlelisten, tv.mopa.ginga. Also set
+  send_action_app_error to 0 (global and secure). No PROTECTED or failed
+  disables. Network DNS filtering was done by AdGuard Home on the router side,
+  so Private DNS was left off.
+known_limits:
+  - "One TV and one firmware build."
+  - >-
+    all.sh, debloat.sh and verify.sh were not run: debloat.sh refuses
+    non-Amazon hardware.
+  - >-
+    The disables in notes are one household's choices, not a removal list for
+    other TVs. The browser, Play Games, My Music and Family Moment are apps,
+    not telemetry.
+  - "Firmware OTA services (com.vt.tv.ota, com.vt.remoteupgrade) were left enabled."
+  - >-
+    The Ads screen in Settings > Privacy has no opt-out switch on this build,
+    only Reset advertising ID and Delete advertising ID.
+verify:
+  blocked: data/blocklists/verify-blocked.txt
+  allowed: data/blocklists/verify-allowed.txt
