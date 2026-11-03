@@ -84,8 +84,15 @@ if [[ $ASSUME_YES == 0 && -z $KEEP_ARG ]]; then
   KEEP="$KEEP $more"
 fi
 
-KEEP=$(printf '%s' "$KEEP" | xargs)
-EXTRA=$(printf '%s' "$EXTRA" | xargs)
+# awk, not xargs: xargs gives up on a stray quote and the whole list was dropped unnoticed.
+KEEP=$(printf '%s\n' "$KEEP" | awk '{$1=$1; print}')
+EXTRA=$(printf '%s\n' "$EXTRA" | awk '{$1=$1; print}')
+# dumbtv.conf is sourced by every script, so only package names may go into it: a quote
+# would break every script, and $(...) would run as a command each time one starts.
+for p in $KEEP $EXTRA; do
+  [[ $p =~ ^[A-Za-z][A-Za-z0-9_]*(\.[A-Za-z][A-Za-z0-9_]*)+$ ]] ||
+    die "'$p' is not a package name (like com.netflix.ninja); data/apps.txt maps app names to packages"
+done
 
 # A keep entry that is on no list would protect nothing; it is almost always a typo.
 known=$(cat "$DATA"/fireos*/packages.txt "$DATA"/fireos/alexa.txt "$DATA"/fireos*/user-apps.txt 2>/dev/null |

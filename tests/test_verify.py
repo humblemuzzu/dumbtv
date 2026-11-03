@@ -52,6 +52,7 @@ class VerifyTests(unittest.TestCase):
             'dumpsys package tv.dumbtv.home': {
                 'out': f'    versionName={RELEASE}' if launcher_package is None else launcher_package},
             'pm list packages': {'out': ''},
+            'cmd netpolicy get restrict-background': {'out': 'Restrict background status: enabled'},
             'settings list secure; settings list global': {'out': self.applied_settings()},
             'settings get secure screensaver_components': {'out': 'null'},
             'am start -a android.intent.action.MAIN -c android.intent.category.LEANBACK_SETTINGS': {'out': ''},
@@ -140,6 +141,17 @@ class VerifyTests(unittest.TestCase):
             'pm list packages': {'out': 'package:com.amazon.tv.acr'},
         })
         self.assertNotIn('enabled again', result.stdout)
+
+    def test_data_saver_on_after_lockdown(self):
+        result, _ = self.run_verify(self.modern(LABEL))
+        self.assertRegex(result.stdout, r'ok +data-saver +on')
+
+    def test_data_saver_an_update_turned_off_is_flagged(self):
+        result, _ = self.run_verify(self.modern(LABEL), extra={
+            'cmd netpolicy get restrict-background': {'out': 'Restrict background status: disabled'},
+        })
+        self.assertEqual(result.returncode, 0, result.stdout)
+        self.assertIn('off, so protected packages use data freely; run lockdown.sh', result.stdout)
 
     def test_a_package_still_disabled_is_not_flagged(self):
         result, _ = self.run_verify(self.modern(LABEL), extra={

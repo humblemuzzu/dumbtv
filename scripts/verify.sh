@@ -168,6 +168,13 @@ if [[ -n $reset ]]; then
 else
   printf '%-10s %-38s %s\n' ok settings "$checked privacy settings as set"
 fi
+
+# lockdown.sh's Data Saver is what keeps the protected packages off metered networks.
+case $(dev 'cmd netpolicy get restrict-background' | tr -d '\r') in
+  *disabled*) printf '%-10s %-38s %s\n' warn data-saver "off, so protected packages use data freely; run lockdown.sh" ;;
+  *enabled*) printf '%-10s %-38s %s\n' ok data-saver "on" ;;
+  *) printf '%-10s %-38s %s\n' skip data-saver "could not read it" ;;
+esac
 dream=$(dream_package)
 if [[ -n $dream ]] && grep -qx "package:$dream" <<<"$off"; then
   printf '%-10s %-38s %s\n' warn screensaver "$dream is disabled, so the TV sleeps at the timeout; run debloat.sh"

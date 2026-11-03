@@ -157,6 +157,7 @@ ok         www.youtube.com              resolves
 ok home bound, front is tv.dumbtv.home/.Home
 packages 51 disabled
 ok settings 13 privacy settings as set
+ok data-saver on
 ok filter 416 entries
 ok vpn dnsfilter.android
 all checks passed
@@ -172,6 +173,8 @@ path. Use the table below; do not disable more packages.
 | Amazon's home screen is back | `./scripts/launcher.sh -y` |
 | Amazon's home shows for ~5 s before dumbtv home | `./scripts/launcher.sh -y` (an update reset the alarm setting) |
 | `verify.sh` warns `enabled again` or `back to Amazon's values` | an update undid part of the cleanup: `./scripts/debloat.sh -y` |
+| `verify.sh` warns `data-saver off` | `./scripts/lockdown.sh -y` |
+| `dnsfilter.sh` says the tracker list "does not look right" | the download was an error page or cut short; nothing was pushed. Run it again later |
 | Nothing is blocked, but the filter is running | reboot the TV |
 | "Unable to Detect Your Remote" over everything | `adb shell pm enable --user 0 com.amazon.vizzini`, then reboot |
 | The TV sleeps while something plays on HDMI | `./scripts/launcher.sh -y` (dumbtv home 1.3 and later keep the panel awake) |
