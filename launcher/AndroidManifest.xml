@@ -66,10 +66,17 @@
             android:name=".Keeper"
             android:exported="false" />
 
+        <!-- directBootAware for LOCKED_BOOT_COMPLETED: Fire OS 6 walks BOOT_COMPLETED through
+             every app's receiver one by one, which reached this one 75 s after Amazon's home
+             appeared on an AFTMM. LOCKED_BOOT_COMPLETED only goes to direct-boot-aware
+             receivers and reached them all within 7 s there. Only the receiver is direct-boot-aware;
+             it waits for the unlocked user before starting the Keeper. -->
         <receiver
             android:name=".BootReceiver"
-            android:exported="true">
+            android:exported="true"
+            android:directBootAware="true">
             <intent-filter>
+                <action android:name="android.intent.action.LOCKED_BOOT_COMPLETED" />
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
                 <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
             </intent-filter>
