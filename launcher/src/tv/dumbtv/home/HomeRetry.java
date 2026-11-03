@@ -25,4 +25,11 @@ final class HomeRetry {
     void cancel() {
         pending = false;
     }
+
+    /** An earlier cover/Home notification cannot acknowledge a request awaiting its attempt. */
+    boolean cancelForWindow(boolean homeWindow) {
+        if (homeWindow && pending) return false;
+        cancel();
+        return true;
+    }
 }
