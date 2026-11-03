@@ -161,7 +161,7 @@ final class Config {
         signature = sig;
         values.clear();
         if (file.isFile()) read();
-        if (mergeShared()) save();
+        mergeShared();
         version++;
     }
 
@@ -191,14 +191,21 @@ final class Config {
      * write on Fire OS 8. The push is applied once: what was applied is remembered, so the same
      * file is not applied again and a later change on the TV is not overwritten by it.
      */
-    private boolean mergeShared() {
-        if (sharedFile == null || !sharedFile.isFile()) return false;
+    private void mergeShared() {
+        if (sharedFile == null || !sharedFile.isFile()) return;
         Map<String, String> incoming = parse(sharedFile);
-        if (incoming.isEmpty()) return false;
-        if (incoming.equals(parse(appliedFile))) return false;
+        if (incoming.isEmpty()) return;
+        if (incoming.equals(parse(appliedFile))) return;
+        Map<String, String> merged = new LinkedHashMap<>(values);
+        merged.putAll(incoming);
+        // Do not acknowledge an import until the settings themselves are on disk. A failed
+        // write must be retried even when neither source file changes before the next refresh.
+        if (!writeSettings(file, merged)) {
+            signature = Long.MIN_VALUE;
+            return;
+        }
         values.putAll(incoming);
-        writeSettings(appliedFile, incoming);
-        return true;
+        signature = writeSettings(appliedFile, incoming) ? signature() : Long.MIN_VALUE;
     }
 
     private void read() {
@@ -222,11 +229,10 @@ final class Config {
     }
 
     private void save() {
-        writeSettings(file, values);
-        signature = signature();
+        signature = writeSettings(file, values) ? signature() : Long.MIN_VALUE;
     }
 
-    private static void writeSettings(File target, Map<String, String> settings) {
+    private static boolean writeSettings(File target, Map<String, String> settings) {
         File tmp = new File(target.getParentFile(), target.getName() + ".tmp");
         try (Writer w = new OutputStreamWriter(new FileOutputStream(tmp), StandardCharsets.UTF_8)) {
             w.write("# dumbtv home. Edit on the TV (Options) or here; unknown keys are kept.\n");
@@ -235,9 +241,11 @@ final class Config {
             }
         } catch (IOException e) {
             Log.w("dumbtv", "could not write " + tmp, e);
-            return;
+            return false;
         }
-        if (!tmp.renameTo(target)) Log.w("dumbtv", "could not replace " + target);
+        if (tmp.renameTo(target)) return true;
+        Log.w("dumbtv", "could not replace " + target);
+        return false;
     }
 
     String get(String key, String fallback) {
