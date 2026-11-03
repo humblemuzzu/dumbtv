@@ -192,6 +192,9 @@ if [[ $bound == 0 ]]; then
     echo "  this build only runs accessibility services Amazon trusts (FireOSFwk A11yAuthorizer)," >&2
     echo "  so HOME cannot be taken over here. dumbtv home stays installed as a normal app;" >&2
     echo "  remove it with: adb uninstall $PKG" >&2
+  else
+    echo "  if parental controls are on, turn them off (Settings > Preferences > Parental Controls)" >&2
+    echo "  and run this again; that is what stopped it on an AFTTI43 (issue #123)" >&2
   fi
   set_futurity off
   set_guard ""

@@ -36,6 +36,32 @@ On a TCL G08 the service stayed unbound because TCL's `TclAppBoot` refused it
 app-op fixed it. That is a TCL rule, not something to grant on every TV; see
 [docs/devices/tcl-g08.md](devices/tcl-g08.md).
 
+### `launcher.sh` says Fire OS did not bind the HOME guard
+
+The service was switched on and Fire OS never started it. Two causes are known:
+
+- **Parental controls.** On an AFTTI43 the guard bound once parental controls
+  were off (Settings > Preferences > Parental Controls), with nothing else changed
+  (#123). With a PIN on app launch, `launcher.sh` can also stop on Amazon's PIN
+  screen; enter the PIN and run it again.
+- **A11yAuthorizer.** Some builds run only accessibility services Amazon trusts.
+  `launcher.sh` says so when the log shows it; nothing on the adb side gets past it.
+
+### Amazon's Network status screen has nothing highlighted
+
+Settings > Network > your network > Network status opens with no button
+highlighted, so Advanced and Run Speed Test cannot be reached (#130). That screen
+(`com.amazon.ssmsys`) asks Android for enabled accessibility services of any kind,
+and while one is on it skips setting its first focus, assuming a screen reader.
+The HOME guard is such a service, whatever type it declares. Turn it off, open the
+screen, and turn it back on; a button that has focus keeps it:
+
+```sh
+adb shell settings put secure accessibility_enabled 0
+# open Network status on the TV now
+./scripts/launcher.sh -y
+```
+
 ### Amazon's home shows for about five seconds before dumbtv home
 
 The `min_futurity=0` alarm setting was lost (an update or a settings reset). Check

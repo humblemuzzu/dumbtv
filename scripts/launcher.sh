@@ -43,6 +43,10 @@ if [[ $home == "$PKG"/* ]]; then
   note "home screen is dumbtv home"
 elif [[ -z $home ]]; then
   note "could not read which app is in front; ./scripts/verify.sh checks the takeover"
+elif [[ $home == com.amazon.tv.parentalcontrols/* ]]; then
+  note "Fire OS is asking for the parental-controls PIN ($home)"
+  note "enter it on the TV, then run this script again"
+  exit 1
 else
   note "home screen is $home"
   note "press HOME once or run this script again; see docs/TROUBLESHOOTING.md if it will not stick"
