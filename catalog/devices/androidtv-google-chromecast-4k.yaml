@@ -1,0 +1,62 @@
+id: androidtv-google-chromecast-4k
+title: "Chromecast with Google TV 4K (Google TV, Android 14)"
+contributors:
+  - KasperHonore
+platform: androidtv
+status: partial
+tested_on: "UTTC.250917.004.14193937"
+models:
+  - "Chromecast with Google TV 4K (sabrina)"
+adb:
+  transport: wifi
+  first_connection_prompt: >-
+    Wireless debugging only, on a random connect port that changes on every
+    boot; 5555 refused connections. Pair once with the six-digit code from
+    'Pair device with pairing code', then adb connect to the port shown on the
+    main Wireless debugging screen.
+developer_mode: >-
+  Settings > System > About > Android TV OS Build > press OK until the TV says you are a developer. Then Settings > System > Developer options > Wireless debugging: ON, and open 'Pair device with pairing code'. USB debugging alone did not open port 5555 (connection refused).
+ip_location: "Settings > System > Developer options > Wireless debugging shows IP address & port for adb connect. 'Pair device with pairing code' shows a different pairing port. adb mdns services found neither on this network, so read both off the screen."
+prompts:
+  - name: "Wireless debugging pairing code"
+    blocks_automation: true
+    fix: "adb pair <host>:<pairing-port> <code>, then adb connect <host>:<connect-port>. Pairing survives reboots; the connect port does not."
+  - name: "Play Protect blocks the dumbtv home APK"
+    blocks_automation: true
+    fix: "The Play Store is hidden by the stock Google TV home, and am start -a com.google.android.finsky.PLAY_PROTECT or the play.google.com/store/protect/home link did not show a Play Protect screen. Installed with 'settings put global verifier_verify_adb_installs 0', then 'settings delete global verifier_verify_adb_installs' straight after. Once dumbtv home is HOME the Play Store shows up as an app; whether Play Protect is reachable from there was not tested."
+data:
+  packages: data/androidtv/packages.txt
+  protected: data/androidtv/protected.txt
+  never_disable: data/androidtv/never-disable.txt
+  user_apps: data/androidtv/user-apps.txt
+launcher:
+  mechanism: set_home_activity
+  package: tv.dumbtv.home
+  reason: >-
+    Stock Google TV home replaced. dumbtv home 1.6 installed from the
+    checksum-verified release APK, then com.google.android.tungsten.setupwraith
+    and com.google.android.apps.tv.launcherx disabled for user 0, in that order,
+    and cmd package set-home-activity tv.dumbtv.home/.Home.
+  fallback: >-
+    pm enable --user 0 com.google.android.apps.tv.launcherx hands HOME back to
+    Google TV with no reboot (done once during the YouTube button test); enable
+    setupwraith too to fully undo the swap.
+  quirk: >-
+    With launcherx disabled the remote's YouTube button does nothing; the
+    Netflix button still works. See quirks.
+quirks:
+  - "YouTube remote button stops working after the launcher swap (dumbtv home 1.6, build UTTC.250917.004). The button is handled by launcherx's GlobalKeyListener ('Launching com.google.android.youtube.tv in main account'), so with launcherx disabled the key event arrives and nothing opens. Verified both ways with YouTube 7.28.301 installed from the Play Store: launcherx enabled, the button opens YouTube; launcherx disabled, nothing. The Netflix button keeps working because com.google.android.chromecast.chromecastservice/.GlobalKeyReceiver handles it. YouTube still opens from dumbtv home."
+  - "Wireless debugging turns itself off on every reboot (adb_wifi_enabled=1 before, off after; seen on two reboots) and comes back on a new connect port. Someone has to switch it on again at the TV after each restart."
+  - "launcherx and setupwraith disabled in that order (setupwraith first), then 40 s before adb reboot. Both stayed disabled and the TV booted to dumbtv home on two cold boots with no entries in the crash buffer. During boot, systemui's TvSensorPrivacyChangedActivity opens and finishes within a second before the screen is enabled; it was not recorded before the changes, so whether the swap or the katniss disable causes it is unknown."
+  - "katniss disabled on request: the remote's mic button then does nothing, and nothing resolves ASSIST, VOICE_ASSIST or WEB_SEARCH. Of the active entries in data/androidtv/packages.txt, feedback, feedbackconsent, partnersetup and dreamx are present on this build; adservices.api, ondevicepersonalization, federatedcompute and the onn update notifier are absent."
+notes: "Manual ADB session on Android 14 (security patch 2025-10-01). Five packages disabled for user 0 (feedback, feedbackconsent, partnersetup, dreamx, katniss) plus setupwraith and launcherx for the launcher swap. dumbtv home 1.6 installed from the checksum-verified release APK. Checked across two reboots, plus HOME, mic, Netflix and YouTube buttons on the physical remote. No DNS filtering by choice, so no telemetry result is claimed; verify.sh was not run because it checks Fire OS mechanisms."
+known_limits:
+  - "Observed on one Chromecast with Google TV 4K build (UTTC.250917.004); the HD model and the Google TV Streamer were not tested."
+  - >-
+    Not an end-to-end dumbtv run. debloat.sh, lockdown.sh and dnsfilter.sh refuse
+    non-Amazon hardware, so the package pass was applied by hand and verify.sh was
+    not run. status is partial for that reason, not because anything misbehaved.
+  - "No DNS filtering was configured, so no telemetry result is claimed. GMS was untouched and still reaches Google."
+verify:
+  blocked: data/blocklists/verify-blocked.txt
+  allowed: data/blocklists/verify-allowed.txt
