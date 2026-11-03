@@ -47,7 +47,6 @@ com.amazon.tv.easyupgrade
 
 # --- demos, tutorials and empty stubs ---
 com.amazon.tv.democontent.provider
-com.amazon.storm.lightning.tutorial
 com.amazon.tmm.tutorial
 com.amazon.tv.releasenotes
 com.amazon.dummy.alarmclock

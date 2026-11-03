@@ -41,6 +41,8 @@ com.amazon.device.bluetoothpa
 com.amazon.device.blepa
 com.amazon.whisperjoin.middleware.np   # device setup / pairing
 com.amazon.whisperplay.service.install
+com.amazon.storm.lightning.tutorial    # despite the name, holds the PIN screen the Fire TV phone
+                                       # app needs to pair (JpakePinActivity, started by turnstile)
 com.amazon.tv.oobe                     # first-run setup, needed after a factory reset
 com.amazon.tv.ooberesource
 com.amazon.webview.chromium            # webview, many apps break without it
