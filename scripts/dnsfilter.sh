@@ -32,6 +32,7 @@ RAW=$WORK/hagezi.txt
 LIST=$WORK/blocklist.txt
 DIR=/sdcard/Android/data/$PKG/files/PersonalDNSFilter
 MEDIA=/sdcard/Android/media/$PKG
+SAVED_LIST=
 
 GW=$(gateway)
 [[ -n $GW ]] || die "could not read the default gateway from 'ip route'"
@@ -202,8 +203,10 @@ restore_into_app() {
 
 # Android/media is the one place adb can write that the app can read. The list goes there and
 # the app loads it from a file:// URL.
+# Lists from earlier runs stay until a new one has loaded: the app's saved settings may still
+# name one of them, and a missing file makes its next reload fail (#155).
 push_to_media() {
-  dev "mkdir -p $MEDIA; rm -f $MEDIA/dumbtv-blocklist*.txt" >/dev/null 2>&1
+  dev "mkdir -p $MEDIA" >/dev/null 2>&1
   # Without these the app's file import writes an empty list and says nothing.
   dev "pm grant $PKG android.permission.READ_EXTERNAL_STORAGE" >/dev/null 2>&1
   dev "pm grant $PKG android.permission.WRITE_EXTERNAL_STORAGE" >/dev/null 2>&1
@@ -211,13 +214,31 @@ push_to_media() {
   [[ $(dev1 "grep -c . $MEDIA/$1") == "$(grep -c . "$LIST")" ]]
 }
 
+drop_old_lists() {
+  dev "for f in $MEDIA/dumbtv-blocklist*.txt; do [ \"\$f\" = $MEDIA/$1 ] || rm -f \"\$f\"; done" >/dev/null 2>&1
+}
+
+# The app's log shows the index built for a list of $1 entries. Its main screen is opened
+# again first when BACK has closed it.
+list_loaded() {
+  local log
+  adb_reconnect
+  log=$(ui_node logOutput)
+  if [[ -z $log ]]; then
+    dev "am start -n $PKG/.DNSProxyActivity" >/dev/null 2>&1
+    sleep 3
+    log=$(ui_node logOutput)
+  fi
+  [[ $log == *"Building index for $1 entries"* ]]
+}
+
 # When adb restore is not available: the settings are typed into the app's own config editor
 # (Advanced settings > Edit configuration file). Pressing BACK saves it, merged over the app's
 # defaults with the last copy of a key winning, so only the changed keys are typed, after the
 # text already there. A list file with a new name gives the app a new URL, which it loads
-# when its RESTART is pressed.
+# when the filter restarts.
 configure_in_app() {
-  local name entries line i nodes lines=()
+  local name entries line i j nodes lines=()
   name=dumbtv-blocklist-$(date +%s).txt
   push_to_media "$name" || { note "could not put the list in $MEDIA"; return 1; }
   entries=$(grep -c . "$LIST")
@@ -254,11 +275,23 @@ configure_in_app() {
     dev input keyevent KEYCODE_ENTER >/dev/null
   done
   dev input keyevent KEYCODE_BACK >/dev/null
-  sleep 2
-  ui_press startBtn || { note "could not press the app's RESTART"; return 1; }
-  for i in $(seq 1 30); do
-    [[ $(ui_node logOutput) == *"Building index for $entries entries"* ]] && return 0
-    sleep 2
+  SAVED_LIST=$name
+  # What BACK does next differs by build. On an AFTKRT it saved, closed the app's screen and
+  # restarted the filter itself, so there was no RESTART left to press (#147); on an AFTOLCBC82
+  # the first press after it went to the text field instead (#155). A filter restart also
+  # restarts its VPN, which drops a network adb session.
+  for i in 1 2 3; do
+    sleep 3
+    list_loaded "$entries" && return 0
+    if ui_nodes | grep -q "package=\"$PKG\""; then
+      ui_press startBtn || dev input keyevent KEYCODE_BACK >/dev/null
+    else
+      dev input keyevent KEYCODE_BACK >/dev/null
+    fi
+    for j in $(seq 1 10); do
+      sleep 3
+      list_loaded "$entries" && return 0
+    done
   done
   note "the app did not load the list after RESTART"
   return 1
@@ -266,9 +299,16 @@ configure_in_app() {
 
 # The last fallback: the app is pointed at the list from its own screen, by a person.
 manual_steps() {
-  push_to_media dumbtv-blocklist.txt || die "push to $MEDIA failed"
+  adb_reconnect
+  push_to_media "${SAVED_LIST:-dumbtv-blocklist.txt}" || die "push to $MEDIA failed"
   acmd settings put secure always_on_vpn_app $PKG >/dev/null
   step "one manual step ($(fireos_name) hides the app's files from adb)"
+  if [[ -n $SAVED_LIST ]]; then
+    note "the settings are saved in personalDNSfilter and point at the list; it only has to load it:"
+    note "  1. open personalDNSfilter and press RESTART; its log then says \"Building index for $(grep -c . "$LIST") entries\""
+    note "  2. reboot the TV, then run ./scripts/verify.sh: the Amazon hosts should answer 127.0.0.1"
+    return
+  fi
   note "the blocklist is on the TV; point personalDNSfilter at it once:"
   note "  1. open personalDNSfilter, tick Advanced settings, then tick Configure filter update"
   note "  2. untick every list in the table"
@@ -308,10 +348,11 @@ if [[ $DRY_RUN == 0 ]]; then
       acmd dumpsys deviceidle whitelist +$PKG >/dev/null
     elif configure_in_app; then
       restored=1
+      drop_old_lists "$SAVED_LIST"
       note "the app loaded the list ($(grep -c . "$LIST") entries) from $MEDIA"
       dev input keyevent KEYCODE_HOME >/dev/null
     else
-      note "the restore did not go through"
+      note "personalDNSfilter could not be set up from adb"
       manual_steps
       exit 0
     fi
