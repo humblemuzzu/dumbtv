@@ -106,7 +106,7 @@ the rest of the cleanup: the packages, the settings and the home screen.
 
 **Why its own launcher?**
 A home screen needs no internet access, no advertising ID and no permission to
-install apps. dumbtv home is 54 KB, open source and asks for no permissions on
+install apps. dumbtv home is 62 KB, open source and asks for no permissions on
 Fire OS 7 and 8. Check it yourself: `aapt2 dump permissions dumbtv-home.apk`
 lists three, each limited to Android 8.1 and earlier, which only Fire OS 6's Keeper
 uses.
