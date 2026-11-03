@@ -28,6 +28,8 @@ com.amazon.vizzini                     # persistent priv-app; on Fire OS 6 it re
 com.amazon.firebat                     # Prime Video on Fire OS 6
 com.amazon.ftv.profilepicker           # profiles, the launcher calls it at boot
 com.amazon.tv.resolutioncycler         # UP+REWIND display-mode recovery
+com.amazon.storm.lightning.tutorial    # despite the name, holds the PIN screen the Fire TV phone
+                                       # app needs to pair (JpakePinActivity, started by turnstile)
 com.amazon.tv.ime                      # on-screen keyboard
 com.ivona.orchestrator                 # text-to-speech for the VoiceView screen reader
 com.ivona.tts.oem

@@ -47,7 +47,6 @@ com.amazon.whisperjoin.wss.wifiprovisioner  # fire os 6: hands Wi-Fi to new Amaz
 com.amazon.tv.ffsprovisioneeclient     # fire os 6: frustration-free setup client
 
 # --- demos, tutorials, test services and empty stubs ---
-com.amazon.storm.lightning.tutorial
 com.amazon.tmm.tutorial
 com.amazon.tv.releasenotes
 com.mediatek.atci.service              # fire os 6: MediaTek AT-command test service
