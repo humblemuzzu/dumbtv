@@ -136,21 +136,21 @@ if [[ $DRY_RUN == 0 ]]; then
     note "SYSTEM_DNS=1 only applies to Fire OS 6; $(fireos_name) keeps its clock without it, so it stays off"
     SYSTEM_DNS=0
   fi
-  if [[ ${SYSTEM_DNS:-0} == 1 ]]; then
-    sed -i.dumbtv2 's|^androidAppWhiteList = .*|androidAppWhiteList = android|' "$CONF_OUT"
-  else
-    sed -i.dumbtv2 's|^androidAppWhiteList = .*|androidAppWhiteList = <none>|' "$CONF_OUT"
+  # Android 7.1 gives a VPN NET_CAPABILITY_INTERNET only when it carries the default route.
+  # This tunnel carries DNS alone, so on Fire OS 6 Prime Video finds no "data connection" and
+  # refuses to play. With PRIME=1 its two packages stay outside the tunnel there; their
+  # lookups then go to the router. Fire OS 7 and 8 play behind the filter as it is.
+  WHITELIST=""
+  [[ ${SYSTEM_DNS:-0} == 1 ]] && WHITELIST="android"
+  if [[ $PRIME == 1 && $SDK -lt 28 ]]; then
+    WHITELIST="${WHITELIST:+$WHITELIST,}com.amazon.firebat,com.amazon.avod"
   fi
+  sed -i.dumbtv2 "s|^androidAppWhiteList = .*|androidAppWhiteList = ${WHITELIST:-<none>}|" "$CONF_OUT"
   for want in '^#filterAutoUpdateURL' '^detectDNS = false' '^routeUnderlyingDNS = true' '^previousAutoUpdateURL = $'; do
     grep -Eq "$want" "$CONF_OUT" || die "config template changed upstream (missing: $want) — update scripts/dnsfilter.sh"
   done
-  if [[ ${SYSTEM_DNS:-0} == 1 ]]; then
-    grep -Eq '^androidAppWhiteList = android' "$CONF_OUT" ||
-      die "config template changed upstream (androidAppWhiteList did not take)"
-  else
-    grep -Eq '^androidAppWhiteList = <none>' "$CONF_OUT" ||
-      die "config template changed upstream (androidAppWhiteList did not take)"
-  fi
+  grep -Fqx "androidAppWhiteList = ${WHITELIST:-<none>}" "$CONF_OUT" ||
+    die "config template changed upstream (androidAppWhiteList did not take)"
   grep -Fqx "routeIPs = $ROUTES" "$CONF_OUT" ||
     die "config template changed upstream (routeIPs did not take) — update scripts/dnsfilter.sh"
   if [[ -n $upstream ]]; then
