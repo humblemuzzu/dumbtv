@@ -422,11 +422,30 @@ while read -r h; do
   esac
 done < <(expected_blocked)
 
-line=$(dev "ping -c1 -W2 www.youtube.com" | head -1)
+# An everyday host has to resolve, not merely escape the block: "unknown host" means the
+# filter forwards to a resolver the TV cannot reach, and every app that needs a name breaks.
+noanswer=0
+for attempt in 1 2 3; do
+  line=$(dev "ping -c1 -W2 www.youtube.com" | head -1)
+  case $line in
+    *"unknown host"*|*"not known"*|*"cannot resolve"*|"") [[ $attempt -lt 3 ]] && sleep 10 ;;
+    *) break ;;
+  esac
+done
 case $line in
   *0.0.0.0*|*127.0.0.1*) printf '  %-34s WRONGLY BLOCKED\n' www.youtube.com; fail=1 ;;
+  *"unknown host"*|*"not known"*|*"cannot resolve"*|"")
+    printf '  %-34s NO ANSWER from %s\n' www.youtube.com "${DNS_UPSTREAM:-the router ($GW)}"; noanswer=1 ;;
   *) printf '  %-34s allowed\n' www.youtube.com ;;
 esac
+
+if [[ $noanswer == 1 ]]; then
+  note "blocked names are answered by the filter, but nothing else resolves. The TV cannot"
+  note "reach ${DNS_UPSTREAM:-the router ($GW)} for DNS; a network that only allows its own"
+  note "resolver (a Pi-hole, an IoT VLAN) needs that one: ./scripts/configure.sh --dns-upstream <ip>,"
+  note "then run this script again. See docs/TROUBLESHOOTING.md."
+  exit 1
+fi
 
 if [[ $fail == 1 ]]; then
   note "the filter is not in the DNS path. Do not force-stop the app — reboot the TV,"

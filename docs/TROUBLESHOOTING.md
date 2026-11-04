@@ -198,6 +198,30 @@ reports while it runs, so:
 Fire OS 7 and 8 leave `net.dns1` to `net.dns4` empty, so there this step adds
 nothing and only the gateway is routed.
 
+### Blocked hosts are blocked, but nothing else resolves
+
+Apps that reach a server by its local address (Plex, Channels DVR) keep working,
+while YouTube and anything else that needs a name says it cannot connect. On the
+TV, `ping www.youtube.com` answers `unknown host`, and `dnsfilter.sh` prints
+`NO ANSWER from ...` in its self-test. The filter answers its own list itself and
+forwards everything else to the router, and the router is not answering the TV.
+
+Seen on an Android 14 Fire TV (AFTCU9343B) on an IoT Wi-Fi that hands out a Pi-hole on another
+subnet as its only resolver and drops DNS to the gateway. Check what the network
+hands out:
+
+```sh
+adb shell dumpsys connectivity | grep -o 'DnsAddresses: \[[^]]*\]'
+```
+
+If that is not the gateway, point the filter at it (see "Use resolvers other than
+the router" above) and run `./scripts/dnsfilter.sh` again:
+
+```sh
+./scripts/configure.sh --dns-upstream <resolver-ip>    # the address from DnsAddresses
+./scripts/dnsfilter.sh
+```
+
 ### The filter stopped working after the TV changed network
 
 The config pins `detectDNS = false`, an explicit `fallbackDNS` and
