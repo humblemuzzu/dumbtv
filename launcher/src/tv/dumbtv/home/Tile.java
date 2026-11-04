@@ -42,7 +42,7 @@ final class Tile extends View {
         this.title = title;
         this.cardW = cardW;
         this.cardH = cardH;
-        boolean app = Catalog.APPS.equals(kind);
+        boolean app = Catalog.isApp(kind);
         afterglow = app && "afterglow".equals(Config.get(c).get(Config.TILE_STYLE))
                 ? new AfterglowTile(c, item.id, title, accent) : null;
         labelH = app && afterglow == null ? Ui.dp(c, 26) : 0;
@@ -121,7 +121,7 @@ final class Tile extends View {
             icon.setBounds(left, top, left + size, top + size);
             icon.draw(canvas);
             drawLine(canvas, inner, cardW / 2f, cardH - cardH * 13 / 100f);
-        } else if (!Catalog.APPS.equals(kind)) {
+        } else if (!Catalog.isApp(kind)) {
             drawLine(canvas, inner, cardW / 2f, cardH / 2f - (inner.ascent() + inner.descent()) / 2);
         }
         if (moving) canvas.drawColor(0x99000000);

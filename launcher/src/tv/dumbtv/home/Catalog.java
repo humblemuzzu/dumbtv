@@ -19,9 +19,13 @@ import java.util.Map;
 
 /** Where tiles come from, and which of them the user wants on the home screen. */
 final class Catalog {
-    static final String APPS = "apps", INPUTS = "inputs";
+    static final String APPS = "apps", ALL_APPS = "allapps", INPUTS = "inputs";
 
     private Catalog() {}
+
+    static boolean isApp(String kind) {
+        return APPS.equals(kind) || ALL_APPS.equals(kind);
+    }
 
     /** Every launchable app, TV apps first; drawables are left for {@link #art}. */
     static List<Item> apps(Context c) {
@@ -112,6 +116,16 @@ final class Catalog {
 
     /** As above, then newest first by {@code recent} (package to last-used time) when it is set. */
     static List<Item> visible(Config cfg, String kind, List<Item> all, Map<String, Long> recent) {
+        // Pinning, hiding and recent use only affect the pinned section. Child lock keeps apps
+        // hidden there out of reach on this screen. Sort the full list by its displayed names.
+        if (ALL_APPS.equals(kind)) {
+            List<Item> out = new ArrayList<>();
+            if (!"on".equals(cfg.get(Config.ALL_APPS)) || "on".equals(cfg.get(Config.LOCK))) return out;
+            out.addAll(all);
+            Collator collator = Collator.getInstance();
+            Collections.sort(out, (a, b) -> collator.compare(label(cfg, a).toString(), label(cfg, b).toString()));
+            return out;
+        }
         List<String> order = cfg.list(kind + ".order");
         List<Item> out = new ArrayList<>();
         for (Item it : all) {

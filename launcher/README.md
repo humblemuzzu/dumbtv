@@ -64,6 +64,7 @@ you open an app. On Fire OS 7 and 8 the Settings button opens Amazon's settings 
 | Tiles | small, medium, large |
 | Layout | rows, or a grid that wraps to as many columns as fit |
 | App order | your order, or recently used: the apps row re-sorts on each return home, newest first. It counts apps opened from dumbtv home, plus apps opened any other way (voice, another app) on Fire OS 6, where the launcher already has usage access. Apps never opened keep your order after the rest |
+| All apps section | hidden (default), shown: a separate alphabetical list of every launchable app below your pinned apps. Child lock hides this section |
 | App names | on focus, always, never |
 | Clock | system, 24-hour, 12-hour |
 | Memory meter | hidden, shown: free memory under the date, with a bar of what is in use; amber, with "running low", when Android reports low memory or under 15% is free. It only shows the numbers: it closes and frees nothing, and needs no permission |
@@ -77,6 +78,19 @@ you open an app. On Fire OS 7 and 8 the Settings button opens Amazon's settings 
 Below them: Next wallpaper, which apps and inputs appear on the home screen, a
 reset for order, names and hidden tiles, and **Open Amazon's home screen**. Apps
 without a TV banner, like the Appstore, start hidden; tick them to add them.
+
+**All apps** is optional. Turn on Options › All apps section to keep the current
+Apps section as **Pinned apps** and add **All apps** below it, in either rows or
+grid layout. The full list includes unpinned apps and apps without TV banners;
+apps with no launcher entry are not listed. Hold OK or press Menu on an app there
+to Pin or Unpin it, Rename it, or open App info. The full list stays alphabetical;
+your custom or recently-used order applies to pinned apps only. Options › Apps on
+home screen still selects those pins. Turning the section off preserves them.
+
+Up and down move between nonempty sections and remember a separate focused tile
+in each. Back and HOME return to the first pinned app, or the first app in All
+apps if nothing is pinned. Child lock hides All apps and disables tile menus, so
+apps hidden from the pinned section stay hidden from this screen while it is locked.
 
 **Afterglow** changes app tiles only, in both rows and grid layouts. Select it in
 Options or set `tile_style=afterglow` in `home.conf`. The name remains visible inside
@@ -139,6 +153,8 @@ tiles=medium
 layout=rows
 # custom recent (recent = newest first; the history stays in the app's private storage)
 order=custom
+# off on (Child lock hides this section)
+all_apps=off
 # focus always never
 labels=focus
 # auto 24h 12h
@@ -309,6 +325,8 @@ Delete both to stop.
 | `release-check.sh` | checks that the version, the built APK and the GitHub release agree |
 | `tests/FocusColorTest.java` | host-side test for `FocusColor`, run by CI |
 | `tests/RecentTest.java` | host-side test for the Recently used order, run by CI |
+| `tests/ConfigTest.java` | file import and failed-write recovery tests, run by CI |
+| `tests/AppSectionsTest.java` | pinned and All apps selection tests, run by CI |
 
 ## Releasing
 
