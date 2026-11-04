@@ -277,7 +277,8 @@ gateway() {
   [[ -z $gw ]] && gw=$(dev 'getprop dhcp.wlan0.gateway' | tr -d '\r')
   printf '%s' "$gw"
 }
-uid_of()     { dev "dumpsys package $1" | sed -n 's/.*userId=\([0-9]*\).*/\1/p' | head -1; }
+# Android 14 prints appId= where older releases print userId=.
+uid_of()     { dev "dumpsys package $1" | sed -n 's/.*\(userId\|appId\)=\([0-9]*\).*/\2/p' | head -1; }
 present() {
   local out rc=0
   out=$(dev_ok "pm path $1") || rc=$?
