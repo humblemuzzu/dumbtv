@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- guard_label stays English: scripts/accessibility.sh finds the service by it. -->
+    <string name="guard_description">Envía el botón HOME a la pantalla de inicio de dumbtv en lugar de la de Amazon. No lee el contenido de la pantalla y no tiene acceso a internet.</string>
+
+    <!-- Pantalla de inicio -->
+    <string name="options">Opciones</string>
+    <string name="settings">Ajustes</string>
+    <string name="row_apps">Apps</string>
+    <string name="row_inputs">Entradas</string>
+    <string name="could_not_open">No se pudo abrir</string>
+    <string name="tile_move">Mover</string>
+    <string name="tile_rename">Renombrar</string>
+    <string name="tile_hide">Ocultar</string>
+    <string name="tile_app_info">Info de la app</string>
+    <string name="move_needs_order">El orden de apps es Usadas recientemente. Elige Tu orden en Opciones para mover mosaicos.</string>
+    <string name="hidden_toast">Oculta. Puedes volver a mostrarla desde Opciones.</string>
+    <string name="rename_title">Renombrar</string>
+    <string name="save">Guardar</string>
+    <string name="original">Original</string>
+    <string name="cancel">Cancelar</string>
+
+    <!-- Entradas -->
+    <string name="input_failed">No se pudo abrir la entrada</string>
+    <string name="input_no_signal">Sin señal</string>
+
+    <!-- Medidor de memoria -->
+    <string name="meter_title">Memoria</string>
+    <string name="meter_free">%1$d MB libres de %2$d MB</string>
+    <string name="meter_low">queda poca</string>
+
+    <!-- Lista de ajustes de Fire OS 6 -->
+    <string name="fire_all_settings">Todos los ajustes…</string>
+    <string name="fire_notifications">Notificaciones</string>
+    <string name="fire_network">Red</string>
+    <string name="fire_applications">Aplicaciones</string>
+    <string name="fire_equipment_control">Control de equipos</string>
+    <string name="fire_controllers">Controles y dispositivos Bluetooth</string>
+    <string name="fire_device">Dispositivo y software</string>
+
+    <!-- Opciones -->
+    <string name="next_wallpaper">Siguiente fondo</string>
+    <string name="apps_on_home">Apps en la pantalla de inicio</string>
+    <string name="inputs_on_home">Entradas en la pantalla de inicio</string>
+    <string name="reset_layout">Restablecer orden, nombres y mosaicos ocultos</string>
+    <string name="open_amazon_home">Abrir la pantalla de inicio de Amazon</string>
+    <string name="done">Listo</string>
+    <string name="reset_title">¿Restablecer la pantalla de inicio?</string>
+    <string name="reset_message">El orden, los nombres y los mosaicos ocultos vuelven a como estaban. Los colores y tamaños se mantienen.</string>
+    <string name="reset">Restablecer</string>
+    <string name="lock_on">Opciones y Ajustes ya no se ven en la pantalla de inicio. Mantén ☰ Menú %1$d segundos para volver aquí.</string>
+    <string name="about">Archivo de ajustes: %1$s\nUn fondo: llámalo exactamente wallpaper.jpg (o .png) y ponlo en esa carpeta\nVarios fondos: ponlos en %2$s/ con cualquier nombre y elige una rotación\nLuego elige Fondo › Imagen o Tinte adaptativo del fondo. No hace falta ningún permiso\nEn Fire OS 8 adb no llega a esa carpeta; usa %3$s\nEl tinte adaptativo del fondo muestra grafito hasta que agregues un fondo\nSin permiso de internet. Sin rastreo, sin anuncios, sin cuentas.</string>
+
+    <!-- Filas de Opciones -->
+    <string name="choice_accent">Color de acento</string>
+    <string name="choice_accent_white">Blanco</string>
+    <string name="choice_accent_blue">Azul</string>
+    <string name="choice_accent_cyan">Cian</string>
+    <string name="choice_accent_green">Verde</string>
+    <string name="choice_accent_amber">Ámbar</string>
+    <string name="choice_accent_red">Rojo</string>
+    <string name="choice_accent_pink">Rosa</string>
+    <string name="choice_accent_violet">Violeta</string>
+    <string name="choice_tiles">Tamaño de mosaicos</string>
+    <string name="choice_tiles_small">Chico</string>
+    <string name="choice_tiles_medium">Mediano</string>
+    <string name="choice_tiles_large">Grande</string>
+    <string name="choice_layout">Diseño</string>
+    <string name="choice_layout_rows">Filas</string>
+    <string name="choice_layout_grid">Cuadrícula</string>
+    <string name="choice_order">Orden de apps</string>
+    <string name="choice_order_custom">Tu orden</string>
+    <string name="choice_order_recent">Usadas recientemente</string>
+    <string name="choice_labels">Nombres de apps</string>
+    <string name="choice_labels_focus">Al seleccionar</string>
+    <string name="choice_labels_always">Siempre</string>
+    <string name="choice_labels_never">Nunca</string>
+    <string name="choice_clock">Reloj</string>
+    <string name="choice_clock_auto">Del sistema</string>
+    <string name="choice_clock_24h">24 horas</string>
+    <string name="choice_clock_12h">12 horas</string>
+    <string name="choice_memory">Medidor de memoria</string>
+    <string name="choice_memory_off">Oculto</string>
+    <string name="choice_memory_on">Visible</string>
+    <string name="choice_inputs">Fila de entradas</string>
+    <string name="choice_inputs_on">Visible</string>
+    <string name="choice_inputs_off">Oculta</string>
+    <string name="choice_switch">Abrir entradas con</string>
+    <string name="choice_switch_auto">Automático</string>
+    <string name="choice_switch_tv">La app del TV</string>
+    <string name="choice_switch_home">dumbtv home</string>
+    <string name="choice_background">Fondo</string>
+    <string name="choice_background_black">Negro</string>
+    <string name="choice_background_graphite">Grafito</string>
+    <string name="choice_background_midnight">Medianoche</string>
+    <string name="choice_background_image">Imagen</string>
+    <string name="choice_background_adaptive">Color adaptativo</string>
+    <string name="choice_background_adaptive_tint">Tinte adaptativo del fondo</string>
+    <string name="choice_dim">Oscurecer imagen</string>
+    <string name="choice_rotate">Rotación de fondos</string>
+    <string name="choice_rotate_off">Apagada</string>
+    <string name="choice_rotate_visit">Al volver al inicio</string>
+    <string name="choice_rotate_hourly">Cada hora</string>
+    <string name="choice_rotate_daily">Cada día</string>
+    <string name="choice_rotate_daytime">Según la hora del día</string>
+    <string name="choice_lock">Bloqueo infantil</string>
+    <string name="choice_lock_off">Apagado</string>
+    <string name="choice_lock_on">Encendido</string>
+    <string name="choice_tile_style">Estilo de mosaicos</string>
+    <string name="choice_tile_style_original">Original</string>
+    <string name="choice_tile_style_afterglow">Afterglow</string>
+</resources>
