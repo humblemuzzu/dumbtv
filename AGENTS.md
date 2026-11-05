@@ -100,7 +100,10 @@ people take them.
 who wants a specific Amazon feature. Fire OS 6 has one more question
 (`--system-dns`); its default is right for almost everyone. `--dns-upstream` is
 not one of the questions: leave it unset unless the owner names resolver IPs.
-Empty means the filter forwards unknown names to the router.
+Empty means the filter forwards unknown names to the router. If the self-test says
+`NO ANSWER`, the TV cannot use the router for DNS (an IoT network that only allows
+its own resolver, a Pi-hole): show the owner what `DnsAddresses` the network hands
+out and set that one once they confirm it.
 
 Record the answers:
 
@@ -176,6 +179,7 @@ path. Use the table below; do not disable more packages.
 | `verify.sh` warns `data-saver off` | `./scripts/lockdown.sh -y` |
 | `dnsfilter.sh` says the tracker list "does not look right" | the download was an error page or cut short; nothing was pushed. Run it again later |
 | Nothing is blocked, but the filter is running | reboot the TV |
+| Blocked names are blocked, but YouTube and other apps cannot connect | the filter's upstream does not answer the TV: "Blocked hosts are blocked, but nothing else resolves" in docs/TROUBLESHOOTING.md |
 | "Unable to Detect Your Remote" over everything | `adb shell pm enable --user 0 com.amazon.vizzini`, then reboot |
 | The TV sleeps while something plays on HDMI | `./scripts/launcher.sh -y` (dumbtv home 1.3 and later keep the panel awake) |
 | An app stopped working | find the host it needs and remove it from `data/blocklists/extra-hosts.txt`, then `./scripts/dnsfilter.sh -y` |

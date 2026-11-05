@@ -153,6 +153,25 @@ class FrontActivityTest(unittest.TestCase):
                     self.assertEqual(result.stdout.strip(), self.WANT[name], result.stderr)
 
 
+class UidOfTest(unittest.TestCase):
+    DUMPS = {
+        "fire os 8": "  Package [com.amazon.tv.csapp] (5f1c2d0):\n    userId=10136\n    pkg=Package{1 com.amazon.tv.csapp}\n",
+        "android 14": "  Package [com.amazon.tv.csapp] (5f1c2d0):\n    appId=10136\n    pkg=Package{1 com.amazon.tv.csapp}\n",
+    }
+
+    def test_every_android_version(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            adb = Path(tmp) / "adb"
+            adb.write_text('#!/usr/bin/env bash\ncat "$DUMP"\n')
+            adb.chmod(0o755)
+            for name, dump in self.DUMPS.items():
+                with self.subTest(name=name):
+                    (Path(tmp) / "dump").write_text(dump)
+                    result = lib("uid_of com.amazon.tv.csapp", {"ADB": str(adb), "SERIAL": "tv",
+                                                                "DUMP": str(Path(tmp) / "dump")})
+                    self.assertEqual(result.stdout.strip(), "10136", result.stderr)
+
+
 class FireOsNameTest(unittest.TestCase):
     def name(self, sdk):
         return lib("fireos_name", {"SDK": str(sdk)}).stdout.strip()
