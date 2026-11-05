@@ -18,6 +18,7 @@
     <string name="tile_hide">Hide</string>
     <string name="tile_pin">Pin</string>
     <string name="tile_unpin">Unpin</string>
+    <string name="tile_icon">Icon</string>
     <string name="tile_app_info">App info</string>
     <string name="move_needs_order">App order is Recently used. Pick Your order in Options to move tiles.</string>
     <string name="hidden_toast">Hidden. Bring it back from Options.</string>
@@ -53,10 +54,19 @@
     <string name="open_amazon_home">Open Amazon\'s home screen</string>
     <string name="done">Done</string>
     <string name="reset_title">Reset the home screen layout?</string>
-    <string name="reset_message">Order, names and hidden tiles go back to default. Colors and sizes stay.</string>
+    <string name="reset_message">Order, names, picked icons and hidden tiles go back to default. Colors and sizes stay.</string>
     <string name="reset">Reset</string>
     <string name="lock_on">Options and Settings are hidden on the home screen now. Hold ☰ Menu for %1$d seconds to come back here.</string>
-    <string name="about">Settings file: %1$s\nOne wallpaper: name it exactly wallpaper.jpg (or .png) and put it in that folder\nSeveral wallpapers: put them in %2$s/ with any names, and pick a rotation\nThen pick Background › Image file or Adaptive wallpaper tint. No permission is needed\nOn Fire OS 8 adb cannot reach that folder; use %3$s instead\nAdaptive wallpaper tint shows graphite until you add a wallpaper\nLibrary banner: put pictures and %4$s in %5$s/ in that folder\nNo internet permission. No tracking, no ads, no accounts.</string>
+    <string name="about">Settings file: %1$s\nOne wallpaper: name it exactly wallpaper.jpg (or .png) and put it in that folder\nSeveral wallpapers: put them in %2$s/ with any names, and pick a rotation\nThen pick Background › Image file or Adaptive wallpaper tint. No permission is needed\nOn Fire OS 8 adb cannot reach that folder; use %3$s instead\nAdaptive wallpaper tint shows graphite until you add a wallpaper\nLibrary banner: put pictures and %4$s in %5$s/ in that folder\nIcon pack: install one, then pick it above; hold OK on a tile › Icon to pick one app\'s icon\nNo internet permission. No tracking, no ads, no accounts.</string>
+
+    <string name="icon_for">Icon for %1$s</string>
+    <string name="icon_filter">Filter by name</string>
+    <string name="icon_reading">Reading the icon pack…</string>
+    <string name="icon_automatic">Automatic</string>
+    <string name="icon_own">App\'s own picture</string>
+    <string name="icon_no_pack">No icon pack chosen. Pick one under Options › Icon pack.</string>
+    <string name="icon_count">%1$d icons</string>
+    <string name="icon_count_of">%1$d of %2$d icons</string>
 
     <string name="library_watch">OK to watch</string>
     <string name="library_more">◀ ▶ more</string>
@@ -123,6 +133,7 @@
     <string name="choice_all_apps">All apps section</string>
     <string name="choice_all_apps_off">Hidden</string>
     <string name="choice_all_apps_on">Shown</string>
+    <string name="choice_icon_pack">Icon pack</string>
     <string name="choice_library">Library banner</string>
     <string name="choice_library_on">Shown</string>
     <string name="choice_library_off">Hidden</string>

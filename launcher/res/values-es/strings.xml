@@ -16,6 +16,7 @@
     <string name="tile_hide">Ocultar</string>
     <string name="tile_pin">Fijar</string>
     <string name="tile_unpin">Dejar de fijar</string>
+    <string name="tile_icon">Icono</string>
     <string name="tile_app_info">Info de la app</string>
     <string name="move_needs_order">El orden de apps es Usadas recientemente. Elige Tu orden en Opciones para mover mosaicos.</string>
     <string name="hidden_toast">Oculta. Puedes volver a mostrarla desde Opciones.</string>
@@ -51,10 +52,19 @@
     <string name="open_amazon_home">Abrir la pantalla de inicio de Amazon</string>
     <string name="done">Listo</string>
     <string name="reset_title">¿Restablecer la pantalla de inicio?</string>
-    <string name="reset_message">El orden, los nombres y los mosaicos ocultos vuelven a como estaban. Los colores y tamaños se mantienen.</string>
+    <string name="reset_message">El orden, los nombres, los iconos elegidos y los mosaicos ocultos vuelven a como estaban. Los colores y tamaños se mantienen.</string>
     <string name="reset">Restablecer</string>
     <string name="lock_on">Opciones y Ajustes ya no se ven en la pantalla de inicio. Mantén ☰ Menú %1$d segundos para volver aquí.</string>
-    <string name="about">Archivo de ajustes: %1$s\nUn fondo: llámalo exactamente wallpaper.jpg (o .png) y ponlo en esa carpeta\nVarios fondos: ponlos en %2$s/ con cualquier nombre y elige una rotación\nLuego elige Fondo › Imagen o Tinte adaptativo del fondo. No hace falta ningún permiso\nEn Fire OS 8 adb no llega a esa carpeta; usa %3$s\nEl tinte adaptativo del fondo muestra grafito hasta que agregues un fondo\nBanner de biblioteca: pon las imágenes y %4$s en %5$s/ dentro de esa carpeta\nSin permiso de internet. Sin rastreo, sin anuncios, sin cuentas.</string>
+    <string name="about">Archivo de ajustes: %1$s\nUn fondo: llámalo exactamente wallpaper.jpg (o .png) y ponlo en esa carpeta\nVarios fondos: ponlos en %2$s/ con cualquier nombre y elige una rotación\nLuego elige Fondo › Imagen o Tinte adaptativo del fondo. No hace falta ningún permiso\nEn Fire OS 8 adb no llega a esa carpeta; usa %3$s\nEl tinte adaptativo del fondo muestra grafito hasta que agregues un fondo\nBanner de biblioteca: pon las imágenes y %4$s en %5$s/ dentro de esa carpeta\nPaquete de iconos: instala uno y elígelo arriba; mantén OK en un mosaico › Icono para elegir el de una app\nSin permiso de internet. Sin rastreo, sin anuncios, sin cuentas.</string>
+
+    <string name="icon_for">Icono para %1$s</string>
+    <string name="icon_filter">Filtrar por nombre</string>
+    <string name="icon_reading">Leyendo el paquete de iconos…</string>
+    <string name="icon_automatic">Automático</string>
+    <string name="icon_own">Imagen propia de la app</string>
+    <string name="icon_no_pack">No hay paquete de iconos elegido. Elige uno en Opciones › Paquete de iconos.</string>
+    <string name="icon_count">%1$d iconos</string>
+    <string name="icon_count_of">%1$d de %2$d iconos</string>
 
     <string name="library_watch">OK para ver</string>
     <string name="library_more">◀ ▶ más</string>
@@ -120,6 +130,7 @@
     <string name="choice_all_apps">Sección Todas las apps</string>
     <string name="choice_all_apps_off">Oculta</string>
     <string name="choice_all_apps_on">Visible</string>
+    <string name="choice_icon_pack">Paquete de iconos</string>
     <string name="choice_library">Banner de biblioteca</string>
     <string name="choice_library_on">Visible</string>
     <string name="choice_library_off">Oculto</string>

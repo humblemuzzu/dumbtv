@@ -49,6 +49,7 @@ public final class Options extends Activity {
         list.addView(title);
 
         for (Config.Choice c : Config.CHOICES) list.addView(choice(c));
+        list.addView(choice(IconPack.choice(IconPack.installed(getPackageManager()))));
         list.addView(action(getString(R.string.next_wallpaper), () -> {
             cfg.nextWallpaper();
             refresh();
@@ -125,8 +126,11 @@ public final class Options extends Activity {
     }
 
     private boolean step(Config.Choice c, int by) {
-        int i = Arrays.asList(c.values).indexOf(cfg.get(c));
         int n = c.values.length;
+        // Nothing to switch to, as Icon pack with none installed: keep what is saved, so a pack
+        // that comes back is still the chosen one.
+        if (n < 2) return true;
+        int i = Arrays.asList(c.values).indexOf(cfg.get(c));
         cfg.set(c.key, c.values[((i + by) % n + n) % n]);
         refresh();
         if (c == Config.LOCK && "on".equals(cfg.get(c))) {
@@ -201,7 +205,7 @@ public final class Options extends Activity {
         new AlertDialog.Builder(this, Ui.DIALOG)
                 .setTitle(R.string.reset_title)
                 .setMessage(R.string.reset_message)
-                .setPositiveButton(R.string.reset, (d, w) -> cfg.removePrefix("name.", "apps.", "inputs."))
+                .setPositiveButton(R.string.reset, (d, w) -> cfg.removePrefix("name.", "apps.", "inputs.", IconPack.CHOSEN))
                 .setNegativeButton(R.string.cancel, null)
                 .show();
     }

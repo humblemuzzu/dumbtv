@@ -292,6 +292,15 @@ final class Config {
         set(key, TextUtils.join(",", items));
     }
 
+    /** Every key=value with this prefix in one string, to notice when any of them changes. */
+    String joined(String prefix) {
+        StringBuilder out = new StringBuilder();
+        for (Map.Entry<String, String> e : values.entrySet()) {
+            if (e.getKey().startsWith(prefix)) out.append(e.getKey()).append('=').append(e.getValue()).append('\n');
+        }
+        return out.toString();
+    }
+
     void removePrefix(String... prefixes) {
         for (Iterator<String> it = values.keySet().iterator(); it.hasNext(); ) {
             String k = it.next();

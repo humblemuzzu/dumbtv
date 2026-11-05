@@ -58,6 +58,14 @@
             android:configChanges="keyboard|keyboardHidden|navigation|orientation|screenSize|screenLayout|uiMode" />
 
         <activity
+            android:name=".IconPicker"
+            android:exported="false"
+            android:excludeFromRecents="true"
+            android:screenOrientation="landscape"
+            android:windowSoftInputMode="stateHidden"
+            android:configChanges="keyboard|keyboardHidden|navigation|orientation|screenSize|screenLayout|uiMode" />
+
+        <activity
             android:name=".Input"
             android:exported="false"
             android:excludeFromRecents="true"

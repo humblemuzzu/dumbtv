@@ -12,6 +12,7 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.Rect;
+import android.graphics.drawable.Drawable;
 import android.media.tv.TvInputManager;
 import android.net.Uri;
 import android.os.Build;
@@ -84,12 +85,25 @@ public final class Home extends Activity {
     private ValueAnimator colorAnimation;
     private int displayedColor, targetColor;
     private boolean tintWallpaper;
+    /** Options › Icon pack and the picked icons as the tiles' art was last loaded for. UI thread. */
+    private String artState = "";
+    /** Icon packs read so far by package, null for one that would not load; io thread only. */
+    private final Map<String, IconPack> packs = new HashMap<>();
 
     private final BroadcastReceiver packages = new BroadcastReceiver() {
         @Override
         public void onReceive(Context c, Intent i) {
             Uri data = i.getData();
-            loadApps(data == null ? null : data.getSchemeSpecificPart());
+            String changed = data == null ? null : data.getSchemeSpecificPart();
+            if (changed != null) {
+                // Forget what was read from that package, a pack that would not load included:
+                // a pack installed again while another was chosen must load when chosen.
+                io.execute(() -> packs.remove(changed));
+                if (artState.contains(changed)) {
+                    for (Item it : apps.all) it.artRequested = false;
+                }
+            }
+            loadApps(changed);
         }
     };
 
@@ -207,6 +221,7 @@ public final class Home extends Activity {
      * their banners in.
      */
     private void firstApps(Future<List<Item>> catalog, Future<Map<String, Long>> times) {
+        artState = artState();
         try {
             apps.all = catalog.get();
             if (times != null) recent = times.get();
@@ -219,11 +234,62 @@ public final class Home extends Activity {
             return;
         }
         int fit = getResources().getDisplayMetrics().widthPixels / (cardSize()[0] + dp(18)) + 1;
+        boolean cornerIcon = "afterglow".equals(cfg.get(Config.TILE_STYLE));
+        List<Item> first = new ArrayList<>();
+        List<Runnable> jobs = new ArrayList<>();
         for (Item it : Catalog.visible(cfg, Catalog.APPS, apps.all, recentFor(Catalog.APPS))) {
             if (fit-- <= 0) break;
-            Catalog.art(getPackageManager(), it, "afterglow".equals(cfg.get(Config.TILE_STYLE)));
-            it.artRequested = true;
+            first.add(it);
+            jobs.add(artJob(it, cornerIcon));
         }
+        try {
+            io.submit(() -> {
+                for (Runnable job : jobs) job.run();
+            }).get();
+        } catch (ExecutionException e) {
+            return; // the tiles load their art as they are drawn
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            return;
+        }
+        for (Item it : first) it.artRequested = true;
+    }
+
+    /** What the tiles' art depends on besides the apps themselves. */
+    private String artState() {
+        return cfg.get(IconPack.KEY, IconPack.OFF) + "|" + cfg.joined(IconPack.CHOSEN);
+    }
+
+    /** Loads one tile's art: the settings are read here, on the UI thread; run it on io. */
+    private Runnable artJob(Item it, boolean cornerIcon) {
+        String pack = cfg.get(IconPack.KEY, IconPack.OFF);
+        String chosen = cfg.get(IconPack.CHOSEN + it.id, null);
+        return () -> Catalog.art(getPackageManager(), it, cornerIcon, replacementArt(it, chosen, pack));
+    }
+
+    /**
+     * The picture that replaces an app's own art: the icon picked for it from the chosen pack,
+     * then the chosen pack's match. Null keeps the app's own. io thread only.
+     */
+    private Drawable replacementArt(Item it, String chosen, String pack) {
+        if (IconPack.OWN.equals(chosen)) return null;
+        IconPack p = iconPack(pack);
+        if (p == null) return null;
+        // A picked icon belongs to the pack it came from and only counts while that pack is the
+        // chosen one: switching packs needs no tile fixed by hand, switching back restores it.
+        String picked = IconMatch.picked(chosen, pack);
+        Drawable d = picked == null ? null : p.picture(picked);
+        return d != null ? d : p.drawable(it);
+    }
+
+    /** An icon pack by package, read once. io thread only. */
+    private IconPack iconPack(String pkg) {
+        if (!packs.containsKey(pkg)) {
+            IconPack p = IconPack.load(getPackageManager(), pkg);
+            packs.put(pkg, p);
+            if (p != null) Keeper.note("icon pack " + pkg + ": " + p.size() + " apps");
+        }
+        return packs.get(pkg);
     }
 
     @Override
@@ -693,6 +759,11 @@ public final class Home extends Activity {
         hero.setAccent(accent);
         apps.title.setText(getString("on".equals(cfg.get(Config.ALL_APPS))
                 ? R.string.row_pinned_apps : R.string.row_apps).toUpperCase(Locale.ROOT));
+        String state = artState();
+        if (!state.equals(artState)) {
+            artState = state;
+            for (Item it : apps.all) it.artRequested = false;
+        }
         render(apps);
         render(allApps);
         render(inputs);
@@ -877,9 +948,9 @@ public final class Home extends Activity {
 
     private void loadArt(Item it) {
         it.artRequested = true;
-        boolean cornerIcon = "afterglow".equals(cfg.get(Config.TILE_STYLE));
+        Runnable job = artJob(it, "afterglow".equals(cfg.get(Config.TILE_STYLE)));
         io.execute(() -> {
-            Catalog.art(getPackageManager(), it, cornerIcon);
+            job.run();
             ui.post(() -> {
                 for (Row row : new Row[] {apps, allApps}) {
                     ViewGroup tiles = row.tiles();
@@ -1193,17 +1264,22 @@ public final class Home extends Activity {
         }
         boolean app = Catalog.APPS.equals(t.kind);
         boolean pinning = app && "on".equals(cfg.get(Config.ALL_APPS));
-        String[] actions = app
-                ? new String[] {getString(R.string.tile_move), getString(R.string.tile_rename),
-                        getString(pinning ? R.string.tile_unpin : R.string.tile_hide),
-                        getString(R.string.tile_app_info)}
-                : new String[] {getString(R.string.tile_move), getString(R.string.tile_rename),
-                        getString(R.string.tile_hide)};
+        // Icon picks from the chosen pack, so it is only offered while that pack is installed.
+        boolean icon = app && IconPack.installed(getPackageManager())
+                .containsKey(cfg.get(IconPack.KEY, IconPack.OFF));
+        List<Integer> menu = new ArrayList<>();
+        menu.add(R.string.tile_move);
+        menu.add(R.string.tile_rename);
+        if (icon) menu.add(R.string.tile_icon);
+        menu.add(pinning ? R.string.tile_unpin : R.string.tile_hide);
+        if (app) menu.add(R.string.tile_app_info);
+        String[] actions = new String[menu.size()];
+        for (int i = 0; i < actions.length; i++) actions[i] = getString(menu.get(i));
         new AlertDialog.Builder(this, Ui.DIALOG)
                 .setTitle(Catalog.label(cfg, t.item))
                 .setItems(actions, (d, which) -> {
-                    switch (which) {
-                        case 0:
+                    switch (menu.get(which)) {
+                        case R.string.tile_move:
                             if (t.getParent() == null) break;
                             if (app && recentFor(t.kind) != null) {
                                 Toast.makeText(this, R.string.move_needs_order, Toast.LENGTH_LONG).show();
@@ -1212,10 +1288,16 @@ public final class Home extends Activity {
                             moving = t;
                             t.setMoving(true);
                             break;
-                        case 1:
+                        case R.string.tile_rename:
                             rename(t);
                             break;
-                        case 2:
+                        case R.string.tile_icon:
+                            startActivity(new Intent(this, IconPicker.class)
+                                    .putExtra(IconPicker.APP, t.item.id)
+                                    .putExtra(IconPicker.LABEL, Catalog.label(cfg, t.item).toString()));
+                            break;
+                        case R.string.tile_hide:
+                        case R.string.tile_unpin:
                             Catalog.setShown(cfg, t.kind, t.item, false);
                             render(app ? apps : inputs);
                             Toast.makeText(this, pinning ? R.string.unpinned_toast : R.string.hidden_toast,

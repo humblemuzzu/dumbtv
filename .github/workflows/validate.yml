@@ -37,6 +37,9 @@ jobs:
             launcher/tests/stubs/android/*/*.java launcher/src/tv/dumbtv/home/Config.java \
             launcher/tests/ConfigTest.java
           java -cp /tmp/config-host tv.dumbtv.home.ConfigTest
+          javac --release 8 -Xlint:all -Werror -d /tmp/host launcher/src/tv/dumbtv/home/IconMatch.java \
+            launcher/tests/IconMatchTest.java
+          java -cp /tmp/host tv.dumbtv.home.IconMatchTest
           javac -d /tmp/host -cp "$jar" launcher/src/tv/dumbtv/home/FocusColor.java \
             launcher/src/tv/dumbtv/home/Config.java launcher/src/tv/dumbtv/home/Library.java \
             launcher/src/tv/dumbtv/home/Recent.java launcher/tests/FocusColorTest.java
