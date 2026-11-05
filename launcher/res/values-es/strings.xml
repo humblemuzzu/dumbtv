@@ -130,6 +130,9 @@
     <string name="choice_tile_style">Estilo de mosaicos</string>
     <string name="choice_tile_style_original">Original</string>
     <string name="choice_tile_style_afterglow">Afterglow</string>
+    <string name="choice_chips">Estilo de botones</string>
+    <string name="choice_chips_text">Texto</string>
+    <string name="choice_chips_icons">Iconos</string>
     <string name="choice_all_apps">Sección Todas las apps</string>
     <string name="choice_all_apps_off">Oculta</string>
     <string name="choice_all_apps_on">Visible</string>

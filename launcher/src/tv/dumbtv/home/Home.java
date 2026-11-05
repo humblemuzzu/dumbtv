@@ -744,7 +744,8 @@ public final class Home extends Activity {
     }
 
     /**
-     * A round icon button. Its name shows next to the icon only while it has the focus, so the
+     * A chip in the corner. Options › Chip style picks its look: the text chip (the default), or
+     * a round icon button whose name shows next to the icon only while it has the focus, so the
      * corner stays quiet and the remote still says where OK goes. {@code shape} and
      * {@code mark} are the two layers {@link Ui#chipIcon} tints; {@link #apply} draws them.
      */
@@ -753,17 +754,15 @@ public final class Home extends Activity {
         v.setTag(new int[] {shape, mark});
         v.setContentDescription(label);
         v.setGravity(Gravity.CENTER);
-        v.setPadding(dp(10), dp(10), dp(10), dp(10));
         v.setFocusable(true);
         v.setClickable(true);
         v.setOnClickListener(click);
         v.setOnFocusChangeListener((view, has) -> {
-            v.setText(has ? label : "");
-            v.setCompoundDrawablePadding(has ? dp(8) : 0);
-            v.setPadding(dp(10), dp(10), dp(has ? 16 : 10), dp(10));
+            chipLook(v, has);
             view.animate().scaleX(has ? 1.06f : 1f).scaleY(has ? 1.06f : 1f).setDuration(110).start();
             if (has) focusBackground(null);
         });
+        chipLook(v, false);
         LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(WRAP, WRAP);
         lp.leftMargin = dp(10);
         lp.topMargin = dp(6);
@@ -772,14 +771,33 @@ public final class Home extends Activity {
         return v;
     }
 
+    private boolean iconChips() {
+        return "icons".equals(cfg.get(Config.CHIPS));
+    }
+
+    /** Text and padding for the chip style: the name always for text, on focus only for icons. */
+    private void chipLook(TextView c, boolean focused) {
+        if (!iconChips()) {
+            c.setText(c.getContentDescription());
+            c.setCompoundDrawablePadding(0);
+            c.setPadding(dp(18), dp(9), dp(18), dp(9));
+            return;
+        }
+        c.setText(focused ? c.getContentDescription() : "");
+        c.setCompoundDrawablePadding(focused ? dp(8) : 0);
+        c.setPadding(dp(10), dp(10), dp(focused ? 16 : 10), dp(10));
+    }
+
     private void apply() {
         applied = cfg.version();
         int accent = cfg.accent();
+        boolean icons = iconChips();
         for (TextView c : chips) {
-            Ui.focusStyle(c, accent, 0x14FFFFFF, dp(21));
+            Ui.focusStyle(c, accent, 0x14FFFFFF, dp(icons ? 21 : 18));
             int[] art = (int[]) c.getTag();
-            c.setCompoundDrawablesRelative(Ui.chipIcon(getDrawable(art[0]), getDrawable(art[1]),
-                    accent, dp(22)), null, null, null);
+            c.setCompoundDrawablesRelative(icons ? Ui.chipIcon(getDrawable(art[0]), getDrawable(art[1]),
+                    accent, dp(22)) : null, null, null, null);
+            chipLook(c, c.isFocused());
             c.setVisibility(locked() ? View.GONE : View.VISIBLE);
         }
         meter.setVisibility("on".equals(cfg.get(Config.MEMORY)) ? View.VISIBLE : View.GONE);

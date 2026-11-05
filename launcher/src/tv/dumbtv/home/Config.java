@@ -110,10 +110,13 @@ final class Config {
 
     static final Choice TILE_STYLE = new Choice("tile_style", "App tile style", "original",
             new String[] {"original", "afterglow"}, new String[] {"Original", "Afterglow"});
+    /** Options and Settings in the corner: text chips, or icon buttons whose name shows on focus. */
+    static final Choice CHIPS = new Choice("chips", "Chip style", "text",
+            new String[] {"text", "icons"}, new String[] {"Text", "Icons"});
     /** The banner of hand-picked titles from {@link Library}; hidden anyway while it has none. */
     static final Choice LIBRARY = new Choice("library", "Library banner", "on",
             new String[] {"on", "off"}, new String[] {"Shown", "Hidden"});
-    static final Choice[] CHOICES = {ACCENT, TILES, LAYOUT, ORDER, ALL_APPS, LABELS, CLOCK, MEMORY, INPUTS, SWITCH, BACKGROUND, DIM, ROTATE, LOCK, TILE_STYLE, LIBRARY};
+    static final Choice[] CHOICES = {ACCENT, TILES, LAYOUT, ORDER, ALL_APPS, LABELS, CLOCK, MEMORY, INPUTS, SWITCH, BACKGROUND, DIM, ROTATE, LOCK, TILE_STYLE, CHIPS, LIBRARY};
 
     /** Folder of wallpapers, next to home.conf, that Background › Image file rotates through. */
     static final String WALLPAPERS = "wallpapers";
