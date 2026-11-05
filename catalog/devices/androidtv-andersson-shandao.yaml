@@ -1,10 +1,10 @@
 id: androidtv-andersson-shandao
-title: "Andersson Android TV (Vestel, MediaTek m7632, Android TV 11)"
+title: "Andersson Android TV (Vestel, MediaTek m7632)"
 contributors:
   - PicaPicaDev
 platform: androidtv
 status: partial
-tested_on: "RTMA.250416.082"
+tested_on: "UKNV.260304.001 (Android 14, sdk 34); first done on RTMA.250416.082 (Android 11)"
 models:
   - "Andersson Android TV (Vestel, device shandao)"
 adb:
@@ -40,7 +40,10 @@ quirks:
   - "com.vestel.smartlogger and com.vestel.vestelreporter run as the system uid (1000), start on boot and stay resident; smartlogger bundles Firebase and has receivers for channel changes, external sources, settings, Bluetooth and CI modules. Both disabled with pm disable-user and stayed disabled across reboots."
   - "Only com.google.android.tvlauncher (priority 2) and the Settings FallbackHome answer HOME, so setupwraith did not need touching. Disabling tvlauncher after installing dumbtv home made HOME land on dumbtv home across reboots."
   - "Private DNS (hostname mode, dns.adguard-dns.com) works on this build; blocked hosts answer 127.0.0.1."
-notes: "Disabled by hand, all surviving reboots: vestel smartlogger, vestelreporter, smartcenter, google feedback, partnersetup, tvrecommendations, mediatek leanbacklauncher partnercustomizer, fusion.android.tv.demo, katniss, and tvlauncher for the launcher swap. MemAvailable went from about 590 MB to about 880 MB."
+  - "A Vestel OTA took this set from Android 11 (RTMA.250416.082) to Android 14 (UKNV.260304.001) as a 960 MB A/B delta that downloaded in the background with update_engine at most of a CPU core. User-disabled packages and the dumbtv home swap survived it, except com.vestel.vestelreporter, which the update re-enabled. Re-check pm list packages -d after any Vestel update."
+  - "Android 14 brings com.android.adservices.api, com.android.ondevicepersonalization.services, com.android.federatedcompute.services and com.android.tv.feedbackconsent; all four disabled with pm disable-user and stayed disabled across a reboot."
+  - "The TV took a new DHCP address after the OTA reboot, so adb connect to the old IP failed with No route to host; reserve the address on the router."
+notes: "Disabled by hand, all surviving reboots: vestel smartlogger, vestelreporter, smartcenter, google feedback, partnersetup, tvrecommendations, mediatek leanbacklauncher partnercustomizer, fusion.android.tv.demo, katniss, tvlauncher for the launcher swap, backdrop (screensaver set to com.android.dreams.basic/.Colors first), tts and syncadapters.calendar; on Android 14 also adservices.api, ondevicepersonalization.services, federatedcompute.services and tv.feedbackconsent. MemAvailable went from about 590 MB to about 880 MB on Android 11."
 verify:
   blocked: data/blocklists/verify-blocked.txt
   allowed: data/blocklists/verify-allowed.txt
