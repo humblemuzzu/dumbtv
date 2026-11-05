@@ -51,13 +51,16 @@
     <string name="apps_on_home">Apps on home screen</string>
     <string name="inputs_on_home">Inputs on home screen</string>
     <string name="reset_layout">Reset order, names and hidden tiles</string>
+    <string name="export_settings">Export settings for adb pull</string>
+    <string name="export_done">Saved to %1$s</string>
+    <string name="export_failed">Could not write the copy</string>
     <string name="open_amazon_home">Open Amazon\'s home screen</string>
     <string name="done">Done</string>
     <string name="reset_title">Reset the home screen layout?</string>
     <string name="reset_message">Order, names, picked icons and hidden tiles go back to default. Colors and sizes stay.</string>
     <string name="reset">Reset</string>
     <string name="lock_on">Options and Settings are hidden on the home screen now. Hold ☰ Menu for %1$d seconds to come back here.</string>
-    <string name="about">Settings file: %1$s\nOne wallpaper: name it exactly wallpaper.jpg (or .png) and put it in that folder\nSeveral wallpapers: put them in %2$s/ with any names, and pick a rotation\nThen pick Background › Image file or Adaptive wallpaper tint. No permission is needed\nOn Fire OS 8 adb cannot reach that folder; use %3$s instead\nAdaptive wallpaper tint shows graphite until you add a wallpaper\nLibrary banner: put pictures and %4$s in %5$s/ in that folder\nIcon pack: install one, then pick it above; hold OK on a tile › Icon to pick one app\'s icon\nNo internet permission. No tracking, no ads, no accounts.</string>
+    <string name="about">Settings file: %1$s\nOne wallpaper: name it exactly wallpaper.jpg (or .png) and put it in that folder\nSeveral wallpapers: put them in %2$s/ with any names, and pick a rotation\nThen pick Background › Image file or Adaptive wallpaper tint. No permission is needed\nOn Fire OS 8 adb cannot reach that folder; use %3$s instead (Export settings puts a copy there)\nAdaptive wallpaper tint shows graphite until you add a wallpaper\nLibrary banner: put pictures and %4$s in %5$s/ in that folder\nIcon pack: install one, then pick it above; hold OK on a tile › Icon to pick one app\'s icon\nNo internet permission. No tracking, no ads, no accounts.</string>
 
     <string name="icon_for">Icon for %1$s</string>
     <string name="icon_filter">Filter by name</string>

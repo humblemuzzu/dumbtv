@@ -49,13 +49,16 @@
     <string name="apps_on_home">Apps en la pantalla de inicio</string>
     <string name="inputs_on_home">Entradas en la pantalla de inicio</string>
     <string name="reset_layout">Restablecer orden, nombres y mosaicos ocultos</string>
+    <string name="export_settings">Exportar ajustes para adb pull</string>
+    <string name="export_done">Guardado en %1$s</string>
+    <string name="export_failed">No se pudo escribir la copia</string>
     <string name="open_amazon_home">Abrir la pantalla de inicio de Amazon</string>
     <string name="done">Listo</string>
     <string name="reset_title">¿Restablecer la pantalla de inicio?</string>
     <string name="reset_message">El orden, los nombres, los iconos elegidos y los mosaicos ocultos vuelven a como estaban. Los colores y tamaños se mantienen.</string>
     <string name="reset">Restablecer</string>
     <string name="lock_on">Opciones y Ajustes ya no se ven en la pantalla de inicio. Mantén ☰ Menú %1$d segundos para volver aquí.</string>
-    <string name="about">Archivo de ajustes: %1$s\nUn fondo: llámalo exactamente wallpaper.jpg (o .png) y ponlo en esa carpeta\nVarios fondos: ponlos en %2$s/ con cualquier nombre y elige una rotación\nLuego elige Fondo › Imagen o Tinte adaptativo del fondo. No hace falta ningún permiso\nEn Fire OS 8 adb no llega a esa carpeta; usa %3$s\nEl tinte adaptativo del fondo muestra grafito hasta que agregues un fondo\nBanner de biblioteca: pon las imágenes y %4$s en %5$s/ dentro de esa carpeta\nPaquete de iconos: instala uno y elígelo arriba; mantén OK en un mosaico › Icono para elegir el de una app\nSin permiso de internet. Sin rastreo, sin anuncios, sin cuentas.</string>
+    <string name="about">Archivo de ajustes: %1$s\nUn fondo: llámalo exactamente wallpaper.jpg (o .png) y ponlo en esa carpeta\nVarios fondos: ponlos en %2$s/ con cualquier nombre y elige una rotación\nLuego elige Fondo › Imagen o Tinte adaptativo del fondo. No hace falta ningún permiso\nEn Fire OS 8 adb no llega a esa carpeta; usa %3$s (Exportar ajustes pone una copia allí)\nEl tinte adaptativo del fondo muestra grafito hasta que agregues un fondo\nBanner de biblioteca: pon las imágenes y %4$s en %5$s/ dentro de esa carpeta\nPaquete de iconos: instala uno y elígelo arriba; mantén OK en un mosaico › Icono para elegir el de una app\nSin permiso de internet. Sin rastreo, sin anuncios, sin cuentas.</string>
 
     <string name="icon_for">Icono para %1$s</string>
     <string name="icon_filter">Filtrar por nombre</string>

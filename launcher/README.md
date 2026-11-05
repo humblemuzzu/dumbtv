@@ -316,6 +316,15 @@ is applied once, the next time the home screen comes back, and wins over what th
 has; what was applied is remembered, so the same push is not applied twice and a
 later change in Options is not overwritten by it.
 
+To back the settings up there, pick Options › Export settings for adb pull. It
+writes a copy named `home-export.conf`, which the launcher never reads, so it is
+not taken for a push. Push it back as `home.conf` to restore it:
+
+```sh
+adb pull /sdcard/Android/media/tv.dumbtv.home/home-export.conf home.conf
+adb push home.conf /sdcard/Android/media/tv.dumbtv.home/home.conf
+```
+
 `rotate=daytime` matches wallpapers to the time of day by name: `morning` or `day`
 (06:00 to 13:00), `afternoon` or `evening` (13:00 to 20:00), `night` (the rest), as
 in `morning-coast.jpg`.

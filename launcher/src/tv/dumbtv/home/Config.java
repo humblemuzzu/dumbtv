@@ -36,6 +36,8 @@ import java.util.TimeZone;
  */
 final class Config {
     static final String FILE = "home.conf";
+    /** Options › Export settings writes this copy into the media folder, for adb pull. */
+    static final String EXPORT = "home-export.conf";
 
     static final class Choice {
         final String key, title;
@@ -244,6 +246,17 @@ final class Config {
 
     private void save() {
         signature = writeSettings(file, values) ? signature() : Long.MIN_VALUE;
+    }
+
+    /**
+     * Writes a copy of the settings into the media folder, the one folder adb can read on Fire OS
+     * 8. It has its own name so it is never taken for a push: pushing it back as home.conf
+     * restores it. Returns the copy, or null when it could not be written.
+     */
+    File export() {
+        if (shared == null || (!shared.isDirectory() && !shared.mkdirs())) return null;
+        File copy = new File(shared, EXPORT);
+        return writeSettings(copy, values) ? copy : null;
     }
 
     private static boolean writeSettings(File target, Map<String, String> settings) {
