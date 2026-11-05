@@ -1,5 +1,7 @@
 id: fireos-insignia-afthy7abba
 title: "Insignia 50\" F50 Fire TV (NS-50F502NA26, AFTHY7ABBA)"
+contributors:
+  - dave137-beep
 platform: fireos
 status: partial
 tested_on: "RS8185.3885N"
