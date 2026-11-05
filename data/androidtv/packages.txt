@@ -130,3 +130,30 @@ com.onn.updatenotification                   # onn/Walmart update nagger
 # disabled so dumbtv home answers HOME (in never-disable.txt; see the
 # catalog entry before copying this)
 # com.google.android.tvlauncher
+
+# --- Andersson Android TV (Vestel, MediaTek m7632, device shandao), Android 11, build RTMA.250416.082 ---
+# Verified by hand on that one TV on 2026-11-05: each was disabled with
+# pm disable-user and the TV kept working across reboots. Commented out on
+# purpose: one household's choices on one build. See
+# catalog/devices/androidtv-andersson-shandao.yaml.
+#
+# Vestel telemetry (system uid 1000, boot-started, always resident)
+# com.vestel.smartlogger                     # Firebase logger: channel, source, settings, BT events
+# com.vestel.vestelreporter                  # Vestel reporter, starts on boot
+# com.vestel.smartcenter                     # Vestel phone-remote companion, always running
+#
+# telemetry and attribution
+# com.google.android.feedback
+# com.google.android.partnersetup
+#
+# promo surfaces and store demo
+# com.google.android.tvrecommendations
+# com.mediatek.android.leanbacklauncher.partnercustomizer
+# fusion.android.tv.demo
+#
+# voice assistant (removes voice search and the remote's mic button)
+# com.google.android.katniss
+#
+# disabled so dumbtv home answers HOME (in never-disable.txt; see the
+# catalog entry before copying this)
+# com.google.android.tvlauncher
