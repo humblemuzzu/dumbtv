@@ -44,6 +44,22 @@ class ContributeTest(unittest.TestCase):
         self.assertEqual(result.returncode, 1)
         self.assertIn("--notes takes a value", result.stderr)
 
+    def test_brand_on_the_box_names_the_file(self):
+        # Fire TV Edition sets report Amazon as manufacturer; the set's maker is in ro.product.brand.
+        import json, os, tempfile
+        for brand_flag, want in (([], "fireos-hisense-aftzz999"), (["--brand", "Toshiba"], "fireos-toshiba-aftzz999")):
+            with self.subTest(flags=brand_flag), tempfile.TemporaryDirectory() as tmp:
+                state = Path(tmp) / "state.json"
+                state.write_text(json.dumps({"packages": {}, "sdk": 30, "props": {
+                    "ro.product.brand": "Hisense", "ro.product.model": "AFTZZ999"}}))
+                env = dict(os.environ, ADB=str(ROOT / "tests" / "fake_tv.py"), ADB_SERIAL="test-tv",
+                           FAKE_TV_STATE=str(state), FAKE_TV_LOG=str(Path(tmp) / "log"))
+                result = subprocess.run(
+                    ["bash", str(ROOT / "scripts" / "contribute.sh"), "-y", "--dry-run", *brand_flag],
+                    env=env, capture_output=True, text=True, stdin=subprocess.DEVNULL, timeout=60)
+                self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+                self.assertIn(f"id: {want}", result.stdout)
+
     def test_every_existing_entry_passes(self):
         # What is already in the catalog was reviewed by hand; the filter must not refuse it.
         lines = [line for f in sorted((ROOT / "catalog" / "devices").glob("*.yaml"))

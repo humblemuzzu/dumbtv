@@ -85,7 +85,10 @@ yamlq() { printf '%s' "$1" | sed -e 's/\\/\\\\/g' -e 's/"/\\"/g'; }
 step "this TV"
 if [[ $USE_DEVICE == 1 ]]; then
   need_device
-  BRAND=$(dev1 getprop ro.product.manufacturer)
+  # Fire TV Edition televisions report Amazon as manufacturer; some report the set's maker
+  # as brand. A --brand given on the command line wins over both.
+  [[ -z $BRAND ]] && BRAND=$(dev1 getprop ro.product.brand)
+  [[ -z $BRAND ]] && BRAND=$(dev1 getprop ro.product.manufacturer)
   MODEL=$(dev1 getprop ro.product.model)
   ANDROID=$(dev1 getprop ro.build.version.release)
   SDK=$(dev1 getprop ro.build.version.sdk)
@@ -98,7 +101,7 @@ if [[ $USE_DEVICE == 1 ]]; then
   note "build    $BUILD"
   note "kernel   $KERNEL"
   [[ -z $PLATFORM ]] && { if is_fireos; then PLATFORM=fireos; else PLATFORM=androidtv; fi; }
-  # Fire TV Edition televisions report Amazon; the brand on the box is what a reader searches for.
+  # The brand on the box is what a reader searches for.
   BRAND=$(ask "Brand on the box (Amazon for sticks and cubes):" "$BRAND")
 else
   [[ -z $BRAND ]] && BRAND=$(ask "Brand:")
