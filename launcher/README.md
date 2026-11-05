@@ -76,6 +76,7 @@ you open an app. On Fire OS 7 and 8 the Settings button opens Amazon's settings 
 | Image dim, wallpaper rotation | for image backgrounds |
 | Child lock | off, on: hides Options and Settings and turns off Hold OK and ☰ Menu on tiles, so the home screen only opens apps and inputs (see below) |
 | App tile style | original (default), Afterglow: uppercase names inside the tile, a brand-color fade into black, a grayscale installed app icon in the corner, and a thin focus border |
+| Library banner | shown (default), hidden. It only appears once a library folder holds titles (see below) |
 
 Below them: Next wallpaper, which apps and inputs appear on the home screen, a
 reset for order, names and hidden tiles, and **Open Amazon's home screen**. Apps
@@ -196,6 +197,39 @@ By hand:
 adb shell mkdir -p /sdcard/Android/data/tv.dumbtv.home/files/wallpapers
 adb push *.jpg /sdcard/Android/data/tv.dumbtv.home/files/wallpapers/
 ```
+
+### Library banner
+
+A wide banner above the apps row for a few titles the owner picks: the picture
+cross-fades to the next title every 8 seconds with a slow zoom. Up from the apps row
+selects it, ◀ ▶ steps through the titles and OK opens the title in its app. Nothing is
+downloaded: the pictures and the list are pushed from a computer, like wallpapers.
+
+`library/library.conf` in the settings folder lists one title per line, and the
+pictures sit beside it:
+
+```
+# image | title | app package | deep link (optional) | key=value extras (optional)
+castle.jpg   | Castle   | com.hulu.plus     | https://www.hulu.com/series/castle-30fb4e12-5a72-4fe6-85ff-ddb5e88d1a65
+seinfeld.jpg | Seinfeld | com.netflix.ninja | https://www.netflix.com/title/70153373
+```
+
+- The deep link is sent to that app only. When the app does not answer it, the app
+  opens on its own home screen. Lines whose picture is missing, or whose app is not
+  installed, are skipped.
+- Links that open the title's page, checked on a Fire TV Stick (AFTSSS, Fire OS 7):
+  Netflix `https://www.netflix.com/title/<id>`, Hulu `https://www.hulu.com/series/<slug-id>`,
+  HBO Max `https://play.hbomax.com/show/<id>` and `/movie/<id>` (the id from an
+  hbomax.com address), Paramount+ `https://www.paramountplus.com/shows/<name>/` and
+  `/movies/video/<id>/`. `adb shell cmd package resolve-activity -a
+  android.intent.action.VIEW -d <link> <package>` shows whether an app takes a link.
+- Wide pictures work best; the banner crops to about 3.8 : 1. Only the picture on
+  screen and the one fading in are held in memory.
+
+`scripts/library.sh <folder>` takes a folder with `library.conf` and the pictures,
+crops each picture to the banner on macOS (`sips`; an optional `crop.conf` of
+`image fraction` lines moves the crop, 0 top to 1 bottom), replaces the TV's library
+folder and returns to the home screen so the banner reloads.
 
 ### Fire OS 8: where adb can write
 
@@ -318,6 +352,8 @@ Delete both to stop.
 | `src/.../Guard.java` | the Fire OS 7 and 8 HOME takeover |
 | `src/.../Keeper.java` | the Fire OS 6 HOME takeover |
 | `src/.../Recent.java` | when each app was last opened, for App order › Recently used |
+| `src/.../Hero.java` | the library banner: cross-fade, slow zoom, ◀ ▶ and OK |
+| `src/.../Library.java` | reads `library/library.conf` and opens a title in its app |
 | `src/.../BootReceiver.java` | restarts the Keeper after a boot or an update |
 | `build.sh` | aapt2, javac, d8, zipalign, apksigner |
 | `install.sh` | download and checksum (or `--build`), install, HOME hook, `--undo` |
@@ -325,6 +361,7 @@ Delete both to stop.
 | `release-check.sh` | checks that the version, the built APK and the GitHub release agree |
 | `tests/FocusColorTest.java` | host-side test for `FocusColor`, run by CI |
 | `tests/RecentTest.java` | host-side test for the Recently used order, run by CI |
+| `tests/LibraryTest.java` | host-side test for `library.conf` parsing, run by CI |
 
 ## Releasing
 

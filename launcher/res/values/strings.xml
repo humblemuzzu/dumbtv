@@ -51,7 +51,10 @@
     <string name="reset_message">Order, names and hidden tiles go back to default. Colors and sizes stay.</string>
     <string name="reset">Reset</string>
     <string name="lock_on">Options and Settings are hidden on the home screen now. Hold ☰ Menu for %1$d seconds to come back here.</string>
-    <string name="about">Settings file: %1$s\nOne wallpaper: name it exactly wallpaper.jpg (or .png) and put it in that folder\nSeveral wallpapers: put them in %2$s/ with any names, and pick a rotation\nThen pick Background › Image file or Adaptive wallpaper tint. No permission is needed\nOn Fire OS 8 adb cannot reach that folder; use %3$s instead\nAdaptive wallpaper tint shows graphite until you add a wallpaper\nNo internet permission. No tracking, no ads, no accounts.</string>
+    <string name="about">Settings file: %1$s\nOne wallpaper: name it exactly wallpaper.jpg (or .png) and put it in that folder\nSeveral wallpapers: put them in %2$s/ with any names, and pick a rotation\nThen pick Background › Image file or Adaptive wallpaper tint. No permission is needed\nOn Fire OS 8 adb cannot reach that folder; use %3$s instead\nAdaptive wallpaper tint shows graphite until you add a wallpaper\nLibrary banner: put pictures and %4$s in %5$s/ in that folder\nNo internet permission. No tracking, no ads, no accounts.</string>
+
+    <string name="library_watch">OK to watch</string>
+    <string name="library_more">◀ ▶ more</string>
 
     <!-- Options rows: choice_<key> is the row, choice_<key>_<value> a value (- becomes _).
          A row or value with no string here shows the English text in Config.java. -->
@@ -112,4 +115,7 @@
     <string name="choice_tile_style">App tile style</string>
     <string name="choice_tile_style_original">Original</string>
     <string name="choice_tile_style_afterglow">Afterglow</string>
+    <string name="choice_library">Library banner</string>
+    <string name="choice_library_on">Shown</string>
+    <string name="choice_library_off">Hidden</string>
 </resources>

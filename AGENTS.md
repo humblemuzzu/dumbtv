@@ -136,6 +136,15 @@ Step by step instead, in this order:
 Every script that changes the TV takes `--dry-run`, which prints what it would do
 and changes nothing.
 
+## Optional: a library banner
+
+Not part of the pass: do this only if the owner asks for it. For each title they name, pick an
+installed app that streams it now (check a current source), confirm its page link with
+`adb shell cmd package resolve-activity -a android.intent.action.VIEW -d <link> <package>`
+(leave the link out if none resolves), and get a wide picture. Put `library.conf` and the
+pictures in a folder outside the repository, never in a commit, and run
+`./scripts/library.sh <folder>`. Format: "Library banner" in [launcher/README.md](launcher/README.md).
+
 ## Reading the output
 
 `debloat.sh` prints one line per package:

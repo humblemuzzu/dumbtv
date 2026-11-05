@@ -49,7 +49,10 @@
     <string name="reset_message">El orden, los nombres y los mosaicos ocultos vuelven a como estaban. Los colores y tamaños se mantienen.</string>
     <string name="reset">Restablecer</string>
     <string name="lock_on">Opciones y Ajustes ya no se ven en la pantalla de inicio. Mantén ☰ Menú %1$d segundos para volver aquí.</string>
-    <string name="about">Archivo de ajustes: %1$s\nUn fondo: llámalo exactamente wallpaper.jpg (o .png) y ponlo en esa carpeta\nVarios fondos: ponlos en %2$s/ con cualquier nombre y elige una rotación\nLuego elige Fondo › Imagen o Tinte adaptativo del fondo. No hace falta ningún permiso\nEn Fire OS 8 adb no llega a esa carpeta; usa %3$s\nEl tinte adaptativo del fondo muestra grafito hasta que agregues un fondo\nSin permiso de internet. Sin rastreo, sin anuncios, sin cuentas.</string>
+    <string name="about">Archivo de ajustes: %1$s\nUn fondo: llámalo exactamente wallpaper.jpg (o .png) y ponlo en esa carpeta\nVarios fondos: ponlos en %2$s/ con cualquier nombre y elige una rotación\nLuego elige Fondo › Imagen o Tinte adaptativo del fondo. No hace falta ningún permiso\nEn Fire OS 8 adb no llega a esa carpeta; usa %3$s\nEl tinte adaptativo del fondo muestra grafito hasta que agregues un fondo\nBanner de biblioteca: pon las imágenes y %4$s en %5$s/ dentro de esa carpeta\nSin permiso de internet. Sin rastreo, sin anuncios, sin cuentas.</string>
+
+    <string name="library_watch">OK para ver</string>
+    <string name="library_more">◀ ▶ más</string>
 
     <!-- Filas de Opciones -->
     <string name="choice_accent">Color de acento</string>
@@ -109,4 +112,7 @@
     <string name="choice_tile_style">Estilo de mosaicos</string>
     <string name="choice_tile_style_original">Original</string>
     <string name="choice_tile_style_afterglow">Afterglow</string>
+    <string name="choice_library">Banner de biblioteca</string>
+    <string name="choice_library_on">Visible</string>
+    <string name="choice_library_off">Oculto</string>
 </resources>
