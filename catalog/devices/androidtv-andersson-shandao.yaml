@@ -1,0 +1,46 @@
+id: androidtv-andersson-shandao
+title: "Andersson Android TV (Vestel, MediaTek m7632, Android TV 11)"
+contributors:
+  - PicaPicaDev
+platform: androidtv
+status: partial
+tested_on: "RTMA.250416.082"
+models:
+  - "Andersson Android TV (Vestel, device shandao)"
+adb:
+  port: 5555
+  transport: wifi
+developer_mode: >-
+  Settings > Device Preferences > About > Build, press OK 7 times, then Device Preferences > Developer options > USB debugging: ON; adb then listens on port 5555 over the network.
+ip_location: "Settings > Network & Internet > the connected network"
+prompts:
+  - name: "Google Play Protect: app built for an older version of Android"
+    blocks_automation: true
+    fix: "adb install of dumbtv home waits until someone presses Install anyway on the TV (targetSdk 28 is deliberate)."
+data:
+  packages: data/androidtv/packages.txt
+  protected: data/androidtv/protected.txt
+  never_disable: data/androidtv/never-disable.txt
+  user_apps: data/androidtv/user-apps.txt
+launcher:
+  mechanism: set_home_activity
+  package: tv.dumbtv.home
+  reason: >-
+    Classic Android TV home (com.google.android.tvlauncher, HOME at
+    priority 2). dumbtv home answers HOME once the stock launcher is disabled.
+  fallback: "pm enable --user 0 com.google.android.tvlauncher"
+  quirk: >-
+    launcher/install.sh was not used: its Guard is for Fire OS. The 1.8
+    release APK was checksum-checked against launcher/version.env, installed
+    with adb install, then com.google.android.tvlauncher was disabled with
+    pm disable-user (it is in never-disable.txt; a deliberate,
+    owner-approved exception).
+quirks:
+  - "Vestel OEM set (Andersson is a Vestel rebrand). ro.product.model is just 'Android TV' and ro.product.brand is 'My'; the board is MediaTek m7632, device shandao."
+  - "com.vestel.smartlogger and com.vestel.vestelreporter run as the system uid (1000), start on boot and stay resident; smartlogger bundles Firebase and has receivers for channel changes, external sources, settings, Bluetooth and CI modules. Both disabled with pm disable-user and stayed disabled across reboots."
+  - "Only com.google.android.tvlauncher (priority 2) and the Settings FallbackHome answer HOME, so setupwraith did not need touching. Disabling tvlauncher after installing dumbtv home made HOME land on dumbtv home across reboots."
+  - "Private DNS (hostname mode, dns.adguard-dns.com) works on this build; blocked hosts answer 127.0.0.1."
+notes: "Disabled by hand, all surviving reboots: vestel smartlogger, vestelreporter, smartcenter, google feedback, partnersetup, tvrecommendations, mediatek leanbacklauncher partnercustomizer, fusion.android.tv.demo, katniss, and tvlauncher for the launcher swap. MemAvailable went from about 590 MB to about 880 MB."
+verify:
+  blocked: data/blocklists/verify-blocked.txt
+  allowed: data/blocklists/verify-allowed.txt
