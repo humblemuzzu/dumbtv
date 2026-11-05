@@ -1,6 +1,115 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">dumbtv</string>
-    <string name="guard_label">dumbtv home button</string>
+    <!-- Not translated: scripts/accessibility.sh finds the bound service by this label. -->
+    <string name="guard_label" translatable="false">dumbtv home button</string>
     <string name="guard_description">Sends the HOME button to the dumbtv home screen instead of Amazon\'s. It reads no screen content and has no internet access.</string>
+
+    <!-- Home screen -->
+    <string name="options">Options</string>
+    <string name="settings">Settings</string>
+    <string name="row_apps">Apps</string>
+    <string name="row_inputs">Inputs</string>
+    <string name="could_not_open">Could not open that</string>
+    <string name="tile_move">Move</string>
+    <string name="tile_rename">Rename</string>
+    <string name="tile_hide">Hide</string>
+    <string name="tile_app_info">App info</string>
+    <string name="move_needs_order">App order is Recently used. Pick Your order in Options to move tiles.</string>
+    <string name="hidden_toast">Hidden. Bring it back from Options.</string>
+    <string name="rename_title">Rename</string>
+    <string name="save">Save</string>
+    <string name="original">Original</string>
+    <string name="cancel">Cancel</string>
+
+    <!-- Inputs -->
+    <string name="input_failed">Could not open input</string>
+    <string name="input_no_signal">No signal</string>
+
+    <!-- Memory meter -->
+    <string name="meter_title">Memory</string>
+    <string name="meter_free">%1$d MB free of %2$d MB</string>
+    <string name="meter_low">running low</string>
+
+    <!-- Fire OS 6 settings list -->
+    <string name="fire_all_settings">All settings…</string>
+    <string name="fire_notifications">Notifications</string>
+    <string name="fire_network">Network</string>
+    <string name="fire_applications">Applications</string>
+    <string name="fire_equipment_control">Equipment Control</string>
+    <string name="fire_controllers">Controllers &amp; Bluetooth Devices</string>
+    <string name="fire_device">Device &amp; Software</string>
+
+    <!-- Options -->
+    <string name="next_wallpaper">Next wallpaper</string>
+    <string name="apps_on_home">Apps on home screen</string>
+    <string name="inputs_on_home">Inputs on home screen</string>
+    <string name="reset_layout">Reset order, names and hidden tiles</string>
+    <string name="open_amazon_home">Open Amazon\'s home screen</string>
+    <string name="done">Done</string>
+    <string name="reset_title">Reset the home screen layout?</string>
+    <string name="reset_message">Order, names and hidden tiles go back to default. Colors and sizes stay.</string>
+    <string name="reset">Reset</string>
+    <string name="lock_on">Options and Settings are hidden on the home screen now. Hold ☰ Menu for %1$d seconds to come back here.</string>
+    <string name="about">Settings file: %1$s\nOne wallpaper: name it exactly wallpaper.jpg (or .png) and put it in that folder\nSeveral wallpapers: put them in %2$s/ with any names, and pick a rotation\nThen pick Background › Image file or Adaptive wallpaper tint. No permission is needed\nOn Fire OS 8 adb cannot reach that folder; use %3$s instead\nAdaptive wallpaper tint shows graphite until you add a wallpaper\nNo internet permission. No tracking, no ads, no accounts.</string>
+
+    <!-- Options rows: choice_<key> is the row, choice_<key>_<value> a value (- becomes _).
+         A row or value with no string here shows the English text in Config.java. -->
+    <string name="choice_accent">Accent color</string>
+    <string name="choice_accent_white">White</string>
+    <string name="choice_accent_blue">Blue</string>
+    <string name="choice_accent_cyan">Cyan</string>
+    <string name="choice_accent_green">Green</string>
+    <string name="choice_accent_amber">Amber</string>
+    <string name="choice_accent_red">Red</string>
+    <string name="choice_accent_pink">Pink</string>
+    <string name="choice_accent_violet">Violet</string>
+    <string name="choice_tiles">Tile size</string>
+    <string name="choice_tiles_small">Small</string>
+    <string name="choice_tiles_medium">Medium</string>
+    <string name="choice_tiles_large">Large</string>
+    <string name="choice_layout">Layout</string>
+    <string name="choice_layout_rows">Rows</string>
+    <string name="choice_layout_grid">Grid</string>
+    <string name="choice_order">App order</string>
+    <string name="choice_order_custom">Your order</string>
+    <string name="choice_order_recent">Recently used</string>
+    <string name="choice_labels">App names</string>
+    <string name="choice_labels_focus">On focus</string>
+    <string name="choice_labels_always">Always</string>
+    <string name="choice_labels_never">Never</string>
+    <string name="choice_clock">Clock</string>
+    <string name="choice_clock_auto">System</string>
+    <string name="choice_clock_24h">24-hour</string>
+    <string name="choice_clock_12h">12-hour</string>
+    <string name="choice_memory">Memory meter</string>
+    <string name="choice_memory_off">Hidden</string>
+    <string name="choice_memory_on">Shown</string>
+    <string name="choice_inputs">Inputs row</string>
+    <string name="choice_inputs_on">Shown</string>
+    <string name="choice_inputs_off">Hidden</string>
+    <string name="choice_switch">Open inputs with</string>
+    <string name="choice_switch_auto">Automatic</string>
+    <string name="choice_switch_tv">The TV\'s app</string>
+    <string name="choice_switch_home">dumbtv home</string>
+    <string name="choice_background">Background</string>
+    <string name="choice_background_black">Black</string>
+    <string name="choice_background_graphite">Graphite</string>
+    <string name="choice_background_midnight">Midnight</string>
+    <string name="choice_background_image">Image file</string>
+    <string name="choice_background_adaptive">Adaptive solid</string>
+    <string name="choice_background_adaptive_tint">Adaptive wallpaper tint</string>
+    <string name="choice_dim">Image dim</string>
+    <string name="choice_rotate">Wallpaper rotation</string>
+    <string name="choice_rotate_off">Off</string>
+    <string name="choice_rotate_visit">Every return home</string>
+    <string name="choice_rotate_hourly">Every hour</string>
+    <string name="choice_rotate_daily">Every day</string>
+    <string name="choice_rotate_daytime">By time of day</string>
+    <string name="choice_lock">Child lock</string>
+    <string name="choice_lock_off">Off</string>
+    <string name="choice_lock_on">On</string>
+    <string name="choice_tile_style">App tile style</string>
+    <string name="choice_tile_style_original">Original</string>
+    <string name="choice_tile_style_afterglow">Afterglow</string>
 </resources>

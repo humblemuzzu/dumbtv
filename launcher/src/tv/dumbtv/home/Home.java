@@ -568,18 +568,20 @@ public final class Home extends Activity {
         when.addView(clock);
         when.addView(date);
         meter = new Meter(this);
+        meter.setWords(getString(R.string.meter_title), getString(R.string.meter_free),
+                getString(R.string.meter_low));
         meter.setVisibility(View.GONE);
         LinearLayout.LayoutParams under = new LinearLayout.LayoutParams(WRAP, WRAP);
         under.topMargin = dp(12);
         under.leftMargin = dp(2);
         when.addView(meter, under);
         head.addView(when, new LinearLayout.LayoutParams(0, WRAP, 1f));
-        head.addView(chip("Options", v -> startActivity(new Intent(this, Options.class))));
-        head.addView(chip("Settings", v -> openSettings()));
+        head.addView(chip(getString(R.string.options), v -> startActivity(new Intent(this, Options.class))));
+        head.addView(chip(getString(R.string.settings), v -> openSettings()));
         column.addView(head, new LinearLayout.LayoutParams(MATCH, WRAP));
 
-        apps = new Row(Catalog.APPS, "Apps", column);
-        inputs = new Row(Catalog.INPUTS, "Inputs", column);
+        apps = new Row(Catalog.APPS, getString(R.string.row_apps), column);
+        inputs = new Row(Catalog.INPUTS, getString(R.string.row_inputs), column);
         return root;
     }
 
@@ -1044,7 +1046,7 @@ public final class Home extends Activity {
         CharSequence[] labels = new CharSequence[sections.size()];
         for (int i = 0; i < labels.length; i++) labels[i] = sections.get(i).label;
         new AlertDialog.Builder(this, Ui.DIALOG)
-                .setTitle("Settings")
+                .setTitle(R.string.settings)
                 .setItems(labels, (d, which) -> {
                     Item s = sections.get(which);
                     if (Guard.AMAZON.equals(s.id)) Guard.pause();
@@ -1087,15 +1089,17 @@ public final class Home extends Activity {
             startActivity(i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED));
             if (pkg != null) Recent.opened(this, pkg);
         } catch (ActivityNotFoundException | SecurityException e) {
-            Toast.makeText(this, "Could not open that", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, R.string.could_not_open, Toast.LENGTH_SHORT).show();
         }
     }
 
     private void menu(Tile t) {
         boolean app = Catalog.APPS.equals(t.kind);
         String[] actions = app
-                ? new String[] {"Move", "Rename", "Hide", "App info"}
-                : new String[] {"Move", "Rename", "Hide"};
+                ? new String[] {getString(R.string.tile_move), getString(R.string.tile_rename),
+                        getString(R.string.tile_hide), getString(R.string.tile_app_info)}
+                : new String[] {getString(R.string.tile_move), getString(R.string.tile_rename),
+                        getString(R.string.tile_hide)};
         new AlertDialog.Builder(this, Ui.DIALOG)
                 .setTitle(Catalog.label(cfg, t.item))
                 .setItems(actions, (d, which) -> {
@@ -1103,8 +1107,7 @@ public final class Home extends Activity {
                         case 0:
                             if (t.getParent() == null) break;
                             if (app && recentFor(t.kind) != null) {
-                                Toast.makeText(this, "App order is Recently used. Pick Your order "
-                                        + "in Options to move tiles.", Toast.LENGTH_LONG).show();
+                                Toast.makeText(this, R.string.move_needs_order, Toast.LENGTH_LONG).show();
                                 break;
                             }
                             moving = t;
@@ -1116,7 +1119,7 @@ public final class Home extends Activity {
                         case 2:
                             Catalog.setShown(cfg, t.kind, t.item, false);
                             render(app ? apps : inputs);
-                            Toast.makeText(this, "Hidden. Bring it back from Options.", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(this, R.string.hidden_toast, Toast.LENGTH_SHORT).show();
                             break;
                         default:
                             launch(new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
@@ -1136,18 +1139,18 @@ public final class Home extends Activity {
         box.addView(field);
         String key = "name." + t.item.id;
         AlertDialog d = new AlertDialog.Builder(this, Ui.DIALOG)
-                .setTitle("Rename")
+                .setTitle(R.string.rename_title)
                 .setView(box)
-                .setPositiveButton("Save", (dialog, w) -> {
+                .setPositiveButton(R.string.save, (dialog, w) -> {
                     String name = field.getText().toString().trim();
                     cfg.set(key, name.equals(t.item.label.toString()) ? null : name);
                     apply();
                 })
-                .setNeutralButton("Original", (dialog, w) -> {
+                .setNeutralButton(R.string.original, (dialog, w) -> {
                     cfg.set(key, null);
                     apply();
                 })
-                .setNegativeButton("Cancel", null)
+                .setNegativeButton(R.string.cancel, null)
                 .create();
         d.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE);
         d.show();

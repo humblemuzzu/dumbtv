@@ -23,22 +23,27 @@ import java.util.List;
  */
 final class FireSettings {
     static final String MAIN_SETTINGS = "com.amazon.tv.launcher.ui.MainSettingsActivity";
-    static final String ALL = "All settings…";
+    static final int ALL = R.string.fire_all_settings;
 
+    /** Labels for {@link #SECTIONS}, in the same order. */
+    private static final int[] LABELS = {
+        R.string.fire_notifications, R.string.fire_network, R.string.fire_applications,
+        R.string.fire_equipment_control, R.string.fire_controllers, R.string.fire_device,
+    };
     private static final String[][] SECTIONS = {
-        {"Notifications", "com.amazon.tv.action.NOTIFICATION_CENTER",
+        {"com.amazon.tv.action.NOTIFICATION_CENTER",
                 "com.amazon.tv.notificationcenter", "com.amazon.tv.notificationcenter.NotificationCenterActivity"},
-        {"Network", "com.amazon.device.settings.action.ADD_NETWORK",
+        {"com.amazon.device.settings.action.ADD_NETWORK",
                 "com.amazon.tv.settings.v2", "com.amazon.tv.settings.v2.tv.network.NetworkActivity"},
-        {"Applications", "com.amazon.device.settings.action.APPLICATIONS",
+        {"com.amazon.device.settings.action.APPLICATIONS",
                 "com.amazon.tv.settings.v2", "com.amazon.tv.settings.v2.tv.applications.ApplicationsActivity"},
-        {"Equipment Control", "com.amazon.tv.oobe.settings.ACTION.DEVICE_CONTROL",
+        {"com.amazon.tv.oobe.settings.ACTION.DEVICE_CONTROL",
                 "com.amazon.tv.devicecontrolsettings",
                 "com.amazon.tv.devicecontrolsettings.screens.main_menu.OzOobeSettingsActivity"},
-        {"Controllers & Bluetooth Devices", "com.amazon.device.settings.action.CONTROLLERS",
+        {"com.amazon.device.settings.action.CONTROLLERS",
                 "com.amazon.tv.settings.v2",
                 "com.amazon.tv.settings.v2.tv.controllers_bluetooth_devices.ControllersAndBluetoothActivity"},
-        {"Device & Software", "com.amazon.device.settings.action.DEVICE",
+        {"com.amazon.device.settings.action.DEVICE",
                 "com.amazon.tv.settings.v2", "com.amazon.tv.settings.v2.tv.device.DeviceActivity"},
     };
 
@@ -55,17 +60,18 @@ final class FireSettings {
     static List<Item> sections(Context c) {
         PackageManager pm = c.getPackageManager();
         List<Item> out = new ArrayList<>();
-        for (String[] s : SECTIONS) {
+        for (int k = 0; k < SECTIONS.length; k++) {
+            String[] s = SECTIONS[k];
             // Most sections share com.amazon.tv.settings.v2's task. Clearing it means BACK leaves
             // to the home screen, not to a section opened earlier and left with HOME.
-            Intent i = new Intent(s[1]).setClassName(s[2], s[3])
+            Intent i = new Intent(s[0]).setClassName(s[1], s[2])
                     .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK);
-            if (startable(c, pm, i)) out.add(new Item(s[3], s[0], i));
+            if (startable(c, pm, i)) out.add(new Item(s[2], c.getString(LABELS[k]), i));
         }
         // The node key Amazon's own menu navigation sends to its home activity; the settings
         // row draws in full there. Opening it pauses the HOME takeover, as Options › Open
         // Amazon's home screen does.
-        out.add(new Item(Guard.AMAZON, ALL, new Intent(Intent.ACTION_MAIN)
+        out.add(new Item(Guard.AMAZON, c.getString(ALL), new Intent(Intent.ACTION_MAIN)
                 .addCategory(Intent.CATEGORY_HOME).setPackage(Guard.AMAZON)
                 .putExtra("navigate_node", "l_settings")));
         return out;

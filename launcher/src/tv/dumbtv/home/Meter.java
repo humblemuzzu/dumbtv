@@ -25,6 +25,8 @@ final class Meter extends View {
     private final Paint bar = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final int width, barH, gap;
     private String label = "";
+    /** The words around the numbers; Home hands in the TV's language with {@link #setWords}. */
+    private String title = "Memory", free = "%1$d MB free of %2$d MB", lowNote = "running low";
     private boolean low;
     private int accent = Ui.TEXT;
     private float shown = -1;
@@ -63,6 +65,14 @@ final class Meter extends View {
         return systemLow || total > 0 && avail < total * LOW_SHARE;
     }
 
+    /** {@code free} takes the free and total MB, as in {@link #label}. */
+    void setWords(String title, String free, String lowNote) {
+        this.title = title;
+        this.free = free;
+        this.lowNote = lowNote;
+        invalidate();
+    }
+
     void setAccent(int color) {
         accent = color;
         invalidate();
@@ -73,7 +83,7 @@ final class Meter extends View {
         if (am == null) return;
         am.getMemoryInfo(info);
         low = low(info.lowMemory, info.availMem, info.totalMem);
-        label = label(info.availMem, info.totalMem) + (low ? " · running low" : "");
+        label = String.format(free, mb(info.availMem), mb(info.totalMem)) + (low ? " · " + lowNote : "");
         float target = used(info.availMem, info.totalMem);
         if (animation != null) animation.cancel();
         if (shown < 0) {
@@ -87,7 +97,7 @@ final class Meter extends View {
             });
             animation.start();
         }
-        setContentDescription("Memory " + label);
+        setContentDescription(title + " " + label);
         invalidate();
     }
 
@@ -100,10 +110,10 @@ final class Meter extends View {
     @Override
     protected void onDraw(Canvas canvas) {
         float baseline = -value.ascent();
-        String title = "Memory  ";
-        canvas.drawText(title, 0, baseline, name);
+        String head = title + "  ";
+        canvas.drawText(head, 0, baseline, name);
         value.setColor(low ? LOW_COLOR : Ui.MUTED);
-        canvas.drawText(label, name.measureText(title), baseline, value);
+        canvas.drawText(label, name.measureText(head), baseline, value);
         float top = getHeight() - barH, r = barH / 2f;
         canvas.drawRoundRect(0, top, width, top + barH, r, r, track);
         bar.setColor(low ? LOW_COLOR : accent);
