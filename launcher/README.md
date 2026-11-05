@@ -171,6 +171,19 @@ Comments go on their own line. Back it up with `adb pull`, restore it with
 
 No permission is needed: the launcher reads its own folder.
 
+The quickest way, on any Fire OS, is `scripts/wallpaper.sh` from the computer. It crops
+each image to the TV's screen and scales it to its size when ImageMagick (`magick`) is
+installed, pushes the images to the media folder below, and turns the image background
+on:
+
+```sh
+./scripts/wallpaper.sh ~/Pictures/*.jpg                              # one or several
+./scripts/wallpaper.sh --rotate hourly --dim 20 --shuffle *.png      # rotate in a random order
+./scripts/wallpaper.sh --replace --crop top portrait.jpg             # drop the old ones first
+```
+
+By hand:
+
 - **One wallpaper:** push it as `wallpaper.jpg` (or `.jpeg`, `.png`, `.webp`) into
   the folder above and set `background=image`.
 - **Several:** push them into a `wallpapers/` subfolder, with any names, and pick a
