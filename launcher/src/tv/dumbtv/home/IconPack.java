@@ -32,6 +32,9 @@ import java.util.Set;
 final class IconPack {
     static final String KEY = "icon_pack";
     static final String OFF = "off";
+    /** Value used when no icon pack is installed; distinct from {@link #OFF} so Text
+    *  can translate each (choice_icon_pack_none / choice_icon_pack_off). */
+    static final String NONE = "none";
     /** Per-app choice from the icon picker: {@code icon.<app>=<pack>/<drawable>}, or {@link #OWN}. */
     static final String CHOSEN = "icon.";
     /** Picked "App's own picture": no pack replaces this app's art. */
@@ -78,16 +81,18 @@ final class IconPack {
      * "None installed", so the row says why there is nothing to pick.
      */
     static Config.Choice choice(Map<String, String> installed) {
+        boolean empty = installed.isEmpty();
+        String off = empty ? NONE : OFF;
         Map<String, String> packs = new LinkedHashMap<>();
-        packs.put(OFF, installed.isEmpty() ? "None installed" : "Off");
+        packs.put(off, empty ? "None installed" : "Off");
         packs.putAll(installed);
-        return new Config.Choice(KEY, "Icon pack", OFF,
-                packs.keySet().toArray(new String[0]), packs.values().toArray(new String[0]));
+        return new Config.Choice(KEY, "Icon pack", off,
+            packs.keySet().toArray(new String[0]), packs.values().toArray(new String[0]));
     }
 
     /** Reads the pack's appfilter; null when the package is missing or is not an icon pack. Slow. */
     static IconPack load(PackageManager pm, String pkg) {
-        if (pkg == null || OFF.equals(pkg)) return null;
+        if (pkg == null || OFF.equals(pkg) || NONE.equals(pkg)) return null;
         try {
             ApplicationInfo info = pm.getApplicationInfo(pkg, ALL);
             IconPack pack = new IconPack(pkg, pm.getResourcesForApplication(info));
