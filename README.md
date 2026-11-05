@@ -67,7 +67,7 @@ no root:
   stops Amazon's telemetry and automatic updates from reaching their servers.
   Everything else, including your streaming apps, works as before.
 - **Replaces the home screen** with [dumbtv home](launcher/README.md): your apps,
-  your inputs and a clock. 62 KB, open source, no internet access.
+  your inputs and a clock. 95 KB, open source, no internet access.
 - **Leaves your apps alone.** Nothing you watch is removed unless you name it.
 - **Can all be undone** with one command.
 
@@ -190,6 +190,8 @@ every model with its menu paths and quirks.
 | [Fire TV smart TV (AFTHY7ABBA)](catalog/devices/fireos-amazon-afthy7abba.yaml) | 8.1 | tested | [@bring-nirachornkul](https://github.com/bring-nirachornkul) |
 | [Fire TV Stick 4K, 2nd gen (AFTKM), RS8185](catalog/devices/fireos-amazon-aftkm-rs8185.yaml) | 8.1 | tested | [@Rouchekoff](https://github.com/Rouchekoff) |
 | [Amazon AFTNA1322D](catalog/devices/fireos-amazon-aftna1322d.yaml) | 8.1 | tested | [@1xretr0](https://github.com/1xretr0) |
+| [Xiaomi TV F Pro 75 Fire TV (AFTBR92D74)](catalog/devices/fireos-xiaomi-aftbr92d74.yaml) | 8.1 | tested | [@Jeff909Dev](https://github.com/Jeff909Dev) |
+| [Hisense 55QD75SFC Fire TV (AFTCU9343B)](catalog/devices/fireos-hisense-aftcu9343b.yaml) | 14 | tested | [@sockmonkey0223](https://github.com/sockmonkey0223) |
 | [Fire TV Stick, 3rd gen (AFTSSS)](catalog/devices/fireos-amazon-aftsss.yaml) | 7.7 | partial | [@B3NR1S](https://github.com/B3NR1S) |
 | [Fire TV Stick 4K Max, 1st gen (AFTKA)](catalog/devices/fireos-amazon-aftka-ps7697.yaml) | 7.6 | partial | [@dchuk](https://github.com/dchuk) |
 | [Fire TV Cube, 2nd gen (AFTR), PS7699](catalog/devices/fireos-amazon-aftr-ps7699.yaml) | 7.6 | partial | [@sant1ago](https://github.com/sant1ago) |
