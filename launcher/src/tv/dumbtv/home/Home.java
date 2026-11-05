@@ -89,6 +89,8 @@ public final class Home extends Activity {
     private String artState = "";
     /** Icon packs read so far by package, null for one that would not load; io thread only. */
     private final Map<String, IconPack> packs = new HashMap<>();
+    /** The installed icon packs, package -> name, read on io; UI thread. */
+    private Map<String, String> iconPacks = new HashMap<>();
 
     private final BroadcastReceiver packages = new BroadcastReceiver() {
         @Override
@@ -99,6 +101,7 @@ public final class Home extends Activity {
                 // Forget what was read from that package, a pack that would not load included:
                 // a pack installed again while another was chosen must load when chosen.
                 io.execute(() -> packs.remove(changed));
+                loadIconPacks();
                 if (artState.contains(changed)) {
                     for (Item it : apps.all) it.artRequested = false;
                 }
@@ -212,6 +215,14 @@ public final class Home extends Activity {
         if (tv != null) tv.registerCallback(inputWatch, ui);
         firstApps(catalog, times);
         loadInputs();
+        loadIconPacks();
+    }
+
+    private void loadIconPacks() {
+        io.execute(() -> {
+            Map<String, String> found = IconPack.installed(getPackageManager());
+            ui.post(() -> iconPacks = found);
+        });
     }
 
     /**
@@ -237,6 +248,9 @@ public final class Home extends Activity {
         boolean cornerIcon = "afterglow".equals(cfg.get(Config.TILE_STYLE));
         List<Item> first = new ArrayList<>();
         List<Runnable> jobs = new ArrayList<>();
+        // A chosen icon pack is read by parsing its whole appfilter; the first frame does not wait
+        // for that, and its tiles load their art as they are drawn, like every later tile.
+        if (!IconPack.OFF.equals(cfg.get(IconPack.KEY, IconPack.OFF))) return;
         for (Item it : Catalog.visible(cfg, Catalog.APPS, apps.all, recentFor(Catalog.APPS))) {
             if (fit-- <= 0) break;
             first.add(it);
@@ -1265,8 +1279,7 @@ public final class Home extends Activity {
         boolean app = Catalog.APPS.equals(t.kind);
         boolean pinning = app && "on".equals(cfg.get(Config.ALL_APPS));
         // Icon picks from the chosen pack, so it is only offered while that pack is installed.
-        boolean icon = app && IconPack.installed(getPackageManager())
-                .containsKey(cfg.get(IconPack.KEY, IconPack.OFF));
+        boolean icon = app && iconPacks.containsKey(cfg.get(IconPack.KEY, IconPack.OFF));
         List<Integer> menu = new ArrayList<>();
         menu.add(R.string.tile_move);
         menu.add(R.string.tile_rename);

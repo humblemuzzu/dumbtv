@@ -49,7 +49,16 @@ public final class Options extends Activity {
         list.addView(title);
 
         for (Config.Choice c : Config.CHOICES) list.addView(choice(c));
-        list.addView(choice(IconPack.choice(IconPack.installed(getPackageManager()))));
+        LinearLayout packRow = new LinearLayout(this);
+        packRow.setOrientation(LinearLayout.VERTICAL);
+        list.addView(packRow);
+        // Finding the packs opens every theme app's resources: keep it off the UI thread.
+        new Thread(() -> {
+            Config.Choice packs = IconPack.choice(IconPack.installed(getPackageManager()));
+            runOnUiThread(() -> {
+                if (!isDestroyed()) packRow.addView(choice(packs));
+            });
+        }, "icon-packs").start();
         list.addView(action(getString(R.string.next_wallpaper), () -> {
             cfg.nextWallpaper();
             refresh();
