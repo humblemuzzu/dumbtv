@@ -428,24 +428,19 @@ noanswer=0
 for attempt in 1 2 3; do
   line=$(dev "ping -c1 -W2 www.youtube.com" | head -1)
   case $line in
-    *"unknown host"*|*"not known"*|*"cannot resolve"*|"") [[ $attempt -lt 3 ]] && sleep 10 ;;
+    "") adb_reconnect ;;
+    *"unknown host"*|*"not known"*|*"cannot resolve"*) ;;
     *) break ;;
   esac
+  [[ $attempt -lt 3 ]] && sleep 10
 done
 case $line in
   *0.0.0.0*|*127.0.0.1*) printf '  %-34s WRONGLY BLOCKED\n' www.youtube.com; fail=1 ;;
-  *"unknown host"*|*"not known"*|*"cannot resolve"*|"")
+  *"unknown host"*|*"not known"*|*"cannot resolve"*)
     printf '  %-34s NO ANSWER from %s\n' www.youtube.com "${DNS_UPSTREAM:-the router ($GW)}"; noanswer=1 ;;
+  "") printf '  %-34s no reply from the TV\n' www.youtube.com; fail=1 ;;
   *) printf '  %-34s allowed\n' www.youtube.com ;;
 esac
-
-if [[ $noanswer == 1 ]]; then
-  note "blocked names are answered by the filter, but nothing else resolves. The TV cannot"
-  note "reach ${DNS_UPSTREAM:-the router ($GW)} for DNS; a network that only allows its own"
-  note "resolver (a Pi-hole, an IoT VLAN) needs that one: ./scripts/configure.sh --dns-upstream <ip>,"
-  note "then run this script again. See docs/TROUBLESHOOTING.md."
-  exit 1
-fi
 
 if [[ $fail == 1 ]]; then
   note "the filter is not in the DNS path. Do not force-stop the app — reboot the TV,"
@@ -458,6 +453,13 @@ if [[ $fail == 1 ]]; then
   if [[ $restored == 1 ]]; then
     note "the config went in without adb push; if a reboot does not fix it, see \"Fire OS 8\" in docs/TROUBLESHOOTING.md"
   fi
+  exit 1
+fi
+if [[ $noanswer == 1 ]]; then
+  note "blocked names are answered by the filter, but nothing else resolves. The TV cannot"
+  note "reach ${DNS_UPSTREAM:-the router ($GW)} for DNS; a network that only allows its own"
+  note "resolver (a Pi-hole, an IoT VLAN) needs that one: ./scripts/configure.sh --dns-upstream <ip>,"
+  note "then run this script again. See docs/TROUBLESHOOTING.md."
   exit 1
 fi
 note "filter is live"
