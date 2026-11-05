@@ -3,3 +3,4 @@
 *.jpg binary
 *.apk binary
 *.keystore binary
+*.cmd text eol=crlf

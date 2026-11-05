@@ -19,3 +19,7 @@ indent_size = 4
 
 [*.md]
 trim_trailing_whitespace = false
+
+[*.ps1]
+# Windows PowerShell 5.1 reads a file without a BOM as the ANSI code page.
+charset = utf-8-bom
