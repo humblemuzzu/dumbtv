@@ -84,6 +84,7 @@ for f in "${images[@]}"; do
   # reads the words in it (morning, afternoon, night).
   name=$(printf '%s' "${base%.*}" | tr -c 'A-Za-z0-9_-' '-')
   if [[ $SHUFFLE == 1 ]]; then name=$(printf '%05d-%s' "$((RANDOM % 100000))" "$name"); fi
+  while compgen -G "$WORK/$name.*" >/dev/null; do name=$name-$n; done
   if [[ -n $MAGICK ]]; then
     out=$WORK/$name.jpg
     if [[ $DRY_RUN == 0 ]]; then
@@ -111,9 +112,11 @@ done
 note "$n pushed"
 
 # A settings file in the media folder is merged in once, the next time the home screen comes
-# back; a later change in Options is not overwritten by the same file.
+# back; a later change in Options is not overwritten by the same file. The launcher skips a
+# file identical to the last one it merged, so each run's file carries its own time.
 {
   echo "background=image"
+  echo "wallpaper.pushed=$(date +%s)"
   [[ -n $ROTATE ]] && echo "rotate=$ROTATE"
   [[ -n $DIM ]] && echo "dim=$DIM"
 } > "$WORK/home.conf"

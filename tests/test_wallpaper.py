@@ -16,15 +16,17 @@ MEDIA = "/sdcard/Android/media/tv.dumbtv.home"
 
 
 class WallpaperTest(unittest.TestCase):
-    def run_script(self, *args, magick=False, installed=True):
-        tmp = Path(self.enterContext(tempfile.TemporaryDirectory()))
+    def run_script(self, *args, magick=False, installed=True, names=("beach.JPG", "night city.png")):
+        holder = tempfile.TemporaryDirectory()
+        self.addCleanup(holder.cleanup)
+        tmp = Path(holder.name)
         packages = {"tv.dumbtv.home": {"system": False, "enabled": True}} if installed else {}
         state = tmp / "state.json"
         pushed = tmp / "pushed"
         state.write_text(json.dumps({"packages": packages, "sdk": 30, "pushed": str(pushed)}))
         log = tmp / "commands.log"
         log.touch()
-        for name in ("beach.JPG", "night city.png"):
+        for name in names:
             (tmp / name).write_bytes(b"image")
         path = os.environ["PATH"]
         if magick:
@@ -37,11 +39,15 @@ class WallpaperTest(unittest.TestCase):
             path = f"{bin_dir}{os.pathsep}{path}"
         env = dict(os.environ, PATH=path, ADB=str(ROOT / "tests" / "fake_tv.py"), ADB_SERIAL="test-tv",
                    FAKE_TV_STATE=str(state), FAKE_TV_LOG=str(log))
-        images = [str(tmp / "beach.JPG"), str(tmp / "night city.png")]
+        images = [str(tmp / name) for name in names]
         result = subprocess.run(["bash", str(ROOT / "scripts" / "wallpaper.sh"), "-y", *args, *images],
                                 env=env, capture_output=True, text=True, timeout=60)
         files = sorted(p.name for p in pushed.iterdir()) if pushed.exists() else []
         conf = (pushed / "home.conf").read_text().split() if (pushed / "home.conf").exists() else []
+        if conf:
+            stamps = [line for line in conf if line.startswith("wallpaper.pushed=")]
+            self.assertEqual(len(stamps), 1, conf)
+            conf.remove(stamps[0])
         return result, log.read_text().splitlines(), files, conf, pushed
 
     def test_images_and_settings_reach_the_media_folder(self):
@@ -61,6 +67,11 @@ class WallpaperTest(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertEqual(files, ["beach.jpg", "home.conf", "night-city.jpg"])
         self.assertEqual((pushed / "beach.jpg").read_text(), "fitted")
+
+    def test_images_with_the_same_name_all_arrive(self):
+        result, _, files, _, _ = self.run_script(magick=True, names=("a.png", "a.jpg", "My Photo.jpg", "My-Photo.jpg"))
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertEqual(len([f for f in files if f != "home.conf"]), 4, files)
 
     def test_replace_clears_the_folder_first(self):
         result, commands, _, _, _ = self.run_script("--replace")
