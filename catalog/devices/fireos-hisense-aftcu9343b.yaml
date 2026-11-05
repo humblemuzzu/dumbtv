@@ -1,0 +1,34 @@
+id: fireos-hisense-aftcu9343b
+title: "Hisense 55QD75SFC Fire TV (AFTCU9343B), Fire OS 14"
+contributors:
+  - sockmonkey0223
+platform: fireos
+status: tested
+tested_on: "Fire OS 14, SL14SHIP1015/168N (Android 14, SDK 34)"
+models:
+  - "Hisense 55QD75SFC"
+adb:
+  port: 5555
+  transport: wifi
+developer_mode: >-
+  Settings > Device & Software > About > click Your TV 7 times, then Developer Options > ADB debugging: ON
+ip_location: "Settings > Device & Software > About > Network"
+prompts:
+  - name: "Allow USB debugging?"
+    blocks_automation: true
+    fix: "Press Allow and tick Always allow from this computer"
+data:
+  packages: data/fireos/packages.txt
+  protected: data/fireos/protected.txt
+  never_disable: data/fireos/never-disable.txt
+  user_apps: data/fireos/user-apps.txt
+quirks:
+  - "Fire OS 14 on Android 14 (sdk 34, kernel 5.15), the first Android 14 Fire OS in the catalog; Settings shows it as Fire OS 14. The settings menu is Device & Software, not My Fire TV. Fingerprint Hisense/fountainhead_9603_curiosity; the Fire TV YouTube app reports the set as HISENSE 55QD75SFC."
+  - "Android 14 prints appId= instead of userId= in dumpsys package. Before the uid_of fix, lockdown.sh skipped every protected package as a shared system uid and debloat.sh reported metered data blocked for com.amazon.tv.developer.dataservice without blacklisting it."
+  - "On an IoT Wi-Fi that only allows DNS to a Pi-hole on another subnet, the filter's default upstream (the gateway) never answered: blocked names resolved to 127.0.0.1, everything else was unknown host, YouTube could not connect while Plex and Channels DVR on local addresses worked. The old self-test still said allowed. DNS_UPSTREAM set to the Pi-hole fixed it."
+  - "After each reboot com.amazon.tv.settings.v2/.system.FallbackHome is in front for a few seconds before the home screen."
+  - "debloat.sh: 17 disabled, 0 protected, 0 suspect, 37 absent; com.amazon.tv.developer.dataservice kept running after disable-user and was starved. lockdown.sh limited crashmanager, rdmapplication, tv.csapp and device.software.ota. 3 third-party apps (YouTube, Plex, Channels DVR) present and untouched."
+notes: "Full pass, step by step, with PRIME=0 ALEXA=0 LAUNCHER=1 DNSFILTER=1 YOUTUBE=0 and DNS_UPSTREAM set to the network's own resolver: debloat, lockdown, dnsfilter and dumbtv home 1.7. verify.sh exited 0: 27 packages disabled, 13 privacy settings, data saver on, filter 405 entries, always-on VPN, HOME bound to dumbtv home."
+verify:
+  blocked: data/blocklists/verify-blocked.txt
+  allowed: data/blocklists/verify-allowed.txt
