@@ -137,6 +137,8 @@
     <string name="choice_all_apps_off">Ausgeblendet</string>
     <string name="choice_all_apps_on">Angezeigt</string>
     <string name="choice_icon_pack">Symbolpaket</string>
+    <string name="choice_icon_pack_off">Aus</string>
+    <string name="choice_icon_pack_none">Keines installiert</string>
     <string name="choice_library">Bibliotheksbanner</string>
     <string name="choice_library_on">Angezeigt</string>
     <string name="choice_library_off">Ausgeblendet</string>
