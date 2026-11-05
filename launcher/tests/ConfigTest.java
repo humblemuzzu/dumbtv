@@ -94,13 +94,15 @@ public final class ConfigTest {
             File blocked = new File(f.dir, Config.FILE + ".applied.tmp");
             check(blocked.mkdir(), "block acknowledgement");
             Config cfg = f.open();
-            check("red".equals(f.open().get(Config.ACCENT)), "settings saved despite marker failure");
+            check("blue".equals(f.open().get(Config.ACCENT)), "nothing applied without a marker");
             check(!f.applied.exists(), "marker failure visible on disk");
             check(blocked.delete(), "unblock acknowledgement");
             cfg.refresh();
+            check("red".equals(cfg.get(Config.ACCENT)), "import applied once the marker can be written");
             check(f.applied.isFile(), "marker retried without a source change");
             cfg.set("accent", "green");
-            check("green".equals(f.open().get(Config.ACCENT)), "recovered marker protects UI edits");
+            cfg.refresh();
+            check("green".equals(f.open().get(Config.ACCENT)), "an applied import never comes back");
         }
         System.out.println("ConfigTest passed (import, write/rename failure, retry, acknowledgement)");
     }

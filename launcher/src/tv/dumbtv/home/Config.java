@@ -206,14 +206,20 @@ final class Config {
         if (incoming.equals(parse(appliedFile))) return;
         Map<String, String> merged = new LinkedHashMap<>(values);
         merged.putAll(incoming);
-        // Do not acknowledge an import until the settings themselves are on disk. A failed
-        // write must be retried even when neither source file changes before the next refresh.
+        // The marker goes first and is taken back if the settings cannot be saved, so an import
+        // is applied exactly once: a saved import without its marker would be applied again on
+        // the next refresh, over whatever was changed in Options since.
+        if (!writeSettings(appliedFile, incoming)) {
+            signature = Long.MIN_VALUE;
+            return;
+        }
         if (!writeSettings(file, merged)) {
+            if (!appliedFile.delete()) Log.w("dumbtv", "could not withdraw " + appliedFile);
             signature = Long.MIN_VALUE;
             return;
         }
         values.putAll(incoming);
-        signature = writeSettings(appliedFile, incoming) ? signature() : Long.MIN_VALUE;
+        signature = signature();
     }
 
     private void read() {
