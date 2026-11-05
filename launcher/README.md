@@ -248,6 +248,12 @@ on:
 ./scripts/wallpaper.sh --replace --crop top portrait.jpg             # drop the old ones first
 ```
 
+On Windows without Git Bash, double-click `tools/windows/Wallpapers.cmd`. It opens a
+window that does the same with nothing else installed but `adb`: drop images on it, slide
+the frame over the part of each one the TV should show, pick the rotation and dim, and
+send them. **Wallpapers on TV** shows what is on the TV as thumbnails and removes the ones
+you tick. The window is in English, or Spanish when Windows is.
+
 By hand:
 
 - **One wallpaper:** push it as `wallpaper.jpg` (or `.jpeg`, `.png`, `.webp`) into
