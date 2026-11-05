@@ -29,8 +29,8 @@ import java.util.Map;
  * The launcher has no internet permission, so nothing here is downloaded.
  */
 final class Library {
-    static final String DIR = "library";
-    static final String FILE = "library.conf";
+    static final String DIR = Config.LIBRARY_DIR;
+    static final String FILE = Config.LIBRARY_FILE;
 
     static final class Entry {
         final String image, title, pkg, uri;

@@ -68,6 +68,9 @@ final class Config {
     static final Choice ORDER = new Choice("order", "App order", "custom",
             new String[] {"custom", "recent"},
             new String[] {"Your order", "Recently used"});
+    static final Choice ALL_APPS = new Choice("all_apps", "All apps section", "off",
+            new String[] {"off", "on"},
+            new String[] {"Hidden", "Shown"});
     static final Choice LABELS = new Choice("labels", "App names", "focus",
             new String[] {"focus", "always", "never"},
             new String[] {"On focus", "Always", "Never"});
@@ -108,10 +111,12 @@ final class Config {
     /** The banner of hand-picked titles from {@link Library}; hidden anyway while it has none. */
     static final Choice LIBRARY = new Choice("library", "Library banner", "on",
             new String[] {"on", "off"}, new String[] {"Shown", "Hidden"});
-    static final Choice[] CHOICES = {ACCENT, TILES, LAYOUT, ORDER, LABELS, CLOCK, MEMORY, INPUTS, SWITCH, BACKGROUND, DIM, ROTATE, LOCK, TILE_STYLE, LIBRARY};
+    static final Choice[] CHOICES = {ACCENT, TILES, LAYOUT, ORDER, ALL_APPS, LABELS, CLOCK, MEMORY, INPUTS, SWITCH, BACKGROUND, DIM, ROTATE, LOCK, TILE_STYLE, LIBRARY};
 
     /** Folder of wallpapers, next to home.conf, that Background › Image file rotates through. */
     static final String WALLPAPERS = "wallpapers";
+    /** Folder and list of {@link Library}, next to home.conf like the wallpapers. */
+    static final String LIBRARY_DIR = "library", LIBRARY_FILE = "library.conf";
     private static final String OFFSET = "wallpaper.offset";
 
     private static final int[] ACCENTS = {
@@ -164,7 +169,7 @@ final class Config {
         signature = sig;
         values.clear();
         if (file.isFile()) read();
-        if (mergeShared()) save();
+        mergeShared();
         version++;
     }
 
@@ -194,14 +199,21 @@ final class Config {
      * write on Fire OS 8. The push is applied once: what was applied is remembered, so the same
      * file is not applied again and a later change on the TV is not overwritten by it.
      */
-    private boolean mergeShared() {
-        if (sharedFile == null || !sharedFile.isFile()) return false;
+    private void mergeShared() {
+        if (sharedFile == null || !sharedFile.isFile()) return;
         Map<String, String> incoming = parse(sharedFile);
-        if (incoming.isEmpty()) return false;
-        if (incoming.equals(parse(appliedFile))) return false;
+        if (incoming.isEmpty()) return;
+        if (incoming.equals(parse(appliedFile))) return;
+        Map<String, String> merged = new LinkedHashMap<>(values);
+        merged.putAll(incoming);
+        // Do not acknowledge an import until the settings themselves are on disk. A failed
+        // write must be retried even when neither source file changes before the next refresh.
+        if (!writeSettings(file, merged)) {
+            signature = Long.MIN_VALUE;
+            return;
+        }
         values.putAll(incoming);
-        writeSettings(appliedFile, incoming);
-        return true;
+        signature = writeSettings(appliedFile, incoming) ? signature() : Long.MIN_VALUE;
     }
 
     private void read() {
@@ -225,11 +237,10 @@ final class Config {
     }
 
     private void save() {
-        writeSettings(file, values);
-        signature = signature();
+        signature = writeSettings(file, values) ? signature() : Long.MIN_VALUE;
     }
 
-    private static void writeSettings(File target, Map<String, String> settings) {
+    private static boolean writeSettings(File target, Map<String, String> settings) {
         File tmp = new File(target.getParentFile(), target.getName() + ".tmp");
         try (Writer w = new OutputStreamWriter(new FileOutputStream(tmp), StandardCharsets.UTF_8)) {
             w.write("# dumbtv home. Edit on the TV (Options) or here; unknown keys are kept.\n");
@@ -238,9 +249,11 @@ final class Config {
             }
         } catch (IOException e) {
             Log.w("dumbtv", "could not write " + tmp, e);
-            return;
+            return false;
         }
-        if (!tmp.renameTo(target)) Log.w("dumbtv", "could not replace " + target);
+        if (tmp.renameTo(target)) return true;
+        Log.w("dumbtv", "could not replace " + target);
+        return false;
     }
 
     String get(String key, String fallback) {
@@ -371,11 +384,11 @@ final class Config {
 
     /** The library folder that holds a library.conf: the app's own first, then the media one. */
     File libraryDir() {
-        File own = new File(dir, Library.DIR);
-        if (new File(own, Library.FILE).isFile()) return own;
+        File own = new File(dir, LIBRARY_DIR);
+        if (new File(own, LIBRARY_FILE).isFile()) return own;
         if (shared != null) {
-            File media = new File(shared, Library.DIR);
-            if (new File(media, Library.FILE).isFile()) return media;
+            File media = new File(shared, LIBRARY_DIR);
+            if (new File(media, LIBRARY_FILE).isFile()) return media;
         }
         return null;
     }

@@ -33,6 +33,10 @@ jobs:
           javac --release 8 -Xlint:all -Werror -d /tmp/host launcher/src/tv/dumbtv/home/HomeRetry.java \
             launcher/tests/HomeRetryTest.java
           java -cp /tmp/host tv.dumbtv.home.HomeRetryTest
+          javac --release 8 -Xlint:all -Werror -d /tmp/config-host \
+            launcher/tests/stubs/android/*/*.java launcher/src/tv/dumbtv/home/Config.java \
+            launcher/tests/ConfigTest.java
+          java -cp /tmp/config-host tv.dumbtv.home.ConfigTest
           javac -d /tmp/host -cp "$jar" launcher/src/tv/dumbtv/home/FocusColor.java \
             launcher/src/tv/dumbtv/home/Config.java launcher/src/tv/dumbtv/home/Library.java \
             launcher/src/tv/dumbtv/home/Recent.java launcher/tests/FocusColorTest.java
@@ -40,6 +44,10 @@ jobs:
           javac -d /tmp/host -cp "/tmp/host:$jar" launcher/src/tv/dumbtv/home/Recent.java \
             launcher/tests/RecentTest.java
           java -cp "/tmp/host:$jar" tv.dumbtv.home.RecentTest
+          javac --release 8 -Xlint:all -Werror -d /tmp/config-host -cp "$jar:/tmp/config-host" \
+            launcher/src/tv/dumbtv/home/Item.java launcher/src/tv/dumbtv/home/Recent.java \
+            launcher/src/tv/dumbtv/home/Catalog.java launcher/tests/AppSectionsTest.java
+          java -cp "/tmp/config-host:$jar" tv.dumbtv.home.AppSectionsTest
           javac -d /tmp/host -cp "/tmp/host:$jar" launcher/src/tv/dumbtv/home/Ui.java \
             launcher/src/tv/dumbtv/home/Meter.java launcher/tests/MeterTest.java
           java -cp "/tmp/host:$jar" tv.dumbtv.home.MeterTest
