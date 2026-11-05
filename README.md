@@ -35,7 +35,7 @@ Ads, tracking and clutter out of your Fire TV. Your apps and HDMI inputs stay.</
 <a href="https://gizmodo.com/people-using-ai-to-make-smart-tvs-dumb-again-is-the-most-2026-thing-ever-2000828213">Gizmodo</a> ·
 <a href="https://www.xda-developers.com/people-are-now-vibe-coding-their-smart-tvs-to-strip-them-of-ads-and-unwanted-features/">XDA</a> ·
 <a href="https://itsfoss.com/news/debloat-smart-tv/">It's FOSS</a> ·
-<a href="docs/PRESS.md">and more than 100 others</a></sub></p>
+<a href="docs/PRESS.md">and more than 150 others</a></sub></p>
 
 ---
 
