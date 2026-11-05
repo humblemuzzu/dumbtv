@@ -133,6 +133,9 @@
     <string name="choice_tile_style">App tile style</string>
     <string name="choice_tile_style_original">Original</string>
     <string name="choice_tile_style_afterglow">Afterglow</string>
+    <string name="choice_chips">Chip style</string>
+    <string name="choice_chips_text">Text</string>
+    <string name="choice_chips_icons">Icons</string>
     <string name="choice_all_apps">All apps section</string>
     <string name="choice_all_apps_off">Hidden</string>
     <string name="choice_all_apps_on">Shown</string>
