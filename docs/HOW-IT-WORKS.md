@@ -122,9 +122,17 @@ only and reads no screen content.
 **Fire OS 6: a foreground service, `Keeper`.** Fire OS 6.7 refuses third-party
 accessibility services. `Keeper` reads the foreground app from UsageStats and calls
 `moveTaskToFront` when Amazon's home appears. That is not an activity launch, so
-the 5 s delay does not apply. It is the only reason the launcher asks for any
-permission at all, and those three permissions are capped at Android 8.1, so Fire
-OS 7 and 8 see none.
+the 5 s delay does not apply. Its usage-access and task-order permissions are
+capped at Android 8.1, so Fire OS 7 and 8 never see them.
+
+**Keeping the filter running: `Filter`.** Android does not restart a VPN whose
+process was killed, so after lmkd kills personalDNSfilter under memory pressure
+the filter stays off until something starts the app again. dumbtv home sends an
+explicit broadcast to the filter's `BootUpReceiver` whenever the home screen
+opens, at boot, and from a 15-minute alarm that survives dumbtv home being killed
+too. The receiver starts the VPN without showing the app, and does nothing while
+the filter runs. It only accepts senders that hold `RECEIVE_BOOT_COMPLETED`, which
+is the one permission dumbtv home asks for on Fire OS 7 and 8.
 
 Holding HOME still opens Fire OS's quick menu, and the launcher's Options can open
 Amazon's home on purpose.

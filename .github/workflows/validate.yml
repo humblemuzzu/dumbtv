@@ -46,13 +46,14 @@ jobs:
         run: |
           min=$("$ANDROID_HOME/build-tools/34.0.0/aapt2" dump badging launcher/build/dumbtv-home.apk | sed -nE "s/^(minSdkVersion|sdkVersion):'([0-9]+)'.*/\2/p")
           [ "$min" = 25 ] || { echo "expected minSdkVersion 25, found $min"; exit 1; }
-      - name: no permissions on Fire OS 7 and later
+      - name: one permission on Fire OS 7 and later
         run: |
-          # The only permissions allowed are Fire OS 6's Keeper trio, each capped at sdk 27.
+          # Fire OS 6's Keeper pair is capped at sdk 27; RECEIVE_BOOT_COMPLETED restarts the filter (Filter.java).
           dump=$("$ANDROID_HOME/build-tools/34.0.0/aapt2" dump permissions launcher/build/dumbtv-home.apk)
           echo "$dump"
-          extra=$(echo "$dump" | grep uses-permission | grep -v "maxSdkVersion='27'" || true)
-          [ -z "$extra" ] || { echo "the launcher must request no permissions on sdk 28+, found: $extra"; exit 1; }
+          extra=$(echo "$dump" | grep uses-permission | grep -v "maxSdkVersion='27'" \
+            | grep -v "name='android.permission.RECEIVE_BOOT_COMPLETED'" || true)
+          [ -z "$extra" ] || { echo "the launcher may only request RECEIVE_BOOT_COMPLETED on sdk 28+, found: $extra"; exit 1; }
           n=$(echo "$dump" | grep -c uses-permission || true)
           [ "$n" -le 3 ] || { echo "expected at most the 3 Fire OS 6 permissions, found $n"; exit 1; }
 

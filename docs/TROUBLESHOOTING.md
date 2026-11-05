@@ -25,6 +25,12 @@ adb shell settings get secure accessibility_enabled             # 0 = off
 Run `./scripts/launcher.sh -y`. It switches the service off and on again, which is
 what makes Android bind it.
 
+On Fire OS 8 this also happens when the TV runs out of memory, for example while
+Prime Video plays HDR on a TV with 2 GB or less (#162). Android 11 kills the launcher
+along with other apps and then never binds a killed accessibility service again until
+the setting changes; Fire OS 7 binds it again by itself. The same
+`./scripts/launcher.sh -y` fixes it.
+
 ### `verify.sh` says the home hook is enabled but not bound
 
 Enabled is a setting; bound means the service is actually running. `verify.sh`
@@ -153,6 +159,21 @@ always-on VPN and the app's own boot start are racing (seen on an AFTTI43, issue
 #58). Add `FILTER_AUTOSTART=0` to `dumbtv.conf` and run `./scripts/dnsfilter.sh`
 again. Fire OS 6 needs the app's own start, so the script ignores this setting
 there.
+
+### Blocked hosts resolve again after an app crashed or the TV ran out of memory
+
+Android does not restart a VPN whose app was killed. When the TV runs short of
+memory it kills the filter along with other apps (#162), and from then on Amazon's
+hosts resolve normally. dumbtv home 1.8 and later start it again, without showing
+the app, whenever the home screen opens and every 15 minutes. Without dumbtv home,
+or with `FILTER_AUTOSTART=0` (the app then ignores that request), reboot the TV or
+open personalDNSfilter once:
+
+```sh
+adb shell am start -n dnsfilter.android/.DNSProxyActivity
+```
+
+Never force-stop it; see above.
 
 ### Use resolvers other than the router
 

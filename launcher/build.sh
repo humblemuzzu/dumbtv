@@ -4,8 +4,9 @@
 #   MIN_SDK=25 (default)  one APK for Fire OS 6, 7 and 8: the published release. Compiling
 #                         against android-25 makes javac reject any android.* API Fire OS 6
 #                         lacks; java.* calls are checked against JDK 8 by --release 8, so keep
-#                         them to what Android 7.1 has. Fire OS 7/8 see no permissions: the
-#                         Keeper's three are capped at maxSdkVersion 27.
+#                         them to what Android 7.1 has. Fire OS 7/8 see one permission,
+#                         RECEIVE_BOOT_COMPLETED (Filter); the Keeper's other two are capped
+#                         at maxSdkVersion 27.
 #   MIN_SDK=28            Android 9+ only, as releases up to 1.1 were
 set -euo pipefail
 cd "$(dirname "${BASH_SOURCE[0]}")"

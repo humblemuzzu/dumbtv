@@ -10,9 +10,12 @@ A home screen for Fire TV that does one job: show your apps and your HDMI inputs
   Services or any other library.
 - **No network.** There is no `INTERNET` permission, so Android will not let it
   open a connection.
-- **No permissions on Fire OS 7 and 8.** It declares three (usage access, task
-  order, boot completed), each limited to Android 8.1 and earlier, for the Fire OS 6
-  Keeper below. Check: `aapt2 dump permissions dumbtv-home.apk`.
+- **One permission on Fire OS 7 and 8: run at startup.** personalDNSfilter only
+  takes a restart request from an app holding it, and dumbtv home uses it for
+  nothing else: when Android kills the filter under memory pressure, dumbtv home
+  starts it again (on HOME, at boot and every 15 minutes). Fire OS 6 adds usage
+  access and task order for the Keeper below, both limited to Android 8.1 and
+  earlier. Check: `aapt2 dump permissions dumbtv-home.apk`.
 - **No ads, no recommended rows, no account, no analytics, no update checks.**
 - About 60–70 MB of memory with the home screen showing, about 37 MB while an app
   plays (measured on a Fire TV Edition television with 1.4 GB of RAM).

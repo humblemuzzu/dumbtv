@@ -9,8 +9,10 @@
          maxSdkVersion keeps Fire OS 7/8 on the permission-free accessibility path. -->
     <uses-permission android:name="android.permission.PACKAGE_USAGE_STATS"
         android:maxSdkVersion="27" />
-    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"
-        android:maxSdkVersion="27" />
+    <!-- Every version: personalDNSfilter's BootUpReceiver only takes broadcasts from apps that
+         hold this, and Filter uses it to restart a filter whose process was killed (#162).
+         A normal permission, granted at install, with no prompt. -->
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.REORDER_TASKS"
         android:maxSdkVersion="27" />
 
