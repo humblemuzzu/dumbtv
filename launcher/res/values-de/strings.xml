@@ -93,7 +93,7 @@
     <string name="choice_layout_rows">Zeilen</string>
     <string name="choice_layout_grid">Raster</string>
     <string name="choice_order">App-Reihenfolge</string>
-    <string name="choice_order_custom">Ihre Reihenfolge</string>
+    <string name="choice_order_custom">Eigene Reihenfolge</string>
     <string name="choice_order_recent">Zuletzt verwendet</string>
     <string name="choice_labels">App-Namen</string>
     <string name="choice_labels_focus">Beim Fokussieren</string>
