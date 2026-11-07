@@ -104,6 +104,9 @@ acmd pm enable --user 0 $PKG >/dev/null 2>&1
 # The VPN consent dialog renders phone-sized on TVs and often ignores the
 # remote. Pre-granting the app-op skips it entirely.
 acmd appops set $PKG ACTIVATE_VPN allow >/dev/null
+# TCL's TclAppBoot keeps an app without the AUTO_START app-op from starting its service on
+# its own, so the VPN never came up (#176). Builds without that op refuse the name.
+acmd appops set $PKG AUTO_START allow >/dev/null || true
 acmd dumpsys deviceidle whitelist +$PKG >/dev/null
 
 step "config"

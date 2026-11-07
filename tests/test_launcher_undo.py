@@ -45,6 +45,7 @@ class LauncherUndoTest(unittest.TestCase):
     def test_the_doze_exemption_goes_too(self):
         commands, settings = self.undo({"secure/enabled_accessibility_services": GUARD})
         self.assertIn("dumpsys deviceidle whitelist -tv.dumbtv.home", commands)
+        self.assertIn("appops set tv.dumbtv.home AUTO_START default", commands)
         self.assertNotIn(GUARD, settings.get("secure/enabled_accessibility_services", ""))
 
     def test_other_accessibility_services_are_kept(self):

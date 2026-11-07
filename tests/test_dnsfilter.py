@@ -127,6 +127,11 @@ class RouteTest(unittest.TestCase):
     def test_no_bypass_when_prime_is_blocked(self):
         self.assertEqual(self.whitelist(25, "PRIME=0\n"), ["androidAppWhiteList = <none>"])
 
+    def test_the_filter_may_start_itself_on_tcl(self):
+        # TclAppBoot blocks the VPN service of an app without AUTO_START (#176).
+        self.pushed_conf({"net.dns1": GATEWAY}, sdk=34)
+        self.assertIn("appops set dnsfilter.android AUTO_START allow", self.touched)
+
     def test_no_bypass_on_fire_os_7_and_8(self):
         self.assertEqual(self.whitelist(28), ["androidAppWhiteList = <none>"])
         self.assertEqual(self.whitelist(30, "SYSTEM_DNS=1\n"), ["androidAppWhiteList = <none>"])

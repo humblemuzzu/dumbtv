@@ -78,6 +78,7 @@ if [[ $mode == undo ]]; then
   # force-stop also keeps the Fire OS 6 Keeper from restarting at the next boot.
   sh_ am force-stop $PKG >/dev/null 2>&1 || true
   sh_ appops set $PKG GET_USAGE_STATS default >/dev/null 2>&1 || true
+  sh_ appops set $PKG AUTO_START default >/dev/null 2>&1 || true
   set_futurity off
   set_guard ""
   sh_ dumpsys deviceidle whitelist -$PKG >/dev/null 2>&1 || true
@@ -139,6 +140,11 @@ esac
 echo "installed $PKG"
 
 sh_ dumpsys deviceidle whitelist +$PKG >/dev/null
+# TCL's TclAppBoot refuses to bind the Guard of an app without the AUTO_START app-op (#176).
+# Builds without that op refuse the name. App-ops reach the disk lazily, so it is written
+# now, before a reboot can drop it.
+sh_ appops set $PKG AUTO_START allow >/dev/null 2>&1 || true
+sh_ appops write-settings >/dev/null 2>&1 || true
 
 # Fire OS 6.7 refuses third-party accessibility services (A11yAuthorizer), so the Guard
 # cannot bind there. Keeper watches Amazon's home through UsageStats and calls
