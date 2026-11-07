@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">dumbtv</string>
+    <!-- Not translated: scripts/accessibility.sh finds the bound service by this label. -->
+    <string name="guard_label" translatable="false">dumbtv home button</string>
+    <string name="guard_description">Sendet die HOME-Taste an den dumbtv-Startbildschirm statt an den von Amazon. Es liest keine Bildschirminhalte und hat keinen Internetzugang.</string>
+
+    <!-- Home screen -->
+    <string name="options">Optionen</string>
+    <string name="settings">Einstellungen</string>
+    <string name="row_apps">Apps</string>
+    <string name="row_inputs">Eingänge</string>
+    <string name="row_all_apps">Alle Apps</string>
+    <string name="row_pinned_apps">Angeheftete Apps</string>
+    <string name="could_not_open">Konnte nicht geöffnet werden</string>
+    <string name="tile_move">Verschieben</string>
+    <string name="tile_rename">Umbenennen</string>
+    <string name="tile_hide">Ausblenden</string>
+    <string name="tile_pin">Anheften</string>
+    <string name="tile_unpin">Lösen</string>
+    <string name="tile_icon">Symbol</string>
+    <string name="tile_app_info">App-Info</string>
+    <string name="move_needs_order">Die App-Reihenfolge ist "Zuletzt verwendet". Wählen Sie in Optionen "Eigene Reihenfolge", um Kacheln zu verschieben.</string>
+    <string name="hidden_toast">Ausgeblendet. Sie können es in Optionen wiederherstellen.</string>
+    <string name="unpinned_toast">Gelöst. Finden Sie es unter Alle Apps.</string>
+    <string name="rename_title">Umbenennen</string>
+    <string name="save">Speichern</string>
+    <string name="original">Original</string>
+    <string name="cancel">Abbrechen</string>
+
+    <!-- Inputs -->
+    <string name="input_failed">Eingang konnte nicht geöffnet werden</string>
+    <string name="input_no_signal">Kein Signal</string>
+
+    <!-- Memory meter -->
+    <string name="meter_title">Arbeitsspeicher</string>
+    <string name="meter_free">%1$d MB von %2$d MB frei</string>
+    <string name="meter_low">Speicher knapp</string>
+
+    <!-- Fire OS 6 settings list -->
+    <string name="fire_all_settings">Alle Einstellungen…</string>
+    <string name="fire_notifications">Benachrichtigungen</string>
+    <string name="fire_network">Netzwerk</string>
+    <string name="fire_applications">Anwendungen</string>
+    <string name="fire_equipment_control">Gerätesteuerung</string>
+    <string name="fire_controllers">Controller &amp; Bluetooth-Geräte</string>
+    <string name="fire_device">Gerät &amp; Software</string>
+
+    <!-- Options -->
+    <string name="next_wallpaper">Nächstes Hintergrundbild</string>
+    <string name="apps_on_home">Apps auf dem Startbildschirm</string>
+    <string name="inputs_on_home">Eingänge auf dem Startbildschirm</string>
+    <string name="reset_layout">Reihenfolge, Namen und ausgeblendete Kacheln zurücksetzen</string>
+    <string name="export_settings">Einstellungen für "adb pull" exportieren</string>
+    <string name="export_done">Gespeichert unter %1$s</string>
+    <string name="export_failed">Die Kopie konnte nicht geschrieben werden</string>
+    <string name="open_amazon_home">Amazon Startbildschirm öffnen</string>
+    <string name="done">Fertig</string>
+    <string name="reset_title">Layout des Startbildschirms zurücksetzen?</string>
+    <string name="reset_message">Reihenfolge, Namen, ausgewählte Symbole und ausgeblendete Kacheln werden auf Standard zurückgesetzt. Farben und Größen bleiben erhalten.</string>
+    <string name="reset">Zurücksetzen</string>
+    <string name="lock_on">Optionen und Einstellungen sind jetzt auf dem Startbildschirm ausgeblendet. Halten Sie ☰ Menü für %1$d Sekunden gedrückt, um hier zurückzukommen.</string>
+    <string name="about">Einstellungsdatei: %1$s\nEin Hintergrundbild: Benennen Sie es exakt als wallpaper.jpg (oder .png) und legen Sie es in diesen Ordner\nMehrere Hintergrundbilder: Legen Sie sie in %2$s/ mit beliebigen Namen ab und wählen Sie wie es gewechselt werden soll\nDann Hintergrund › "Bilddatei" oder "Adaptiver Farbon des Hintergrundbildes" wählen. Keine Berechtigung erforderlich\nUnter Fire OS 8 kann adb auf diesen Ordner nicht zugreifen; verwenden Sie stattdessen %3$s (Einstellungen exportieren legt eine Kopie dort ab)\n"Adaptiver Farboton des Hintergrundbildes" nutzt Graphit, bis Sie ein Hintergrundbild hinzufügen\nBibliotheksbanner: Legen Sie Bilder und %4$s in %5$s/ in diesem Ordner ab\nSymbolpaket: Installieren Sie eines und wählen Sie es oben aus; halten Sie OK auf einer Kachel › Symbol gedrückt, um das Symbol einer App zu wählen\nKeine Internetberechtigung. Kein Tracking, keine Werbung, keine Accounts.</string>
+
+    <string name="icon_for">Symbol für %1$s</string>
+    <string name="icon_filter">Nach Name filtern</string>
+    <string name="icon_reading">Symbolpaket wird geladen…</string>
+    <string name="icon_automatic">Automatisch</string>
+    <string name="icon_own">Eigenes Symbol der App</string>
+    <string name="icon_no_pack">Kein Symbolpaket gewählt. Wählen Sie eines unter Optionen › Symbolpaket.</string>
+    <string name="icon_count">%1$d Symbole</string>
+    <string name="icon_count_of">%1$d von %2$d Symbolen</string>
+
+    <string name="library_watch">OK zum Anschauen</string>
+    <string name="library_more">◀ ▶ mehr</string>
+
+    <!-- Options rows: choice_<key> is the row, choice_<key>_<value> a value (- becomes _).
+         A row or value with no string here shows the English text in Config.java. -->
+    <string name="choice_accent">Akzentfarbe</string>
+    <string name="choice_accent_white">Weiß</string>
+    <string name="choice_accent_blue">Blau</string>
+    <string name="choice_accent_cyan">Türkis</string>
+    <string name="choice_accent_green">Grün</string>
+    <string name="choice_accent_amber">Bernstein</string>
+    <string name="choice_accent_red">Rot</string>
+    <string name="choice_accent_pink">Rosa</string>
+    <string name="choice_accent_violet">Violett</string>
+    <string name="choice_tiles">Kachelgröße</string>
+    <string name="choice_tiles_small">Klein</string>
+    <string name="choice_tiles_medium">Mittel</string>
+    <string name="choice_tiles_large">Groß</string>
+    <string name="choice_layout">Layout</string>
+    <string name="choice_layout_rows">Zeilen</string>
+    <string name="choice_layout_grid">Raster</string>
+    <string name="choice_order">App-Reihenfolge</string>
+    <string name="choice_order_custom">Eigene Reihenfolge</string>
+    <string name="choice_order_recent">Zuletzt verwendet</string>
+    <string name="choice_labels">App-Namen</string>
+    <string name="choice_labels_focus">Beim Fokussieren</string>
+    <string name="choice_labels_always">Immer</string>
+    <string name="choice_labels_never">Nie</string>
+    <string name="choice_clock">Uhr</string>
+    <string name="choice_clock_auto">System</string>
+    <string name="choice_clock_24h">24-Stunden</string>
+    <string name="choice_clock_12h">12-Stunden</string>
+    <string name="choice_memory">Speicheranzeige</string>
+    <string name="choice_memory_off">Ausgeblendet</string>
+    <string name="choice_memory_on">Angezeigt</string>
+    <string name="choice_inputs">Eingänge</string>
+    <string name="choice_inputs_on">Angezeigt</string>
+    <string name="choice_inputs_off">Ausgeblendet</string>
+    <string name="choice_switch">Eingänge öffnen mit</string>
+    <string name="choice_switch_auto">Automatisch</string>
+    <string name="choice_switch_tv">Die TV-App</string>
+    <string name="choice_switch_home">dumbtv-Startbildschirm</string>
+    <string name="choice_background">Hintergrund</string>
+    <string name="choice_background_black">Schwarz</string>
+    <string name="choice_background_graphite">Graphit</string>
+    <string name="choice_background_midnight">Mitternacht</string>
+    <string name="choice_background_image">Bilddatei</string>
+    <string name="choice_background_adaptive">Adaptiv einfarbig</string>
+    <string name="choice_background_adaptive_tint">Adaptiver Farbton des Hintergrundbildes</string>
+    <string name="choice_dim">Bild abdunkeln</string>
+    <string name="choice_rotate">Wechsel des Hintergrundbildes</string>
+    <string name="choice_rotate_off">Aus</string>
+    <string name="choice_rotate_visit">Bei jeder Rückkehr zum Startbildschirm</string>
+    <string name="choice_rotate_hourly">Jede Stunde</string>
+    <string name="choice_rotate_daily">Jeden Tag</string>
+    <string name="choice_rotate_daytime">Nach Tageszeit</string>
+    <string name="choice_lock">Kindersicherung</string>
+    <string name="choice_lock_off">Aus</string>
+    <string name="choice_lock_on">An</string>
+    <string name="choice_tile_style">Design der App-Kachel</string>
+    <string name="choice_tile_style_original">Original</string>
+    <string name="choice_tile_style_afterglow">Afterglow</string>
+    <string name="choice_all_apps">Bereich Alle Apps</string>
+    <string name="choice_all_apps_off">Ausgeblendet</string>
+    <string name="choice_all_apps_on">Angezeigt</string>
+    <string name="choice_icon_pack">Symbolpaket</string>
+    <string name="choice_icon_pack_off">Aus</string>
+    <string name="choice_icon_pack_none">Keines installiert</string>
+    <string name="choice_library">Bibliotheksbanner</string>
+    <string name="choice_library_on">Angezeigt</string>
+    <string name="choice_library_off">Ausgeblendet</string>
+</resources>

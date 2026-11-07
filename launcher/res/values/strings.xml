@@ -140,6 +140,8 @@
     <string name="choice_all_apps_off">Hidden</string>
     <string name="choice_all_apps_on">Shown</string>
     <string name="choice_icon_pack">Icon pack</string>
+    <string name="choice_icon_pack_off">Off</string>
+    <string name="choice_icon_pack_none">None installed</string>
     <string name="choice_library">Library banner</string>
     <string name="choice_library_on">Shown</string>
     <string name="choice_library_off">Hidden</string>
