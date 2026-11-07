@@ -14,7 +14,7 @@ adb:
   port: 5555
   transport: wifi
 developer_mode: >-
-  Settings > Device & Software > About > press OK on Your TV 7 times, then back > Developer Options > ADB debugging: ON (third set). Only after full setup: a set first set up in Basic mode shows Device & Software as About, Legal, Sleep, Restart and Reset to Factory Defaults, and the 7 presses do nothing, no countdown. Earlier sets had it enabled by the owner before the session. On this build Developer Options is under Settings > Device & Software > Developer Options, with separate ADB debugging (network) and USB debugging toggles; ADB debugging is the one adb connect needs. The usual Fire OS unlock (About > click the device name 7 times) was not re-verified here.
+  Settings > Device & Software > About > press OK on Your TV 7 times, then back > Developer Options > ADB debugging: ON (third set). Only after full setup: a set first set up in Basic mode shows Device & Software as About, Legal, Sleep, Restart and Reset to Factory Defaults, and the 7 presses do nothing, no countdown. Earlier sets had it enabled by the owner before the session. On this build Developer Options is under Settings > Device & Software > Developer Options, with separate ADB debugging (network) and USB debugging toggles; ADB debugging is the one adb connect needs.
 ip_location: "Settings > Device & Software > About > Network (the owner supplied the address; path not re-verified)"
 prompts:
   - name: "USB debugging authorization"
