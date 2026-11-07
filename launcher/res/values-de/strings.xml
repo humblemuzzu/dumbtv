@@ -1,8 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">dumbtv</string>
-    <!-- Not translated: scripts/accessibility.sh finds the bound service by this label. -->
-    <string name="guard_label" translatable="false">dumbtv home button</string>
+    <!-- guard_label stays English: scripts/accessibility.sh finds the service by it. -->
     <string name="guard_description">Sendet die HOME-Taste an den dumbtv-Startbildschirm statt an den von Amazon. Es liest keine Bildschirminhalte und hat keinen Internetzugang.</string>
 
     <!-- Home screen -->
