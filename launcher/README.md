@@ -6,7 +6,7 @@ A home screen for Fire TV that does one job: show your apps and your HDMI inputs
   <img src="../docs/assets/screens/home.png" alt="dumbtv home: a clock, an Apps row and an Inputs row" width="720">
 </p>
 
-- **95 KB.** Plain Java and Android views. No AndroidX, Kotlin, Compose, Play
+- **107 KB.** Plain Java and Android views. No AndroidX, Kotlin, Compose, Play
   Services or any other library.
 - **No network.** There is no `INTERNET` permission, so Android will not let it
   open a connection.
@@ -183,6 +183,17 @@ adb shell pm disable-user --user 0 <pack package>
 ```
 
 The icons are the pack author's, under the pack's licence.
+
+## Languages
+
+dumbtv home follows the TV's language: English, German and Spanish so far. Any other
+language, and any string a translation lacks, shows in English.
+
+To add one, copy `res/values/strings.xml` to `res/values-<code>/strings.xml` (for
+example `values-it`) and translate the text between the tags. Leave out `app_name` and
+`guard_label`: `scripts/accessibility.sh` finds the HOME service by that label, so it
+stays English. Keep `%s` and `%d` as they are, and keep option values short, since they
+share a row with their name.
 
 ## The settings file
 
