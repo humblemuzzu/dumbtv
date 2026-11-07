@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Settings chip: a gear outline. Its hub is chip_settings_mark, drawn in the accent. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:strokeColor="#FFFFFFFF"
+        android:strokeWidth="1.7"
+        android:strokeLineJoin="round"
+        android:pathData="M9.6,5.21L10.39,2.64L13.61,2.64L14.4,5.21L15.1,5.5L17.48,4.24L19.76,6.52L18.5,8.9L18.79,9.6L21.36,10.39L21.36,13.61L18.79,14.4L18.5,15.1L19.76,17.48L17.48,19.76L15.1,18.5L14.4,18.79L13.61,21.36L10.39,21.36L9.6,18.79L8.9,18.5L6.52,19.76L4.24,17.48L5.5,15.1L5.21,14.4L2.64,13.61L2.64,10.39L5.21,9.6L5.5,8.9L4.24,6.52L6.52,4.24L8.9,5.5Z" />
+</vector>
