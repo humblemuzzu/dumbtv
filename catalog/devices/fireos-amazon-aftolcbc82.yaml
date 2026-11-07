@@ -3,16 +3,18 @@ title: "Fire TV Edition television (AFTOLCBC82)"
 contributors:
   - koconnorgit
   - iotemylabs
+  - gmckeever
 platform: fireos
 status: tested
-tested_on: "RS8153.3202N, then RS8180.3746N after a staged OTA applied on the first reboot; a second set on RS8180.3746N"
+tested_on: "RS8153.3202N, then RS8180.3746N after a staged OTA applied on the first reboot; a second set on RS8180.3746N; a third set (Hisense 43QD6) on RS8180.3746N"
 models:
   - "AFTOLCBC82 (codename ginza; Fire TV Edition television, MediaTek)"
+  - "Hisense 43\" Class QD6 Series Hi-QLED 4K Fire TV (2025)"
 adb:
   port: 5555
   transport: wifi
 developer_mode: >-
-  Enabled by the owner before the session. On this build Developer Options is under Settings > Device & Software > Developer Options, with separate ADB debugging (network) and USB debugging toggles; ADB debugging is the one adb connect needs. The usual Fire OS unlock (About > click the device name 7 times) was not re-verified here.
+  Settings > Device & Software > About > press OK on Your TV 7 times, then back > Developer Options > ADB debugging: ON (third set). Only after full setup: a set first set up in Basic mode shows Device & Software as About, Legal, Sleep, Restart and Reset to Factory Defaults, and the 7 presses do nothing, no countdown. Earlier sets had it enabled by the owner before the session. On this build Developer Options is under Settings > Device & Software > Developer Options, with separate ADB debugging (network) and USB debugging toggles; ADB debugging is the one adb connect needs. The usual Fire OS unlock (About > click the device name 7 times) was not re-verified here.
 ip_location: "Settings > Device & Software > About > Network (the owner supplied the address; path not re-verified)"
 prompts:
   - name: "USB debugging authorization"
@@ -20,7 +22,7 @@ prompts:
     fix: "human presses Allow on the TV and ticks Always allow. adb devices then shows authorizing and offline for about 30 s before device; keep polling, do not reconnect in a loop"
   - name: "ADB off after reboot"
     blocks_automation: true
-    fix: "port 5555 was closed after debloat.sh's reboot although the TV reached its home screen, so reboot_wait timed out. Turning ADB debugging off and on again in Developer Options opened it; turning it on once did not"
+    fix: "port 5555 was closed after debloat.sh's reboot although the TV reached its home screen, so reboot_wait timed out. Turning ADB debugging off and on again in Developer Options opened it; turning it on once did not. On the third set it happened after both reboots, debloat.sh's and dnsfilter.sh's; dnsfilter.sh stopped before its self-test and verify.sh after reconnecting showed the filter working"
   - name: "Fire TV full-screen keyboard"
     blocks_automation: true
     fix: "opens over personalDNSfilter's text fields and hides the dialog. Type with adb shell input text, close it with KEYCODE_BACK; the next tap after typing reopens the field instead of pressing the button, so press BACK and tap again"
@@ -43,7 +45,9 @@ quirks:
   - "com.amazon.device.software.ota restarts within seconds of lockdown.sh's force-stop; only the DNS filter stops updates"
   - "Wi-Fi reports NOT_METERED, so lockdown.sh's data saver and background-data blacklist have no effect here; the app-op part still applies"
   - "youtube.sh works on this model"
-notes: "Fire OS 8 television, two sets. A full pass on Fire OS 8.1.5.3 and again after an OTA to 8.1.8.0: debloat, lockdown and the DNS filter through the file:/// list, verify.sh exit 0 before and after a reboot. dumbtv home 1.2 takes HOME 0.3 s after Amazon's home starts, also after a reboot, and opens inputs on its own screen. A second set on 8.1.8.0: debloat (58 disabled), lockdown and youtube.sh, with blocking done by a network resolver using the same host list"
+  - "Fire TV Basic mode (set up without the full experience) hides Developer Options: the unlock on About > Your TV gives no message at all. Leaving Basic mode fixed it; the full setup also took the set from Fire OS 8.1.2.9 to 8.1.8.0 (RS8180.3746N) before the pass"
+  - "Third set: dnsfilter.sh typed the config into personalDNSfilter by itself and the app loaded the 411-entry list; no manual taps were needed. The three packages that came back after the first reboot on the first set stayed disabled. debloat.sh: 44 disabled, 0 protected, 10 absent, 0 suspect"
+notes: "Fire OS 8 television, three sets. A full pass on Fire OS 8.1.5.3 and again after an OTA to 8.1.8.0: debloat, lockdown and the DNS filter through the file:/// list, verify.sh exit 0 before and after a reboot. dumbtv home 1.2 takes HOME 0.3 s after Amazon's home starts, also after a reboot, and opens inputs on its own screen. A second set on 8.1.8.0: debloat (58 disabled), lockdown and youtube.sh, with blocking done by a network resolver using the same host list. A third set (Hisense 43QD6, 8.1.8.0), full pass step by step with PRIME=1 ALEXA=0 LAUNCHER=1 DNSFILTER=1 YOUTUBE=1: debloat, lockdown, dnsfilter, dumbtv home 1.8 and youtube.sh; verify.sh exited 0: 44 packages disabled, 13 privacy settings, data saver on, always-on VPN, HOME bound to dumbtv home"
 verify:
   blocked: data/blocklists/verify-blocked.txt
   allowed: data/blocklists/verify-allowed.txt

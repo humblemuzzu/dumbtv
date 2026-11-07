@@ -186,7 +186,7 @@ every model with its menu paths and quirks.
 | [Ember 55, Fire TV Omni Mini-LED (AFTOMNA003)](catalog/devices/fireos-amazon-aftomna003.yaml) | 8.0 | tested | [@zaco-tm](https://github.com/zaco-tm) |
 | [Fire TV Stick 4K Max, 2nd gen (AFTKRT)](catalog/devices/fireos-amazon-aftkrt.yaml) | 8.1 | tested | [@gerardo-galvez-hl](https://github.com/gerardo-galvez-hl), [@derkstample](https://github.com/derkstample), [@aboubakrine](https://github.com/aboubakrine), [@s-razaq](https://github.com/s-razaq) |
 | [Fire TV Stick 4K Plus (AFTMA08C15)](catalog/devices/fireos-amazon-aftma08c15.yaml) | 8.1 | tested | [@edrmundy](https://github.com/edrmundy) |
-| [Fire TV Edition television (AFTOLCBC82)](catalog/devices/fireos-amazon-aftolcbc82.yaml) | 8.1 | tested | [@koconnorgit](https://github.com/koconnorgit), [@iotemylabs](https://github.com/iotemylabs) |
+| [Fire TV Edition television (AFTOLCBC82)](catalog/devices/fireos-amazon-aftolcbc82.yaml) | 8.1 | tested | [@koconnorgit](https://github.com/koconnorgit), [@iotemylabs](https://github.com/iotemylabs), [@gmckeever](https://github.com/gmckeever) |
 | [Fire TV smart TV (AFTHY7ABBA)](catalog/devices/fireos-amazon-afthy7abba.yaml) | 8.1 | tested | [@bring-nirachornkul](https://github.com/bring-nirachornkul) |
 | [Fire TV Stick 4K, 2nd gen (AFTKM), RS8185](catalog/devices/fireos-amazon-aftkm-rs8185.yaml) | 8.1 | tested | [@Rouchekoff](https://github.com/Rouchekoff) |
 | [Amazon AFTNA1322D](catalog/devices/fireos-amazon-aftna1322d.yaml) | 8.1 | tested | [@1xretr0](https://github.com/1xretr0) |
