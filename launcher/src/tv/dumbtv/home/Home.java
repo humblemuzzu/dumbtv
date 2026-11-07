@@ -1271,7 +1271,7 @@ public final class Home extends Activity {
         }
         Intent own = Input.intent(this, cfg, t.item, Catalog.label(cfg, t.item));
         // The built-in screen goes on top of this one in the same task, so BACK returns here and
-        // the HOME takeover's singleTask relaunch clears it. NEW_TASK on an
+        // the HOME takeover's singleTask relaunch clears it. NEW_TASK | RESET_TASK_IF_NEEDED on an
         // activity of the task that is already in front only brings that task forward and starts
         // nothing (ActivityStarter.complyActivityFlags), so it is started plainly.
         if (own != null) startActivity(own);
@@ -1281,7 +1281,9 @@ public final class Home extends Activity {
     private void launch(Intent i, String pkg) {
         if (Guard.AMAZON.equals(pkg)) Guard.pause();
         try {
-            startActivity(i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+            // No transition: on a warm start of an app with a trampoline activity, such as
+            // Prime Video, the animation showed home again between the two (#169).
+            startActivity(i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED),
                     ActivityOptions.makeCustomAnimation(this, 0, 0).toBundle());
             if (pkg != null) Recent.opened(this, pkg);
         } catch (ActivityNotFoundException | SecurityException e) {
