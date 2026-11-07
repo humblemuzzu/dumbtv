@@ -133,12 +133,15 @@
     <string name="choice_tile_style">Design der App-Kachel</string>
     <string name="choice_tile_style_original">Original</string>
     <string name="choice_tile_style_afterglow">Afterglow</string>
+    <string name="choice_chips">Stil der Schaltflächen</string>
+    <string name="choice_chips_text">Text</string>
+    <string name="choice_chips_icons">Symbole</string>
     <string name="choice_all_apps">Bereich Alle Apps</string>
     <string name="choice_all_apps_off">Ausgeblendet</string>
     <string name="choice_all_apps_on">Angezeigt</string>
     <string name="choice_icon_pack">Symbolpaket</string>
-    <string name="choice_icon_pack_off">Aus</string>
-    <string name="choice_icon_pack_none">Keines installiert</string>
+    <string name="icon_pack_off">Aus</string>
+    <string name="icon_pack_none">Keines installiert</string>
     <string name="choice_library">Bibliotheksbanner</string>
     <string name="choice_library_on">Angezeigt</string>
     <string name="choice_library_off">Ausgeblendet</string>

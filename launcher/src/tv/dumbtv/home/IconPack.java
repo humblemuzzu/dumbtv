@@ -32,9 +32,6 @@ import java.util.Set;
 final class IconPack {
     static final String KEY = "icon_pack";
     static final String OFF = "off";
-    /** Value used when no icon pack is installed; distinct from {@link #OFF} so Text
-    *  can translate each (choice_icon_pack_none / choice_icon_pack_off). */
-    static final String NONE = "none";
     /** Per-app choice from the icon picker: {@code icon.<app>=<pack>/<drawable>}, or {@link #OWN}. */
     static final String CHOSEN = "icon.";
     /** Picked "App's own picture": no pack replaces this app's art. */
@@ -78,21 +75,21 @@ final class IconPack {
      * Off, then every installed pack by name. A chosen pack that was uninstalled is simply not
      * offered: the row shows Off and the tiles their own art, while the setting stays, so the
      * pack is back as it was once installed again. With no pack installed, Off reads
-     * "None installed", so the row says why there is nothing to pick.
+     * {@code none}, so the row says why there is nothing to pick. Both labels arrive in the TV's
+     * language; their strings are not named choice_icon_pack_*, so Text cannot swap one for the
+     * other.
      */
-    static Config.Choice choice(Map<String, String> installed) {
-        boolean empty = installed.isEmpty();
-        String off = empty ? NONE : OFF;
+    static Config.Choice choice(Map<String, String> installed, String off, String none) {
         Map<String, String> packs = new LinkedHashMap<>();
-        packs.put(off, empty ? "None installed" : "Off");
+        packs.put(OFF, installed.isEmpty() ? none : off);
         packs.putAll(installed);
-        return new Config.Choice(KEY, "Icon pack", off,
-            packs.keySet().toArray(new String[0]), packs.values().toArray(new String[0]));
+        return new Config.Choice(KEY, "Icon pack", OFF,
+                packs.keySet().toArray(new String[0]), packs.values().toArray(new String[0]));
     }
 
     /** Reads the pack's appfilter; null when the package is missing or is not an icon pack. Slow. */
     static IconPack load(PackageManager pm, String pkg) {
-        if (pkg == null || OFF.equals(pkg) || NONE.equals(pkg)) return null;
+        if (pkg == null || OFF.equals(pkg)) return null;
         try {
             ApplicationInfo info = pm.getApplicationInfo(pkg, ALL);
             IconPack pack = new IconPack(pkg, pm.getResourcesForApplication(info));

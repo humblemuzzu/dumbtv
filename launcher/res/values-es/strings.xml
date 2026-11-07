@@ -137,6 +137,8 @@
     <string name="choice_all_apps_off">Oculta</string>
     <string name="choice_all_apps_on">Visible</string>
     <string name="choice_icon_pack">Paquete de iconos</string>
+    <string name="icon_pack_off">Apagado</string>
+    <string name="icon_pack_none">Ninguno instalado</string>
     <string name="choice_library">Banner de biblioteca</string>
     <string name="choice_library_on">Visible</string>
     <string name="choice_library_off">Oculto</string>

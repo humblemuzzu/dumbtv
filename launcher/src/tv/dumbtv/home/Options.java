@@ -54,7 +54,8 @@ public final class Options extends Activity {
         list.addView(packRow);
         // Finding the packs opens every theme app's resources: keep it off the UI thread.
         new Thread(() -> {
-            Config.Choice packs = IconPack.choice(IconPack.installed(getPackageManager()));
+            Config.Choice packs = IconPack.choice(IconPack.installed(getPackageManager()),
+                    getString(R.string.icon_pack_off), getString(R.string.icon_pack_none));
             runOnUiThread(() -> {
                 if (!isDestroyed()) packRow.addView(choice(packs));
             });
