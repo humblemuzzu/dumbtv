@@ -6,6 +6,7 @@ import java.io.File;
 import java.lang.reflect.Constructor;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.util.Arrays;
 
 /** Real file imports and failed writes, with directory-only Android stubs and no TV. */
 public final class ConfigTest {
@@ -54,6 +55,15 @@ public final class ConfigTest {
     }
 
     public static void main(String[] args) throws Exception {
+        try (Fixture f = new Fixture()) {
+            check(new File(f.media, Config.FILE).delete(), "no import");
+            check(Arrays.asList(Config.CHOICES).contains(Config.POSITION), "Home position listed in Options");
+            check("top".equals(f.open().get(Config.POSITION)), "Home position defaults to Top");
+            write(f.settings, "position=sideways\n");
+            check("top".equals(f.open().get(Config.POSITION)), "unknown Home position falls back to Top");
+            write(f.settings, "position=bottom\n");
+            check("bottom".equals(f.open().get(Config.POSITION)), "Home position Bottom read from home.conf");
+        }
         try (Fixture f = new Fixture()) {
             Config cfg = f.open();
             check("red".equals(cfg.get(Config.ACCENT)), "import wins");
@@ -104,6 +114,6 @@ public final class ConfigTest {
             cfg.refresh();
             check("green".equals(f.open().get(Config.ACCENT)), "an applied import never comes back");
         }
-        System.out.println("ConfigTest passed (import, write/rename failure, retry, acknowledgement)");
+        System.out.println("ConfigTest passed (Home position, import, write/rename failure, retry, acknowledgement)");
     }
 }

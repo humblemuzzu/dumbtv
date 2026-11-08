@@ -92,6 +92,9 @@
     <string name="choice_layout">Layout</string>
     <string name="choice_layout_rows">Rows</string>
     <string name="choice_layout_grid">Grid</string>
+    <string name="choice_position">Home position</string>
+    <string name="choice_position_top">Top</string>
+    <string name="choice_position_bottom">Bottom</string>
     <string name="choice_order">App order</string>
     <string name="choice_order_custom">Your order</string>
     <string name="choice_order_recent">Recently used</string>
