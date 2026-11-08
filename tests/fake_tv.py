@@ -29,6 +29,18 @@ if args[:1] == ['disconnect']:
 if args[-1:] == ['get-state']:
     print('device')
     sys.exit(0)
+if state.get('crlf'):
+    # Some hosts' adb ends every line of shell output in CR LF.
+    sys.stdout.reconfigure(newline='\r\n')
+if len(args) == 5 and args[0] == '-s' and args[2] == 'install' and 'installs' in state:
+    # Installs the package the test named for this APK, at its versionCode.
+    name, code = state['installs']['package'], state['installs']['versionCode']
+    state['packages'][name] = {'system': False, 'enabled': True}
+    state.setdefault('versions', {})[name] = code
+    save()
+    print('Performing Streamed Install')
+    print('Success')
+    sys.exit(0)
 if len(args) == 5 and args[0] == '-s' and args[2] == 'push' and 'pushed' in state:
     # Keeps a copy of each pushed file, so a test can read what reached the TV.
     Path(state['pushed']).mkdir(parents=True, exist_ok=True)
@@ -139,6 +151,13 @@ elif words[:2] == ['dumpsys', 'package']:
     print('    userId=10050')
     if words[2:] and words[2] in state.get('versions', {}):
         print(f"    versionCode={state['versions'][words[2]]} minSdk=21 targetSdk=29")
+elif words[:1] == ['cat'] and len(words) == 2 and words[1] in state.get('files', {}):
+    sys.stdout.write(state['files'][words[1]])
+elif words[:1] == ['cat'] and len(words) == 2:
+    print(f'cat: {words[1]}: No such file or directory', file=sys.stderr)
+    sys.exit(1)
+elif words[:2] == ['monkey', '-p']:
+    print('Events injected: 1')
 elif command == 'ps -A -o NAME':
     print('NAME')
 elif command == 'dumpsys activity activities':

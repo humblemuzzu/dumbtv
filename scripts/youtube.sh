@@ -93,7 +93,7 @@ if present "$YT"; then
     fi
   else
     dev "pm disable-user --user 0 $YT" | tail -1
-    if grep -qx "package:$YT" <<<"$(dev "pm list packages -d")"; then
+    if grep -qx "package:$YT" <<<"$(dev "pm list packages -d" | tr -d '\r')"; then
       note "disabled (the app is still installed: 'pm enable $YT' brings it back)"
     else
       note "could not disable $YT — update it from the Appstore and run this again"
@@ -104,11 +104,19 @@ else
 fi
 
 step "home screen"
-if present tv.dumbtv.home; then
+if ! present tv.dumbtv.home; then
+  note "dumbtv home is not installed; skipping the home-screen step"
+elif [[ $SDK -ge 30 ]]; then
+  # Fire OS 8 closes Android/data to adb, so the app order cannot be read, and a file pushed
+  # into the media folder would replace it instead of editing it. The launcher puts an app
+  # with no place in the order after the ordered ones, and a disabled YouTube drops out.
+  note "SmartTube is at the end of the apps row; to move it, hold OK on it and pick Move"
+else
   conf=$WORK/home.conf
   if "$ADB" -s "$SERIAL" shell "cat $HOME_DIR/home.conf" > "$conf" 2>/dev/null && [[ -s $conf ]]; then
-    # Keep every other key; replace the app order, then drop YouTube from it.
-    awk -v pkg="$PKG" -v yt="$YT" '
+    # Keep every other key; replace the app order, then drop YouTube from it. A CR that adb
+    # left on a line would keep a last-listed YouTube from matching, so it goes first.
+    tr -d '\r' < "$conf" | awk -v pkg="$PKG" -v yt="$YT" '
       /^apps\.order=/ {
         n=split(substr($0, index($0,"=")+1), a, ",")
         out=pkg
@@ -119,14 +127,12 @@ if present tv.dumbtv.home; then
       }
       { print }
       END { if (!done) print "apps.order=" pkg }
-    ' "$conf" > "$conf.new"
+    ' > "$conf.new"
     "$ADB" -s "$SERIAL" push "$conf.new" "$HOME_DIR/home.conf" | tail -1
     note "apps.order now: $(sed -n 's/^apps\.order=//p' "$conf.new")"
   else
     note "no home.conf yet — set the app order in dumbtv home > Options"
   fi
-else
-  note "dumbtv home is not installed; skipping the home-screen step"
 fi
 
 step "one-time settings (remote, on the TV)"
