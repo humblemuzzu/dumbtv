@@ -143,7 +143,7 @@ installed app that streams it now (check a current source), confirm its page lin
 `adb shell cmd package resolve-activity -a android.intent.action.VIEW -d <link> <package>`
 (leave the link out if none resolves), and get a wide picture. Put `library.conf` and the
 pictures in a folder outside the repository, never in a commit, and run
-`./scripts/library.sh <folder>`. Format: "Library banner" in [launcher/README.md](launcher/README.md).
+`./scripts/library.sh --dry-run <folder>`, then without `--dry-run`. Format: "Library banner" in [launcher/README.md](launcher/README.md).
 
 ## Reading the output
 

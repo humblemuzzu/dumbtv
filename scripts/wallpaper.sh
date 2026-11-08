@@ -18,11 +18,13 @@ PKG=tv.dumbtv.home
 DIR=/sdcard/Android/media/$PKG
 ROTATE="" DIM="" CROP=center SHUFFLE=0 REPLACE=0
 args=() images=()
+# A flag that takes a value must get one: "--dim" at the end, or "--dim --shuffle", is an error.
+value() { [[ $# -ge 2 && -n $2 && $2 != -* ]] || die "$1 needs a value"; }
 while [[ $# -gt 0 ]]; do
   case $1 in
-    --rotate) ROTATE=${2:-}; shift ;;
-    --dim) DIM=${2:-}; shift ;;
-    --crop) CROP=${2:-}; shift ;;
+    --rotate) value "$@"; ROTATE=$2; shift ;;
+    --dim) value "$@"; DIM=$2; shift ;;
+    --crop) value "$@"; CROP=$2; shift ;;
     --shuffle) SHUFFLE=1 ;;
     --replace) REPLACE=1 ;;
     --dry-run|-y|--yes) args+=("$1") ;;
@@ -76,6 +78,11 @@ trap 'rm -rf "$WORK"' EXIT
 
 step "images"
 n=0
+# Names given out so far, lower-cased: the TV's shared storage ignores case, so Beach.jpg
+# and beach.jpg are one file there. Kept in a list rather than read back from $WORK, so a
+# dry run, which writes nothing, shows the same names a real run pushes.
+taken="
+"
 for f in "${images[@]}"; do
   n=$((n + 1))
   base=$(basename "$f")
@@ -84,7 +91,11 @@ for f in "${images[@]}"; do
   # reads the words in it (morning, afternoon, night).
   name=$(printf '%s' "${base%.*}" | tr -c 'A-Za-z0-9_-' '-')
   if [[ $SHUFFLE == 1 ]]; then name=$(printf '%05d-%s' "$((RANDOM % 100000))" "$name"); fi
-  while compgen -G "$WORK/$name.*" >/dev/null; do name=$name-$n; done
+  while key=$(printf '%s' "$name" | tr 'A-Z' 'a-z'); [[ $taken == *"
+$key
+"* ]]; do name=$name-$n; done
+  taken="$taken$key
+"
   if [[ -n $MAGICK ]]; then
     out=$WORK/$name.jpg
     if [[ $DRY_RUN == 0 ]]; then

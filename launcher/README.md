@@ -300,10 +300,12 @@ seinfeld.jpg | Seinfeld | com.netflix.ninja | https://www.netflix.com/title/7015
 - Wide pictures work best; the banner crops to about 3.8 : 1. Only the picture on
   screen and the one fading in are held in memory.
 
-`scripts/library.sh <folder>` takes a folder with `library.conf` and the pictures,
-crops each picture to the banner on macOS (`sips`; an optional `crop.conf` of
-`image fraction` lines moves the crop, 0 top to 1 bottom), replaces the TV's library
-folder and returns to the home screen so the banner reloads.
+`scripts/library.sh [--dry-run] [-y] <folder>` takes a folder with `library.conf` and
+the pictures, crops each picture to the banner (with ImageMagick where it is installed,
+else `sips` on macOS, else not at all; an optional `crop.conf` of `image fraction` lines
+moves the crop, 0 top to 1 bottom), asks before it replaces the TV's library folder, and
+returns to the home screen so the banner reloads. Pictures must sit beside
+`library.conf`; a name with a `/` is skipped.
 
 ### Fire OS 8: where adb can write
 
