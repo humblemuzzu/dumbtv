@@ -186,11 +186,11 @@ The icons are the pack author's, under the pack's licence.
 
 ## Languages
 
-dumbtv home follows the TV's language: English, German and Spanish so far. Any other
-language, and any string a translation lacks, shows in English.
+dumbtv home follows the TV's language: English, German, Italian and Spanish so far.
+Any other language, and any string a translation lacks, shows in English.
 
 To add one, copy `res/values/strings.xml` to `res/values-<code>/strings.xml` (for
-example `values-it`) and translate the text between the tags. Leave out `app_name` and
+example `values-fr`) and translate the text between the tags. Leave out `app_name` and
 `guard_label`: `scripts/accessibility.sh` finds the HOME service by that label, so it
 stays English. Keep `%s` and `%d` as they are, and keep option values short, since they
 share a row with their name.
