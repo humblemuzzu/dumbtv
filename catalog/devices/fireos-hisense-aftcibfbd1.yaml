@@ -1,0 +1,33 @@
+id: fireos-hisense-aftcibfbd1
+title: "Hisense 65U65SFC Pro Fire TV Edition (AFTCIBFBD1)"
+platform: fireos
+status: tested
+tested_on: "Fire OS 8.1.8.0, RS8180.3749N (Android 11, SDK 30)"
+models:
+  - "Hisense 65U65SFC Pro Fire TV Edition"
+adb:
+  port: 5555
+  transport: wifi
+developer_mode: >-
+  Settings > Device & Software > About > click the device name 7 times, then Device & Software > Developer Options > ADB debugging: ON
+ip_location: "Settings > Network > select your network"
+prompts:
+  - name: "Allow USB debugging?"
+    blocks_automation: true
+    fix: "tick Always allow from this computer, press Allow on the remote"
+  - name: "Unable to Detect Your Remote (after a reboot, Bluetooth remote not yet reconnected)"
+    blocks_automation: true
+    fix: "press any remote button (or hold Home 10 s), press OK, then run ./scripts/dnsfilter.sh -y again; com.amazon.vizzini stayed enabled"
+data:
+  packages: data/fireos/packages.txt
+  protected: data/fireos/protected.txt
+  never_disable: data/fireos/never-disable.txt
+  user_apps: data/fireos/user-apps.txt
+quirks:
+  - "The first dnsfilter.sh run ended at its manual step: the remote overlay covered personalDNSfilter, so the config editor could not be reached. Clearing the overlay and re-running dnsfilter.sh -y configured the app over adb, and its self-test passed."
+  - "On macOS the first adb connect failed with 'No route to host' while ping and nc reached port 5555; a retry after adb kill-server connected (macOS Local Network permission for adb)."
+  - "11 third-party apps were present and untouched. com.amazon.comms.starktachyon was already disabled by the system before the pass."
+notes: "debloat.sh (32 packages disabled, 5 absent, 0 suspect), lockdown.sh, dnsfilter.sh and launcher.sh ran with PRIME=1 ALEXA=1 LAUNCHER=1 DNSFILTER=1 YOUTUBE=0; verify.sh reported all checks passed. SmartTube was installed alongside the stock YouTube app, which stayed enabled."
+verify:
+  blocked: data/blocklists/verify-blocked.txt
+  allowed: data/blocklists/verify-allowed.txt
