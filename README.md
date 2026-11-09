@@ -193,7 +193,7 @@ every model with its menu paths and quirks.
 | [Xiaomi TV F Pro 75 Fire TV (AFTBR92D74)](catalog/devices/fireos-xiaomi-aftbr92d74.yaml) | 8.1 | tested | [@Jeff909Dev](https://github.com/Jeff909Dev) |
 | [Hisense 55QD75SFC Fire TV (AFTCU9343B)](catalog/devices/fireos-hisense-aftcu9343b.yaml) | 14 | tested | [@sockmonkey0223](https://github.com/sockmonkey0223) |
 | [TCL 65M8LF Fire TV (AFTCHE92D8)](catalog/devices/fireos-tcl-aftche92d8.yaml) | 14 | tested | [@alexanderkoh](https://github.com/alexanderkoh) |
-| [Fire TV Stick, 3rd gen (AFTSSS)](catalog/devices/fireos-amazon-aftsss.yaml) | 7.7 | partial | [@B3NR1S](https://github.com/B3NR1S) |
+| [Fire TV Stick, 3rd gen (AFTSSS)](catalog/devices/fireos-amazon-aftsss.yaml) | 7.7 | tested | [@B3NR1S](https://github.com/B3NR1S) |
 | [Fire TV Stick 4K Max, 1st gen (AFTKA)](catalog/devices/fireos-amazon-aftka-ps7697.yaml) | 7.6 | partial | [@dchuk](https://github.com/dchuk) |
 | [Fire TV Cube, 2nd gen (AFTR), PS7699](catalog/devices/fireos-amazon-aftr-ps7699.yaml) | 7.6 | partial | [@sant1ago](https://github.com/sant1ago) |
 | [Hisense 58U6HF (AFTHA001)](catalog/devices/fireos-hisense-aftha001.yaml) | 7.7 | partial | [@murilaiooo](https://github.com/murilaiooo) |
