@@ -3,8 +3,8 @@ title: "Amazon Fire TV Stick, 3rd gen (AFTSSS)"
 contributors:
   - B3NR1S
 platform: fireos
-status: partial
-tested_on: "PS7717.5741N"
+status: tested
+tested_on: "PS7717.5746N"
 models: []
 adb:
   port: 5555
@@ -14,15 +14,15 @@ developer_mode: >-
 ip_location: "Settings > My Fire TV > About > Network"
 prompts:
   - name: "Allow VPN connection"
-    blocks_automation: true
-    fix: "VPN permissions weren't granted automatically. Launching personalDNSfilter via ADB (adb shell monkey -p dnsfilter.android 1) brought up the permission dialog, which I accepted using the Fire TV remote. Running the verification script afterwards confirmed that all blocking rules are active"
+    blocks_automation: false
+    fix: "On PS7717.5746N dnsfilter.sh pre-granted ACTIVATE_VPN and the dialog never appeared. On PS7717.5741N it did: launching personalDNSfilter via ADB (adb shell monkey -p dnsfilter.android 1) brought up the permission dialog, which was accepted with the Fire TV remote, and verify.sh then confirmed every blocking rule"
 data:
   packages: data/fireos/packages.txt
   protected: data/fireos/protected.txt
   never_disable: data/fireos/never-disable.txt
   user_apps: data/fireos/user-apps.txt
 quirks: []
-notes: "Debloat and the DNS filter work; verify.sh confirmed every blocking rule after the VPN prompt was accepted by hand. Keep battery optimisation off for personalDNSfilter so Fire OS does not stop it."
+notes: "Full pass on PS7717.5746N (debloat, lockdown, DNS filter, dumbtv home 1.9): verify.sh exited 0 with no manual step. 35 packages disabled, 0 protected, 0 suspect. dnsfilter.sh put personalDNSfilter on the deviceidle whitelist itself; keep battery optimisation off for it so Fire OS does not stop it."
 verify:
   blocked: data/blocklists/verify-blocked.txt
   allowed: data/blocklists/verify-allowed.txt
