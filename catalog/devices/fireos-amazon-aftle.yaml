@@ -1,0 +1,33 @@
+id: fireos-amazon-aftle
+title: "Amazon AFTLE (Onida Fire TV Edition)"
+platform: fireos
+contributors:
+  - Sj2594
+status: tested
+tested_on: "NS6711"
+models:
+  - "Onida Fire TV Edition"
+adb:
+  port: 5555
+  transport: wifi
+developer_mode: >-
+  Settings > Device and Software > About > press the device name 7 times, then Settings > Device and Software > Developer Options > ADB debugging: ON
+ip_location: "Settings > Device and Software > About > Network"
+prompts:
+  - name: "Allow USB debugging?"
+    blocks_automation: true
+    fix: "Tick 'Always allow from this computer', then press Allow"
+  - name: "adb connect reports offline"
+    blocks_automation: true
+    fix: "Set ADB debugging off and on again in Developer Options, then reconnect"
+data:
+  packages: data/fireos/packages.txt
+  protected: data/fireos/protected.txt
+  never_disable: data/fireos/never-disable.txt
+  user_apps: data/fireos/user-apps.txt
+quirks:
+  - "Fire TV Edition menus: Settings > Device and Software, not Settings > My Fire TV"
+notes: "Full pass: 36 packages disabled, lockdown, DNS filter, dumbtv home 1.9; verify.sh passed."
+verify:
+  blocked: data/blocklists/verify-blocked.txt
+  allowed: data/blocklists/verify-allowed.txt
