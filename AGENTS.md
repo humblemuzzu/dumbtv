@@ -185,6 +185,8 @@ path. Use the table below; do not disable more packages.
 | Amazon's home screen is back | `./scripts/launcher.sh -y` |
 | Amazon's home shows for ~5 s before dumbtv home | `./scripts/launcher.sh -y` (an update reset the alarm setting) |
 | `verify.sh` warns `enabled again` or `back to Amazon's values` | an update undid part of the cleanup: `./scripts/debloat.sh -y` |
+| `verify.sh` warns `off, but the TV needs them` (Prime Video gone, phone app will not pair) | an older dumbtv disabled them: `./scripts/debloat.sh -y` |
+| The TV wakes from standby on Amazon's home | `./scripts/launcher.sh -y` (dumbtv home 1.10 and later stay in front) |
 | `verify.sh` warns `data-saver off` | `./scripts/lockdown.sh -y` |
 | `dnsfilter.sh` says the tracker list "does not look right" | the download was an error page or cut short; nothing was pushed. Run it again later |
 | Nothing is blocked, but the filter is running | reboot the TV |

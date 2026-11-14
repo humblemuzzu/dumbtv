@@ -31,6 +31,15 @@ along with other apps and then never binds a killed accessibility service again 
 the setting changes; Fire OS 7 binds it again by itself. The same
 `./scripts/launcher.sh -y` fixes it.
 
+### The TV wakes from standby on Amazon's home screen
+
+Going to standby, Fire OS brings Amazon's home up with the screen already off. Up to
+dumbtv home 1.9 the guard then mistook its own cover window for the user leaving
+Amazon's home, and Android held its launch back for minutes while the screen was off,
+so the TV woke on Amazon's home and stayed there until an app was opened and closed
+(#153). From 1.10 dumbtv home is back in front within a second of standby. Update with
+`./scripts/launcher.sh -y`.
+
 ### `verify.sh` says the home hook is enabled but not bound
 
 Enabled is a setting; bound means the service is actually running. `verify.sh`
@@ -52,6 +61,9 @@ The service was switched on and Fire OS never started it. Two causes are known:
   screen; enter the PIN and run it again.
 - **A11yAuthorizer.** Some builds run only accessibility services Amazon trusts.
   `launcher.sh` says so when the log shows it; nothing on the adb side gets past it.
+
+On a Hisense AFTHA001 a second run bound it with nothing changed (PR #193), so
+`launcher.sh` now switches the service off and on once more before it reports this.
 
 ### Amazon's Network status screen has nothing highlighted
 
@@ -304,9 +316,11 @@ adb reboot
 
 ### Prime Video does not open
 
-`com.amazon.firebat` is Prime Video on Fire OS 6, 7 and 8, despite the name. It is
-on `never-disable.txt` now; a TV debloated by an older version can get it back
-with `./scripts/restore.sh` or `adb shell pm enable --user 0 com.amazon.firebat`.
+`com.amazon.firebat` is Prime Video on Fire OS 6, 7 and 8, despite the name. dumbtv
+disabled it until October 2026 and it is on `never-disable.txt` now, but a later run
+did not switch it back on, so on a TV debloated back then Prime Video stays gone from
+dumbtv home and closes at once from Amazon's (#175). `verify.sh` warns "off, but the TV
+needs them", and `./scripts/debloat.sh -y` turns it back on; no factory reset is needed.
 Also check that `PRIME=1` is set in `dumbtv.conf`.
 
 ### Prime Video says "Internet connection error" on Fire OS 6
@@ -415,6 +429,10 @@ level and switch to `data/fireos6/` on their own.
   both, wallpapers in name order, and a settings file pushed to the media folder is
   applied once, then remembered, so it does not overwrite a later change made in
   Options. [launcher/README.md](../launcher/README.md) has the commands.
+- **ADB is off after a reboot.** Some TVs reach their home screen with ADB debugging
+  switched off, so the scripts wait and the address refuses port 5555 (#191). They say
+  so after about half a minute: turn ADB debugging off and on in Developer Options,
+  allow this computer again, and the run carries on by itself.
 - **HOME stays on Amazon's home with launcher 1.1.** Android 11 needs the
   launcher to have a visible window first; 1.2 waits for its cover window. Update
   with `./launcher/install.sh`.
