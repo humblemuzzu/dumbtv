@@ -2,9 +2,11 @@ id: fireos-amazon-aftsss
 title: "Amazon Fire TV Stick, 3rd gen (AFTSSS)"
 contributors:
   - B3NR1S
+  - jgcoronado
+  - Zarafos
 platform: fireos
 status: tested
-tested_on: "PS7717.5741N (first unit, partial); PS7712.5370N (second unit, full pass with dumbtv home 1.9)"
+tested_on: "PS7717.5741N (first unit, partial); PS7712.5370N (second unit, full pass with dumbtv home 1.9); PS7717.5746N (third unit, full pass with dumbtv home 1.9)"
 models: []
 adb:
   port: 5555
@@ -14,8 +16,8 @@ developer_mode: >-
 ip_location: "Settings > My Fire TV > About > Network"
 prompts:
   - name: "Allow VPN connection"
-    blocks_automation: true
-    fix: "VPN permissions weren't granted automatically. Launching personalDNSfilter via ADB (adb shell monkey -p dnsfilter.android 1) brought up the permission dialog, which I accepted using the Fire TV remote. Running the verification script afterwards confirmed that all blocking rules are active"
+    blocks_automation: false
+    fix: "On PS7717.5746N dnsfilter.sh pre-granted ACTIVATE_VPN and the dialog never appeared. On PS7717.5741N it did: launching personalDNSfilter via ADB (adb shell monkey -p dnsfilter.android 1) brought up the permission dialog, which was accepted with the Fire TV remote, and verify.sh then confirmed every blocking rule"
 data:
   packages: data/fireos/packages.txt
   protected: data/fireos/protected.txt
@@ -26,7 +28,8 @@ quirks:
   - "Second unit: lockdown.sh found all 7 protected packages, com.amazon.device.rdmapplication included, and each took RUN_ANY_IN_BACKGROUND ignore and the background-data blacklist"
   - "Second unit: dnsfilter.sh set up personalDNSfilter by itself (399-entry list) and did not stop at a manual step: its self-test passed after the reboot and the VPN was owned by personalDNSfilter without launching the app by hand as on the first unit"
   - "Second unit: launcher.sh installed dumbtv home 1.9 and took HOME on the first run. verify.sh exited 0, and again after a cold reboot: 33 packages disabled, 13 privacy settings, data saver on, filter 387 entries, VPN owned by personalDNSfilter"
-notes: "Two units. Second unit, Fire OS 7.7.1.2 (PS7712.5370N): full pass with defaults, dumbtv home 1.9 and the DNS filter with no manual step; verify.sh exit 0 before and after a reboot. First unit (PS7717.5741N): debloat and the DNS filter work; verify.sh confirmed every blocking rule after the VPN prompt was accepted by hand. Keep battery optimisation off for personalDNSfilter so Fire OS does not stop it."
+  - "Third unit, Fire OS 7.7.1.7 (PS7717.5746N): preflight, debloat, lockdown, dnsfilter and launcher (dumbtv home 1.9) with no manual step; debloat 35 disabled, 0 protected, 0 suspect; dnsfilter.sh put personalDNSfilter on the deviceidle whitelist itself. verify.sh exited 0: 36 packages disabled, filter 387 entries"
+notes: "Three units. Second (PS7712.5370N) and third (PS7717.5746N): full pass with dumbtv home 1.9 and the DNS filter with no manual step; verify.sh exit 0. First unit (PS7717.5741N): debloat and the DNS filter work; verify.sh confirmed every blocking rule after the VPN prompt was accepted by hand. Keep battery optimisation off for personalDNSfilter so Fire OS does not stop it."
 verify:
   blocked: data/blocklists/verify-blocked.txt
   allowed: data/blocklists/verify-allowed.txt
