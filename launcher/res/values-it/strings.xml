@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- guard_label stays English: scripts/accessibility.sh finds the service by it. -->
+    <string name="guard_description">Manda il tasto HOME alla home di dumbtv invece che a quella di Amazon. Non legge il contenuto dello schermo e non ha accesso a internet.</string>
+
+    <!-- Home screen -->
+    <string name="options">Opzioni</string>
+    <string name="settings">Impostazioni</string>
+    <string name="row_apps">App</string>
+    <string name="row_inputs">Ingressi</string>
+    <string name="row_all_apps">Tutte le app</string>
+    <string name="row_pinned_apps">App fissate</string>
+    <string name="could_not_open">Impossibile aprire</string>
+    <string name="tile_move">Sposta</string>
+    <string name="tile_rename">Rinomina</string>
+    <string name="tile_hide">Nascondi</string>
+    <string name="tile_pin">Fissa</string>
+    <string name="tile_unpin">Non fissare</string>
+    <string name="tile_icon">Icona</string>
+    <string name="tile_app_info">Info app</string>
+    <string name="move_needs_order">L\'ordine è «Usate di recente». Scegli «Il tuo ordine» in Opzioni per spostare le tessere.</string>
+    <string name="hidden_toast">Nascosta. La rimetti da Opzioni.</string>
+    <string name="unpinned_toast">Non più fissata. La trovi in Tutte le app.</string>
+    <string name="rename_title">Rinomina</string>
+    <string name="save">Salva</string>
+    <string name="original">Originale</string>
+    <string name="cancel">Annulla</string>
+
+    <!-- Inputs -->
+    <string name="input_failed">Impossibile aprire l\'ingresso</string>
+    <string name="input_no_signal">Nessun segnale</string>
+
+    <!-- Memory meter -->
+    <string name="meter_title">Memoria</string>
+    <string name="meter_free">%1$d MB liberi su %2$d MB</string>
+    <string name="meter_low">quasi esaurita</string>
+
+    <!-- Fire OS 6 settings list -->
+    <string name="fire_all_settings">Tutte le impostazioni…</string>
+    <string name="fire_notifications">Notifiche</string>
+    <string name="fire_network">Rete</string>
+    <string name="fire_applications">Applicazioni</string>
+    <string name="fire_equipment_control">Controllo apparecchiature</string>
+    <string name="fire_controllers">Controller e dispositivi Bluetooth</string>
+    <string name="fire_device">Dispositivo e software</string>
+
+    <!-- Options -->
+    <string name="next_wallpaper">Sfondo successivo</string>
+    <string name="apps_on_home">App nella home</string>
+    <string name="inputs_on_home">Ingressi nella home</string>
+    <string name="reset_layout">Ripristina ordine, nomi e tessere nascoste</string>
+    <string name="export_settings">Esporta impostazioni per adb pull</string>
+    <string name="export_done">Salvato in %1$s</string>
+    <string name="export_failed">Impossibile scrivere la copia</string>
+    <string name="open_amazon_home">Apri la home di Amazon</string>
+    <string name="done">Fatto</string>
+    <string name="reset_title">Ripristinare la disposizione della home?</string>
+    <string name="reset_message">Ordine, nomi, icone scelte e tessere nascoste tornano come all\'inizio. Colori e dimensioni restano.</string>
+    <string name="reset">Ripristina</string>
+    <string name="lock_on">Ora Opzioni e Impostazioni sono nascoste nella home. Tieni premuto ☰ Menu per %1$d secondi per tornare qui.</string>
+    <string name="about">File delle impostazioni: %1$s\nUn solo sfondo: chiamalo esattamente wallpaper.jpg (o .png) e mettilo in quella cartella\nPiù sfondi: mettili in %2$s/ con qualsiasi nome e scegli un cambio sfondo\nPoi scegli Sfondo › Immagine o Immagine con velatura adattiva. Non serve alcun permesso\nSu Fire OS 8 adb non raggiunge quella cartella: usa %3$s (Esporta impostazioni ci mette una copia)\nImmagine con velatura adattiva mostra grafite finché non aggiungi uno sfondo\nBanner libreria: metti le immagini e %4$s in %5$s/ dentro quella cartella\nPacchetto icone: installane uno e sceglilo qui sopra; tieni premuto OK su una tessera › Icona per scegliere l\'icona di un\'app\nNessun permesso internet. Nessun tracciamento, nessuna pubblicità, nessun account.</string>
+
+    <string name="icon_for">Icona per %1$s</string>
+    <string name="icon_filter">Filtra per nome</string>
+    <string name="icon_reading">Lettura del pacchetto icone…</string>
+    <string name="icon_automatic">Automatica</string>
+    <string name="icon_own">Immagine dell\'app</string>
+    <string name="icon_no_pack">Nessun pacchetto icone scelto. Scegline uno in Opzioni › Pacchetto icone.</string>
+    <string name="icon_count">%1$d icone</string>
+    <string name="icon_count_of">%1$d di %2$d icone</string>
+
+    <string name="library_watch">OK per guardare</string>
+    <string name="library_more">◀ ▶ altri</string>
+
+    <!-- Options rows: choice_<key> is the row, choice_<key>_<value> a value (- becomes _).
+         A row or value with no string here shows the English text in Config.java. -->
+    <string name="choice_accent">Colore di risalto</string>
+    <string name="choice_accent_white">Bianco</string>
+    <string name="choice_accent_blue">Blu</string>
+    <string name="choice_accent_cyan">Azzurro</string>
+    <string name="choice_accent_green">Verde</string>
+    <string name="choice_accent_amber">Ambra</string>
+    <string name="choice_accent_red">Rosso</string>
+    <string name="choice_accent_pink">Rosa</string>
+    <string name="choice_accent_violet">Viola</string>
+    <string name="choice_tiles">Dimensione tessere</string>
+    <string name="choice_tiles_small">Piccole</string>
+    <string name="choice_tiles_medium">Medie</string>
+    <string name="choice_tiles_large">Grandi</string>
+    <string name="choice_layout">Disposizione</string>
+    <string name="choice_layout_rows">Righe</string>
+    <string name="choice_layout_grid">Griglia</string>
+    <string name="choice_order">Ordine app</string>
+    <string name="choice_order_custom">Il tuo ordine</string>
+    <string name="choice_order_recent">Usate di recente</string>
+    <string name="choice_labels">Nomi app</string>
+    <string name="choice_labels_focus">Quando selezionate</string>
+    <string name="choice_labels_always">Sempre</string>
+    <string name="choice_labels_never">Mai</string>
+    <string name="choice_clock">Orologio</string>
+    <string name="choice_clock_auto">Sistema</string>
+    <string name="choice_clock_24h">24 ore</string>
+    <string name="choice_clock_12h">12 ore</string>
+    <string name="choice_memory">Indicatore memoria</string>
+    <string name="choice_memory_off">Nascosto</string>
+    <string name="choice_memory_on">Visibile</string>
+    <string name="choice_inputs">Riga ingressi</string>
+    <string name="choice_inputs_on">Visibile</string>
+    <string name="choice_inputs_off">Nascosta</string>
+    <string name="choice_switch">Apri ingressi con</string>
+    <string name="choice_switch_auto">Automatico</string>
+    <string name="choice_switch_tv">App della TV</string>
+    <string name="choice_switch_home">dumbtv home</string>
+    <string name="choice_background">Sfondo</string>
+    <string name="choice_background_black">Nero</string>
+    <string name="choice_background_graphite">Grafite</string>
+    <string name="choice_background_midnight">Blu notte</string>
+    <string name="choice_background_image">Immagine</string>
+    <string name="choice_background_adaptive">Colore adattivo</string>
+    <string name="choice_background_adaptive_tint">Immagine con velatura adattiva</string>
+    <string name="choice_dim">Oscuramento immagine</string>
+    <string name="choice_rotate">Cambio sfondo</string>
+    <string name="choice_rotate_off">Spento</string>
+    <string name="choice_rotate_visit">A ogni ritorno alla home</string>
+    <string name="choice_rotate_hourly">Ogni ora</string>
+    <string name="choice_rotate_daily">Ogni giorno</string>
+    <string name="choice_rotate_daytime">In base all\'ora</string>
+    <string name="choice_lock">Blocco bambini</string>
+    <string name="choice_lock_off">Spento</string>
+    <string name="choice_lock_on">Attivo</string>
+    <string name="choice_tile_style">Stile tessere app</string>
+    <string name="choice_tile_style_original">Originale</string>
+    <string name="choice_tile_style_afterglow">Afterglow</string>
+    <string name="choice_chips">Stile pulsanti</string>
+    <string name="choice_chips_text">Testo</string>
+    <string name="choice_chips_icons">Icone</string>
+    <string name="choice_all_apps">Sezione Tutte le app</string>
+    <string name="choice_all_apps_off">Nascosta</string>
+    <string name="choice_all_apps_on">Visibile</string>
+    <string name="choice_icon_pack">Pacchetto icone</string>
+    <string name="icon_pack_off">Spento</string>
+    <string name="icon_pack_none">Nessuno installato</string>
+    <string name="choice_library">Banner libreria</string>
+    <string name="choice_library_on">Visibile</string>
+    <string name="choice_library_off">Nascosto</string>
+</resources>
