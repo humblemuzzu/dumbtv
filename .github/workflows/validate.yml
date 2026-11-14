@@ -36,6 +36,9 @@ jobs:
           javac --release 8 -Xlint:all -Werror -d /tmp/host launcher/src/tv/dumbtv/home/OwnWindow.java \
             launcher/tests/OwnWindowTest.java
           java -cp /tmp/host tv.dumbtv.home.OwnWindowTest
+          javac --release 8 -Xlint:all -Werror -d /tmp/host launcher/src/tv/dumbtv/home/GridGeometry.java \
+            launcher/tests/GridGeometryTest.java
+          java -cp /tmp/host tv.dumbtv.home.GridGeometryTest
           javac --release 8 -Xlint:all -Werror -d /tmp/config-host \
             launcher/tests/stubs/android/*/*.java launcher/src/tv/dumbtv/home/Config.java \
             launcher/tests/ConfigTest.java
