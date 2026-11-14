@@ -3,8 +3,8 @@ title: "Amazon Fire TV Stick, 3rd gen (AFTSSS)"
 contributors:
   - B3NR1S
 platform: fireos
-status: partial
-tested_on: "PS7717.5741N"
+status: tested
+tested_on: "PS7717.5741N (first unit, partial); PS7712.5370N (second unit, full pass with dumbtv home 1.9)"
 models: []
 adb:
   port: 5555
@@ -21,8 +21,12 @@ data:
   protected: data/fireos/protected.txt
   never_disable: data/fireos/never-disable.txt
   user_apps: data/fireos/user-apps.txt
-quirks: []
-notes: "Debloat and the DNS filter work; verify.sh confirmed every blocking rule after the VPN prompt was accepted by hand. Keep battery optimisation off for personalDNSfilter so Fire OS does not stop it."
+quirks:
+  - "Second unit, Fire OS 7.7.1.2 (PS7712.5370N): all.sh -y with defaults (PRIME=1, ALEXA=1, LAUNCHER=1, DNSFILTER=1, YOUTUBE=0), run from Git Bash on Windows 11. debloat.sh: 32 disabled, 0 protected, 1 already disabled by the system (com.android.nfc), 4 absent, 0 suspect; com.amazon.tv.developer.dataservice kept running after disable-user and was starved"
+  - "Second unit: lockdown.sh found all 7 protected packages, com.amazon.device.rdmapplication included, and each took RUN_ANY_IN_BACKGROUND ignore and the background-data blacklist"
+  - "Second unit: dnsfilter.sh set up personalDNSfilter by itself (399-entry list) and did not stop at a manual step: its self-test passed after the reboot and the VPN was owned by personalDNSfilter without launching the app by hand as on the first unit"
+  - "Second unit: launcher.sh installed dumbtv home 1.9 and took HOME on the first run. verify.sh exited 0, and again after a cold reboot: 33 packages disabled, 13 privacy settings, data saver on, filter 387 entries, VPN owned by personalDNSfilter"
+notes: "Two units. Second unit, Fire OS 7.7.1.2 (PS7712.5370N): full pass with defaults, dumbtv home 1.9 and the DNS filter with no manual step; verify.sh exit 0 before and after a reboot. First unit (PS7717.5741N): debloat and the DNS filter work; verify.sh confirmed every blocking rule after the VPN prompt was accepted by hand. Keep battery optimisation off for personalDNSfilter so Fire OS does not stop it."
 verify:
   blocked: data/blocklists/verify-blocked.txt
   allowed: data/blocklists/verify-allowed.txt
