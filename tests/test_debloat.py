@@ -32,8 +32,9 @@ STORE_APPS = ["com.netflix.ninja", "com.amazon.firetv.youtube", "org.videolan.vl
 class DebloatTest(unittest.TestCase):
     AMAZON_DREAM = "com.amazon.ftv.screensaver/.app.services.ScreensaverService"
 
-    def run_debloat(self, conf="", *flags, basic_dream=True):
+    def run_debloat(self, conf="", *flags, basic_dream=True, extra=None):
         packages = {p: {"system": True, "enabled": True} for p in CLEANUP + ALEXA + USER_APPS}
+        packages.update(extra or {})
         if basic_dream:
             packages["com.android.dreams.basic"] = {"system": True, "enabled": True}
         for p in STORE_APPS:
@@ -60,6 +61,7 @@ class DebloatTest(unittest.TestCase):
             )
             self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
             commands = log.read_text().splitlines()
+            self.commands, self.output = commands, result.stdout + result.stderr
             report = tmp / "report" / "debloat.txt"
             self.report = report.read_text().splitlines() if report.exists() else None
         disabled = {c.split()[-1] for c in commands if c.startswith("pm disable-user")}
@@ -119,6 +121,24 @@ class DebloatTest(unittest.TestCase):
         _, _, settings = self.run_debloat('REMOVE_EXTRA="com.amazon.ftv.screensaver"\n',
                                           basic_dream=False)
         self.assertFalse([s for s in settings if "screensaver" in s])
+
+    def test_a_needed_package_an_old_list_disabled_is_enabled_again(self):
+        # dumbtv disabled com.amazon.firebat (Prime Video) until October 2026 (#175).
+        self.run_debloat(extra={"com.amazon.firebat": {"system": True, "enabled": False}})
+        self.assertIn("pm enable --user 0 com.amazon.firebat", self.commands)
+        self.assertIn("enabled again (an older dumbtv had disabled it)", self.output)
+        self.assertIn("com.amazon.firebat\tenabled-again", self.report)
+
+    def test_a_needed_package_the_system_ships_disabled_stays_off(self):
+        self.run_debloat(extra={"com.amazon.tv.livetv": {"system": True, "enabled": False,
+                                                         "system_disabled": True}})
+        self.assertIn("off, left as it is", self.output)
+        self.assertFalse(any("livetv\tenabled-again" in line for line in self.report))
+
+    def test_enabled_packages_the_tv_needs_are_not_touched(self):
+        self.run_debloat(extra={"com.amazon.firebat": {"system": True, "enabled": True}})
+        self.assertFalse(any(c.startswith("pm enable") for c in self.commands), self.commands)
+        self.assertIn("none of them is off", self.output)
 
     def test_dry_run_changes_nothing(self):
         disabled, uninstalled, settings = self.run_debloat("", "--dry-run")

@@ -26,7 +26,18 @@ if [[ $DRY_RUN == 0 ]]; then
   confirm "Disable Amazon's ads and tracking on $SERIAL${REMOVE_EXTRA:+ and remove the apps you named}?" || die "cancelled"
 fi
 
+# never-disable.txt packages that are off. Older lists disabled some of them: Prime Video's
+# com.amazon.firebat until October 2026, the phone app's pairing screen until November. Nothing
+# switched them back on, so Prime Video stayed gone after an update (#175).
+needed_off() {
+  local off
+  off=$(dev 'pm list packages -d' | tr -d '\r' | sed -n 's/^package://p')
+  list_of "$(fos never-disable.txt)" | awk '{print $1}' | grep -xF -f <(printf '%s\n' "$off") || true
+}
+
 if [[ $DRY_RUN == 1 ]]; then
+  step "packages the TV needs (dry-run)"
+  for p in $(needed_off); do note "$p  would be enabled again"; done
   step "Amazon packages (dry-run)"
   for p in $(cleanup_list); do
     protected_by_policy "$p" && { note "$p  SKIP (never-disable list)"; continue; }
@@ -85,6 +96,20 @@ for p in $(cleanup_list); do
     printf '  %-46s absent\n' "$p"; absent=$((absent+1)); continue
   fi
   disable_pkg "$p"
+done
+
+step "packages the TV needs"
+enabledn=0; needed=$(needed_off)
+[[ -n $needed ]] || note "none of them is off"
+for p in $needed; do
+  out=$(acmd pm enable --user 0 "$p" | head -1)
+  case $out in
+    *"new state: enabled"*)
+      printf '  %-46s enabled again (an older dumbtv had disabled it)\n' "$p"; enabledn=$((enabledn+1))
+      printf '%s\tenabled-again\n' "$p" >> "$log" ;;
+    # Shipped disabled by the system, which the shell may not change; left as Amazon set it.
+    *) printf '  %-46s off, left as it is: %s\n' "$p" "$out" ;;
+  esac
 done
 
 if [[ -n $REMOVE_EXTRA ]]; then
@@ -151,7 +176,7 @@ while read -r ns key value; do
 done < <(settings_files | sed 's/ = / /')
 
 step "summary"
-note "disabled $disabledn · protected $protectedn · system-disabled $sysoff · absent $absent · suspect $suspect · apps uninstalled $removed"
+note "disabled $disabledn · protected $protectedn · system-disabled $sysoff · absent $absent · suspect $suspect · apps uninstalled $removed · enabled again $enabledn"
 note "log: ${log#$ROOT/}"
 [[ $suspect -gt 0 ]] && note "SUSPECT entries need a human look before continuing"
 

@@ -127,7 +127,10 @@ elif words[:4] == ['pm', 'disable-user', '--user', '0']:
         save()
         print(f'Package {name} new state: disabled-user')
 elif words[:4] == ['pm', 'enable', '--user', '0']:
-    if words[4] in apps:
+    if apps.get(words[4], {}).get('system_disabled'):
+        # Shipped disabled by the system (state 2), which the shell may not change.
+        print(f'Security exception: Shell cannot change component state for {words[4]}/null to 1')
+    elif words[4] in apps:
         apps[words[4]]['enabled'] = True
         save()
         print(f'Package {words[4]} new state: enabled')

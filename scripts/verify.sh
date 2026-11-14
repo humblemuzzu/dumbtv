@@ -156,6 +156,18 @@ if [[ -n $back ]]; then
   printf '%-10s %-38s %s\n' warn packages "enabled again:$back; run debloat.sh"
 fi
 
+# Older lists disabled packages now on never-disable.txt, Prime Video's among them (#175).
+# enabled=3 is a disable by a user or the shell; the system's own (2) is left alone.
+needed=""
+for p in $(list_of "$(fos never-disable.txt)" | awk '{print $1}'); do
+  grep -qxF "package:$p" <<<"$off" || continue
+  dev "dumpsys package $p" | grep -q 'User 0:.* enabled=3 ' || continue
+  needed="$needed $p"
+done
+if [[ -n $needed ]]; then
+  printf '%-10s %-38s %s\n' warn packages "off, but the TV needs them:$needed; run debloat.sh"
+fi
+
 current=$(dev 'settings list secure; settings list global' | tr -d '\r')
 reset=""; checked=0
 while read -r ns key value; do

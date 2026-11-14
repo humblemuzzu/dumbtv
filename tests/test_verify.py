@@ -136,6 +136,23 @@ class VerifyTests(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stdout)
         self.assertIn('enabled again: com.amazon.tv.acr;', result.stdout)
 
+    def test_a_needed_package_an_old_list_disabled_is_flagged(self):
+        # dumbtv disabled com.amazon.firebat (Prime Video) until October 2026 (#175).
+        result, _ = self.run_verify(self.modern(LABEL), extra={
+            'pm list packages -d': {'out': 'package:com.amazon.firebat\npackage:com.amazon.tv.acr'},
+            'dumpsys package com.amazon.firebat': {'out': '    User 0: ceDataInode=1 installed=true hidden=false suspended=false stopped=false notLaunched=false enabled=3 instant=false'},
+        })
+        self.assertEqual(result.returncode, 0, result.stdout)
+        self.assertIn('off, but the TV needs them: com.amazon.firebat; run debloat.sh', result.stdout)
+
+    def test_a_needed_package_the_system_ships_disabled_is_not_flagged(self):
+        result, _ = self.run_verify(self.modern(LABEL), extra={
+            'pm list packages -d': {'out': 'package:com.amazon.tv.livetv'},
+            'dumpsys package com.amazon.tv.livetv': {'out': '    User 0: ceDataInode=1 installed=true hidden=false suspended=false stopped=false notLaunched=false enabled=2 instant=false'},
+        })
+        self.assertEqual(result.returncode, 0, result.stdout)
+        self.assertNotIn('the TV needs them', result.stdout)
+
     def test_a_package_the_owner_kept_is_not_flagged(self):
         result, _ = self.run_verify(self.modern(LABEL), keep='com.amazon.tv.acr', extra={
             'pm list packages': {'out': 'package:com.amazon.tv.acr'},
