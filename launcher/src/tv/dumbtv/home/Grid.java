@@ -65,7 +65,7 @@ final class Grid extends ViewGroup {
         int cols = columns(avail, cw);
         for (int i = 0; i < n; i++) {
             int col = i % cols, row = i / cols;
-            int x = getPaddingLeft() + GridGeometry.columnLeft(avail, cw, hGap, cols, n, col);
+            int x = getPaddingLeft() + GridGeometry.columnLeft(avail, cw, hGap, cols, col);
             int y = getPaddingTop() + row * (ch + vGap);
             getChildAt(i).layout(x, y, x + cw, y + ch);
         }
