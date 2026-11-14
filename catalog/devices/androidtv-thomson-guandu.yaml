@@ -1,0 +1,71 @@
+id: androidtv-thomson-guandu
+title: "Thomson Android TV (Expressluck, MediaTek m7632, Android 14)"
+platform: androidtv
+# Full pass done by hand over ADB; verify.sh only checks Fire OS things.
+status: partial
+tested_on: "UKNV.260903.001 (Android 14, sdk 34, security patch 2026-09-01)"
+models:
+  - "Thomson TV (Expressluck, device guandu)"
+adb:
+  port: 5555
+  transport: wifi
+  first_connection_prompt: "Allow USB debugging? on the TV; tick Always allow, then Allow"
+developer_mode: >-
+  Settings > Device Preferences > About > Build, press OK 7 times, then
+  Device Preferences > Developer options > USB debugging: ON. adb then listens
+  on port 5555 over the network.
+ip_location: "Settings > Network & Internet > the connected network"
+prompts:
+  - name: "Unsafe app blocked: built for an older version of Android"
+    when: "installing the dumbtv home APK (targetSdk 28)"
+    blocks_automation: true
+    fix: >-
+      Play Protect holds pm install until someone answers on the remote:
+      More details, then Install anyway. Pressing OK cancels the install.
+data:
+  packages: data/androidtv/packages.txt
+  protected: data/androidtv/protected.txt
+  never_disable: data/androidtv/never-disable.txt
+  user_apps: data/androidtv/user-apps.txt
+launcher:
+  mechanism: set_home_activity
+  package: tv.dumbtv.home
+  reason: >-
+    Classic Android TV home (com.google.android.tvlauncher, HOME at
+    priority 2). dumbtv home answers HOME once the stock launcher is disabled.
+  fallback: "pm enable --user 0 com.google.android.tvlauncher"
+  quirk: >-
+    launcher/install.sh was not used: its Guard is for Fire OS. The 1.10
+    release APK was checksum-checked against launcher/version.env, pushed to
+    /data/local/tmp and installed with pm install -r, then
+    com.google.android.tvlauncher was disabled with pm disable-user (it is in
+    never-disable.txt; a deliberate, owner-approved exception). HOME landed on
+    dumbtv home at once and after a reboot, and the stock launcher stayed
+    disabled (lastDisabledCaller stayed shell).
+quirks:
+  - "Made by Expressluck on a CVTE board: ro.product.manufacturer is Expressluck, ro.product.brand Thomson, ro.product.model just 'Thomson TV', device guandu. MediaTek m7632, the same platform as the Andersson (Vestel) entry."
+  - "Only com.google.android.tvlauncher (priority 2), dumbtv home and the Settings FallbackHome answer HOME. com.google.android.tungsten.setupwraith is installed but does not answer HOME, so it was left alone."
+  - "The port shown under Wireless debugging refused a plain adb connect; port 5555 worked. The adb link drops every few seconds (device offline, error: closed) and the load average sits around 60: reconnect and retry, and batch commands into one adb shell call."
+  - "Anoki ACR (screen fingerprinting) is built into the firmware. tv.anoki.acr.anokiacroptin (priv-app, starts at boot, INTERNET) was disabled with pm disable-user and stayed disabled across reboots. Its native half, vendor.anoki.acrservice@1.0-service, is started by /system_ext/etc/init/vendor.anoki.acrservice@1.0-service.rc (class hal, user shell, groups audio inet) and cannot be stopped without root. Both the app and /system/lib/libanokiacr.so name acr-config.aistrm.net."
+  - "AdGuard's public DNS does not block aistrm.net; the app, the native library and CLTV's FAST streams (stream.aistrm.net) all use it. A resolver with a custom rule blocking aistrm.net is needed. With the app disabled and aistrm.net blocked, the native service held no outside connection while watched."
+  - "com.cltv.fast (iWedia CLTV, providing an Anoki FAST channels TV input) cannot stay disabled: com.mediatek.tv.service re-enables it at every boot (lastDisabledCaller: com.mediatek.tv.service). appops RUN_IN_BACKGROUND and RUN_ANY_IN_BACKGROUND ignore survive a reboot; am set-standby-bucket restricted does not (back to active, since Android binds its TV input). Live TV and HDMI do not go through it: they use com.mediatek.tvinput and com.mediatek.wwtv.tvcenter."
+  - "Private DNS (hostname mode) validates on this build, but TV Settings has no Private DNS screen: only adb can switch it off again (settings put global private_dns_mode opportunistic)."
+  - "The screensaver is com.google.android.backdrop (promo art). Set screensaver_components to com.android.dreams.basic/.Colors first, then disable backdrop; both survived a reboot."
+  - "No root path: user build, verified boot green, vbmeta locked, no OEM unlocking option in Developer options."
+notes: >-
+  Disabled by hand, all surviving reboots: adservices.api,
+  ondevicepersonalization.services, federatedcompute.services,
+  tv.feedbackconsent, google feedback, partnersetup, tvrecommendations,
+  mediatek leanbacklauncher partnercustomizer, fusion.android.tv.demo,
+  play.games (owner choice), tv.anoki.acr.anokiacroptin, backdrop, and
+  tvlauncher for the launcher swap. Private DNS set to a filtering resolver
+  with aistrm.net blocked. Home screen, HDMI inputs, live TV, the remote and
+  its mic button checked by the owner afterwards.
+known_limits:
+  - "Observed on one unit and one build; other Thomson / Expressluck sets and firmware may differ."
+  - "all.sh and verify.sh were not run: verify.sh checks Fire OS things, so its pass/fail says nothing about this TV."
+  - "The Anoki ACR native service keeps running; only DNS stands between it and its server."
+  - "com.cltv.fast keeps running because MediaTek re-enables it; only its background appops and DNS restrain it."
+verify:
+  blocked: data/blocklists/verify-blocked.txt
+  allowed: data/blocklists/verify-allowed.txt

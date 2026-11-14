@@ -172,3 +172,43 @@ com.onn.updatenotification                   # onn/Walmart update nagger
 # disabled so dumbtv home answers HOME (in never-disable.txt; see the
 # catalog entry before copying this)
 # com.google.android.tvlauncher
+
+# --- Thomson Android TV (Expressluck, MediaTek m7632, device guandu) ---
+# Android 14 build UKNV.260903.001. Verified by hand on that one TV in
+# November 2026: each was disabled with pm disable-user and the TV kept working
+# across reboots. Commented out on purpose: one household's choices on one TV.
+# See catalog/devices/androidtv-thomson-guandu.yaml.
+#
+# ads and personalisation modules
+# com.android.adservices.api
+# com.android.ondevicepersonalization.services
+# com.android.federatedcompute.services
+#
+# telemetry and attribution
+# com.android.tv.feedbackconsent
+# com.google.android.feedback
+# com.google.android.partnersetup
+#
+# promo surfaces and store demo
+# com.google.android.tvrecommendations
+# com.mediatek.android.leanbacklauncher.partnercustomizer
+# fusion.android.tv.demo
+# com.google.android.backdrop                # set screensaver_components to
+#                                            # com.android.dreams.basic/.Colors first
+#
+# Anoki ACR (screen fingerprinting). Its native service,
+# vendor.anoki.acrservice, keeps running and cannot be stopped without root:
+# block aistrm.net at the resolver as well.
+# tv.anoki.acr.anokiacroptin
+#
+# household choice, not bloat
+# com.google.android.play.games
+#
+# disabled so dumbtv home answers HOME (in never-disable.txt; see the
+# catalog entry before copying this)
+# com.google.android.tvlauncher
+#
+# NOT disableable: com.cltv.fast (iWedia CLTV, Anoki FAST channels input).
+# com.mediatek.tv.service re-enables it at every boot. Restrain it with
+# appops RUN_IN_BACKGROUND / RUN_ANY_IN_BACKGROUND ignore and block
+# aistrm.net, where its streams come from.
