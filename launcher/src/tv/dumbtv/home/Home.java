@@ -79,6 +79,8 @@ public final class Home extends Activity {
     private Meter meter;
     private Row apps, allApps, inputs;
     private Hero hero;
+    /** Options › Home position › Bottom: the empty stretch between the clock and the rows. */
+    private View spacer;
     private int libraryGeneration;
     private Map<String, Long> recent = new HashMap<>();
     private Tile moving;
@@ -673,6 +675,12 @@ public final class Home extends Activity {
         head.addView(chip(getString(R.string.settings), R.drawable.chip_settings, R.drawable.chip_settings_mark,
                 v -> openSettings()));
         column.addView(head, new LinearLayout.LayoutParams(MATCH, WRAP));
+        // Home position › Bottom: the page fills the screen (setFillViewport), and this stretch
+        // takes what the banner and the rows leave of it, so they sit on the bottom edge. When
+        // they do not fit on one screen it gets nothing, and the page scrolls as with Top.
+        spacer = new View(this);
+        spacer.setVisibility(View.GONE);
+        column.addView(spacer, new LinearLayout.LayoutParams(MATCH, 0, 1f));
 
         hero = new Hero(this, ui, io);
         hero.setOnClickListener(v -> hero.openCurrent());
@@ -747,6 +755,10 @@ public final class Home extends Activity {
         return "on".equals(cfg.get(Config.LOCK));
     }
 
+    private boolean atBottom() {
+        return "bottom".equals(cfg.get(Config.POSITION));
+    }
+
     /**
      * A chip in the corner. Options › Chip style picks its look: the text chip (the default), or
      * a round icon button whose name shows next to the icon only while it has the focus, so the
@@ -807,6 +819,7 @@ public final class Home extends Activity {
         meter.setVisibility("on".equals(cfg.get(Config.MEMORY)) ? View.VISIBLE : View.GONE);
         meter.setAccent(accent);
         hero.setAccent(accent);
+        spacer.setVisibility(atBottom() ? View.VISIBLE : View.GONE);
         apps.title.setText(getString("on".equals(cfg.get(Config.ALL_APPS))
                 ? R.string.row_pinned_apps : R.string.row_apps).toUpperCase(Locale.ROOT));
         String state = artState();
@@ -987,8 +1000,10 @@ public final class Home extends Activity {
         ViewGroup.LayoutParams params = apps.title.getLayoutParams();
         if (!(params instanceof LinearLayout.LayoutParams)) return;
         LinearLayout.LayoutParams lp = (LinearLayout.LayoutParams) params;
-        // The library banner takes that space when it shows, and so does All apps.
-        int targetMargin = (!"grid".equals(cfg.get(Config.LAYOUT)) && isInputsHidden()
+        // The library banner takes that space when it shows, and so does All apps. With Home
+        // position › Bottom the spacer already puts the apps on the bottom edge: the shift is
+        // measured from the display, not the page, and could push them below it.
+        int targetMargin = (!atBottom() && !"grid".equals(cfg.get(Config.LAYOUT)) && isInputsHidden()
                 && !heroShown() && allApps.title.getVisibility() != View.VISIBLE) ? appRowShift() : 0;
         if (lp.topMargin != targetMargin) {
             lp.topMargin = targetMargin;

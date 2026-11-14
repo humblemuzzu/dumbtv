@@ -89,6 +89,9 @@
     <string name="choice_layout">Diseño</string>
     <string name="choice_layout_rows">Filas</string>
     <string name="choice_layout_grid">Cuadrícula</string>
+    <string name="choice_position">Posición de apps</string>
+    <string name="choice_position_top">Arriba</string>
+    <string name="choice_position_bottom">Abajo</string>
     <string name="choice_order">Orden de apps</string>
     <string name="choice_order_custom">Tu orden</string>
     <string name="choice_order_recent">Usadas recientemente</string>

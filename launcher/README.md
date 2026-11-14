@@ -66,6 +66,7 @@ you open an app. On Fire OS 7 and 8 the Settings button opens Amazon's settings 
 | Accent | white, blue, cyan, green, amber, red, pink, violet |
 | Tiles | small, medium, large |
 | Layout | rows, or a grid that wraps to as many columns as fit |
+| Home position | top (default), bottom: the clock, Options and Settings stay at the top and the rows (with the library banner) move down to the bottom edge, leaving the middle of the screen to the background. Rows that fill the screen anyway stay where they are and scroll as with top |
 | App order | your order, or recently used: the apps row re-sorts on each return home, newest first. It counts apps opened from dumbtv home, plus apps opened any other way (voice, another app) on Fire OS 6, where the launcher already has usage access. Apps never opened keep your order after the rest |
 | All apps section | hidden (default), shown: a separate alphabetical list of every launchable app below your pinned apps. Child lock hides this section |
 | App names | on focus, always, never |
@@ -210,6 +211,8 @@ accent=blue
 tiles=medium
 # rows grid
 layout=rows
+# top bottom
+position=top
 # custom recent (recent = newest first; the history stays in the app's private storage)
 order=custom
 # off on (Child lock hides this section)

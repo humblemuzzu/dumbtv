@@ -67,6 +67,13 @@ final class Config {
     static final Choice LAYOUT = new Choice("layout", "Layout", "rows",
             new String[] {"rows", "grid"},
             new String[] {"Rows", "Grid"});
+    /**
+     * Where the rows sit. Bottom leaves the clock, Options and Settings at the top and moves the
+     * rows down to the bottom edge, so the middle of the screen shows the wallpaper.
+     */
+    static final Choice POSITION = new Choice("position", "Home position", "top",
+            new String[] {"top", "bottom"},
+            new String[] {"Top", "Bottom"});
     static final Choice ORDER = new Choice("order", "App order", "custom",
             new String[] {"custom", "recent"},
             new String[] {"Your order", "Recently used"});
@@ -116,7 +123,7 @@ final class Config {
     /** The banner of hand-picked titles from {@link Library}; hidden anyway while it has none. */
     static final Choice LIBRARY = new Choice("library", "Library banner", "on",
             new String[] {"on", "off"}, new String[] {"Shown", "Hidden"});
-    static final Choice[] CHOICES = {ACCENT, TILES, LAYOUT, ORDER, ALL_APPS, LABELS, CLOCK, MEMORY, INPUTS, SWITCH, BACKGROUND, DIM, ROTATE, LOCK, TILE_STYLE, CHIPS, LIBRARY};
+    static final Choice[] CHOICES = {ACCENT, TILES, LAYOUT, POSITION, ORDER, ALL_APPS, LABELS, CLOCK, MEMORY, INPUTS, SWITCH, BACKGROUND, DIM, ROTATE, LOCK, TILE_STYLE, CHIPS, LIBRARY};
 
     /** Folder of wallpapers, next to home.conf, that Background › Image file rotates through. */
     static final String WALLPAPERS = "wallpapers";
