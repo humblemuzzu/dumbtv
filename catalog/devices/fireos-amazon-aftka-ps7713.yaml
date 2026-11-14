@@ -3,6 +3,7 @@ title: "Amazon Fire TV Stick 4K Max, 1st gen (AFTKA), Fire OS 7.7.1.3"
 contributors:
   - harupong
   - Elv1sh
+  - rotenaple
 platform: fireos
 status: tested
 tested_on: "PS7713.5443N"
@@ -31,7 +32,7 @@ quirks:
   - "No package in packages.txt was refused (protected 0). Absent on this model: media.recommendations, neo.minerva.logcat, device_remote_config_sync_service, tv.democontent.provider, tv.localgallery"
   - "This build has no 'cmd package install-existing', so system apps are only disabled, never uninstalled"
   - "lockdown.sh turns Data Saver on for the whole TV, which can also restrict background data for apps the user keeps"
-notes: "Two sticks on Fire OS 7 build PS7713.5443N. One ran the full pass and verify.sh exited 0. The other ran debloat, lockdown and the dumbtv home takeover with DNSFILTER=0 by choice, Alexa and Silk kept via KEEP_APPS; verify.sh exited 0 there too."
+notes: "Two sticks on Fire OS 7 build PS7713.5443N. One ran the full pass and verify.sh exited 0. The other ran debloat, lockdown and the dumbtv home takeover with DNSFILTER=0 by choice, Alexa and Silk kept via KEEP_APPS; verify.sh exited 0 there too. A third ran the full pass with DNSFILTER=1, LAUNCHER=1 and SmartTube in place of YouTube (YOUTUBE=1), with PRIME=0 and ALEXA=0; verify.sh exited 0."
 verify:
   blocked: data/blocklists/verify-blocked.txt
   allowed: data/blocklists/verify-allowed.txt
