@@ -73,7 +73,10 @@ saved as `YOUTUBE=0` unless you said yes, and `all.sh` only runs this when it is
    `pm disable-user --user 0` — reversible, and it stays installed, so the
    Appstore can hand it back. `--remove` uninstalls it instead: it lives in
    `/data`, so that is a real deletion, and the Appstore is the way back.
-4. Puts SmartTube in the dumbtv home app order and drops YouTube out of it.
+4. Puts SmartTube in the dumbtv home app order and drops YouTube out of it. On
+   Fire OS 8, adb cannot read or edit that order, so this step is skipped:
+   SmartTube appears at the end of the apps row, and you move it by holding OK on
+   it and picking Move.
 
 The stock app has to be disabled, not just hidden: Amazon's launcher and any
 voice-search intent still resolve to it otherwise, and a child who finds the "all
@@ -113,7 +116,7 @@ If it was removed with `--remove`, the only way back is the Amazon Appstore
 (YouTube, free). That is the one step in this repo that is not undoable from the
 command line — everything else is.
 
-Then set the dumbtv home app order back in Options, or edit
+Then set the dumbtv home app order back in Options, or, on Fire OS 6 and 7, edit
 `/sdcard/Android/data/tv.dumbtv.home/files/home.conf`.
 
 ## What this does not do
