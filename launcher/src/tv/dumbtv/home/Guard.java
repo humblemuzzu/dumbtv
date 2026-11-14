@@ -38,9 +38,12 @@ import android.view.accessibility.AccessibilityEvent;
  * Android 14 counts the cover only once the window manager has shown its surface, a frame or
  * more after that draw, so there the alarm is set {@link #SHOWN_DELAY_MS} later (issue #57).
  *
- * Waking from standby resumes whatever was on screen without a new window event. If the last
- * window was Amazon's home screen, ours is brought up at once. Amazon's other launcher screens,
- * such as its settings grid, are left alone, as is a wake before any window was seen.
+ * Going to standby, Fire OS 7 brings Amazon's home to the front with the screen already off.
+ * The launch alarm is a wakeup alarm because Android holds back other alarms for minutes while
+ * the screen is off, so ours came back up to three minutes into standby, or not before the wake.
+ * Waking resumes whatever was on screen without a new window event. If the last window was
+ * Amazon's home screen, ours is brought up at once. Amazon's other launcher screens, such as
+ * its settings grid, are left alone, as is a wake before any window was seen.
  */
 public final class Guard extends AccessibilityService {
     static final String AMAZON = "com.amazon.tv.launcher";
@@ -62,7 +65,7 @@ public final class Guard extends AccessibilityService {
     private final BroadcastReceiver screenOn = new BroadcastReceiver() {
         @Override
         public void onReceive(Context c, Intent i) {
-            if (!paused && onAmazonHome) launchWhenCovered();
+            if (!paused && onAmazonHome && !Home.inFront) launchWhenCovered();
         }
     };
 
@@ -79,7 +82,7 @@ public final class Guard extends AccessibilityService {
 
     private static void home(Context c, long delayMs) {
         AlarmManager alarms = (AlarmManager) c.getSystemService(Context.ALARM_SERVICE);
-        alarms.setExact(AlarmManager.ELAPSED_REALTIME, SystemClock.elapsedRealtime() + delayMs,
+        alarms.setExact(AlarmManager.ELAPSED_REALTIME_WAKEUP, SystemClock.elapsedRealtime() + delayMs,
                 launch(c));
     }
 
@@ -153,10 +156,13 @@ public final class Guard extends AccessibilityService {
         if (pkg == null) return;
         if (!AMAZON.contentEquals(pkg)) {
             if ("com.android.systemui".contentEquals(pkg) || "android".contentEquals(pkg)) return;
+            boolean own = getPackageName().contentEquals(pkg);
+            if (own && !OwnWindow.showsWhatIsInFront(cls, View.class.getName(),
+                    Home.class.getName(), Home.inFront)) return;
             cancelRetry();
             onAmazonHome = false;
             paused = false;
-            if (!getPackageName().contentEquals(pkg)) arrived(this);
+            if (!own) arrived(this);
             return;
         }
         onAmazonHome = cls != null && AMAZON_HOME.contentEquals(cls);
@@ -171,7 +177,7 @@ public final class Guard extends AccessibilityService {
     /** Retain a throttled HOME event: Fire OS may leave Amazon Home on top after a burst. */
     private void retryHome() {
         handler.removeCallbacks(retry);
-        if (running != this || paused || !onAmazonHome) {
+        if (running != this || paused || !onAmazonHome || Home.inFront) {
             homeRetry.cancel();
             return;
         }

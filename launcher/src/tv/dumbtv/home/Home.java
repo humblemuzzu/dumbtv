@@ -65,6 +65,8 @@ public final class Home extends Activity {
     private Config cfg;
     private TvInputManager tv;
     private int applied = -1, appsGeneration;
+    /** Whether the home screen is the resumed activity; Guard reads it on the same main thread. */
+    static boolean inFront;
     private boolean resumed, landed, unlockOpened;
     private String lastFocusedKind;
     private final Map<String, String> lastIds = new HashMap<>();
@@ -311,6 +313,7 @@ public final class Home extends Activity {
     protected void onResume() {
         super.onResume();
         resumed = true;
+        inFront = true;
         Guard.arrived(this);
         Filter.wake(this);
         cfg.refresh();
@@ -336,6 +339,7 @@ public final class Home extends Activity {
     protected void onPause() {
         super.onPause();
         resumed = false;
+        inFront = false;
         hero.stop();
         stopColorAnimation();
         targetColor = 0;
