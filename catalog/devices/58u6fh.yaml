@@ -1,0 +1,28 @@
+id: 58u6fh
+title: "Hisense 58U6HF Fire TV AFTHA001"
+contributors:
+  - w3dd1e
+platform: fireos
+status: untested
+tested_on: "PS7715.5585N"
+models:
+  - "58U6HF"
+adb:
+  port: 5555
+  transport: wifi
+developer_mode: >-
+  Settings > My Fire TV > About > click the device name 7 times, then My Fire TV > Developer Options > ADB debugging: ON
+ip_location: "Settings > About > Network"
+prompts: []
+data:
+  packages: data/fireos/packages.txt
+  protected: data/fireos/protected.txt
+  never_disable: data/fireos/never-disable.txt
+  user_apps: data/fireos/user-apps.txt
+quirks:
+  - "On first attempt, this failed with error Fire OS did not bind HOME guard.  Checked settings but changed nothing, reran set up and workrfectly on 2nd attempt"
+  - "Failed with error Fire OS did not bind Home guard. Reran set up and worked perfectly on 2nd attempt"
+notes: "Error on first attempt, reran 2nd attempt and worked perfectly with no changes"
+verify:
+  blocked: data/blocklists/verify-blocked.txt
+  allowed: data/blocklists/verify-allowed.txt
