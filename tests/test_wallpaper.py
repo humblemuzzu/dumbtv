@@ -115,6 +115,28 @@ class WallpaperTest(unittest.TestCase):
         self.assertEqual(commands, [])
         self.assertEqual(files, [])
 
+    def test_a_flag_without_its_value_stops_before_the_tv(self):
+        for args in (("--dim", "--replace"), ("--rotate", "--shuffle"), ("--crop", "")):
+            with self.subTest(args=args):
+                result, commands, files, _, _ = self.run_script(*args)
+                self.assertNotEqual(result.returncode, 0)
+                self.assertIn("needs a value", result.stderr)
+                self.assertEqual((commands, files), ([], []))
+
+    def test_names_differing_only_in_case_do_not_overwrite(self):
+        result, _, files, _, _ = self.run_script(names=("Beach.jpg", "beach.png"))
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        walls = [f.lower().rsplit(".", 1)[0] for f in files if f != "home.conf"]
+        self.assertEqual(len(set(walls)), 2, files)
+
+    def test_dry_run_shows_the_names_a_real_run_pushes(self):
+        names = ("a.png", "a.jpg")
+        dry, _, _, _, _ = self.run_script("--dry-run", magick=True, names=names)
+        real, _, files, _, _ = self.run_script(magick=True, names=names)
+        self.assertEqual(dry.returncode, 0, dry.stdout + dry.stderr)
+        shown = sorted(line.split("wallpapers/")[1] for line in dry.stdout.splitlines() if "-> wallpapers/" in line)
+        self.assertEqual(shown, [f for f in files if f != "home.conf"])
+
     def test_needs_the_launcher(self):
         result, _, files, _, _ = self.run_script(installed=False)
         self.assertNotEqual(result.returncode, 0)
