@@ -1,0 +1,27 @@
+id: fireos-hisense-aftha001-ps7717
+title: "Hisense AFTHA001"
+platform: fireos
+status: tested
+tested_on: "PS7717.5746N"
+models: []
+adb:
+  port: 5555
+  transport: wifi
+developer_mode: >-
+  Settings > My Fire TV > About > press OK on the device name 7 times, then Developer Options > ADB debugging
+ip_location: "Settings > Network > the connected network"
+prompts:
+  - name: "ADB authorization on first connection"
+    blocks_automation: true
+    fix: "accept 'Allow USB debugging?' on the TV with the remote and tick 'Always allow'; adb devices then shows device"
+data:
+  packages: data/fireos/packages.txt
+  protected: data/fireos/protected.txt
+  never_disable: data/fireos/never-disable.txt
+  user_apps: data/fireos/user-apps.txt
+quirks:
+  - "After dnsfilter.sh's own reboot the self-test showed nothing blocked (tunnel up, always-on set). One more manual reboot put the filter in the DNS path; verify.sh then passed."
+notes: "Full pass (debloat, lockdown, dnsfilter, launcher 1.9, SmartTube) with Prime and Alexa kept. verify.sh exited 0: 39 packages disabled, 13 privacy settings, data saver on, filter 387 entries, HOME lands on dumbtv home. debloat: 36 disabled, 0 protected, 0 suspect."
+verify:
+  blocked: data/blocklists/verify-blocked.txt
+  allowed: data/blocklists/verify-allowed.txt
