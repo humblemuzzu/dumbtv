@@ -187,9 +187,15 @@ sleep 2
 source ../scripts/accessibility.sh
 user=$(sh_ am get-current-user | tr -d '\r')
 bound=0
-for _ in $(seq 1 15); do
-  if sh_ dumpsys accessibility | guard_bound "${user:-0}"; then bound=1; break; fi
-  sleep 1
+# A Hisense AFTHA001 left the first enable unbound, and a second run bound it at once (PR #193),
+# so the service is switched off and on once more before this gives up.
+for attempt in 1 2; do
+  [[ $attempt == 2 ]] && { echo "the HOME guard is not bound yet; switching it off and on again"; set_guard $GUARD; }
+  for _ in $(seq 1 15); do
+    if sh_ dumpsys accessibility | guard_bound "${user:-0}"; then bound=1; break; fi
+    sleep 1
+  done
+  [[ $bound == 1 ]] && break
 done
 if [[ $bound == 0 ]]; then
   echo "error: Fire OS did not bind the HOME guard ($GUARD)." >&2
