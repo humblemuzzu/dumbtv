@@ -15,17 +15,18 @@ ROOT = Path(__file__).resolve().parents[1]
 MEDIA = "/sdcard/Android/media/tv.dumbtv.home"
 
 
-def path_without_magick(shim):
-    """PATH with any installed ImageMagick hidden: a directory holding magick is replaced by
-    shim, which links everything else in it, so bash, python3 and the rest stay reachable."""
+def path_without(shim, *tools):
+    """PATH with the installed tools hidden (ImageMagick, macOS's sips): a directory holding
+    one is replaced by shim, which links everything else in it, so bash, python3 and the rest
+    stay reachable."""
     dirs = []
     for d in os.environ["PATH"].split(os.pathsep):
-        if not (Path(d) / "magick").exists():
+        if not any((Path(d) / tool).exists() for tool in tools):
             dirs.append(d)
             continue
         shim.mkdir(exist_ok=True)
         for entry in Path(d).iterdir():
-            if entry.name != "magick" and not (shim / entry.name).exists():
+            if entry.name not in tools and not (shim / entry.name).exists():
                 (shim / entry.name).symlink_to(entry)
         if str(shim) not in dirs:
             dirs.append(str(shim))
@@ -45,7 +46,7 @@ class WallpaperTest(unittest.TestCase):
         log.touch()
         for name in names:
             (tmp / name).write_bytes(b"image")
-        path = path_without_magick(tmp / "no-magick")
+        path = path_without(tmp / "no-magick", "magick")
         if magick:
             # Stands in for ImageMagick: writes its last argument, so the fit step can be seen.
             bin_dir = tmp / "bin"

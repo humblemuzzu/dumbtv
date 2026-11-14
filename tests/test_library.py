@@ -13,7 +13,7 @@ import tempfile
 import unittest
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from test_wallpaper import path_without_magick
+from test_wallpaper import path_without
 
 ROOT = Path(__file__).resolve().parents[1]
 MEDIA = "/sdcard/Android/media/tv.dumbtv.home/library"
@@ -47,7 +47,7 @@ class LibraryTest(unittest.TestCase):
             (src / name).write_bytes(b"picture")
         if crop is not None:
             (src / "crop.conf").write_text(crop)
-        path = path_without_magick(tmp / "no-magick")
+        path = path_without(tmp / "no-tools", "magick", "sips")
         calls = tmp / "magick.log"
         if magick:
             # Stands in for ImageMagick: identify reports a 2000x600 picture, every other call
