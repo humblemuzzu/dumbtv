@@ -1,0 +1,39 @@
+id: fireos-bush-aftsh3f7ef
+title: "Bush 43USF26 4K Freely Fire TV Edition (AFTSH3F7EF), Fire OS 8.1.8.5"
+contributors:
+  - oddeyed
+platform: fireos
+status: tested
+tested_on: "RS8185.3887N"
+models:
+  - "AFTSH3F7EF (Bush 43USF26 43 inch 4K Freely Fire TV)"
+adb:
+  port: 5555
+  transport: wifi
+developer_mode: >-
+  Settings > Device & Software > About > press OK on Your TV 7 times, then Settings > Device & Software > Developer Options > ADB debugging: ON
+ip_location: "Not recorded; the owner knew the address from their router"
+prompts:
+  - name: "USB debugging authorization"
+    blocks_automation: true
+    fix: "press Allow on the TV and tick Always allow"
+  - name: "ADB off after reboot"
+    blocks_automation: true
+    fix: "port 5555 refused after every reboot (debloat.sh's, and two earlier ones including a Fire OS update) although the TV reached its home screen, so reboot_wait timed out. The owner turned ADB debugging off and on in Developer Options, then lockdown.sh onwards ran"
+  - name: "Fire TV full-screen keyboard"
+    blocks_automation: true
+    fix: "any tap on a text field opens Amazon's full-screen keyboard, which takes all taps and turns KEYCODE_ENTER into a press of its focused key, so a newline cannot be typed. input text still types into the field; tapping its Next button (994,717 at 1920x1080) closes it. In personalDNSfilter's Edit filter dialog, taps did not move between fields but KEYCODE_TAB did"
+data:
+  packages: data/fireos/packages.txt
+  protected: data/fireos/protected.txt
+  never_disable: data/fireos/never-disable.txt
+  user_apps: data/fireos/user-apps.txt
+quirks:
+  - "dnsfilter.sh printed 'could not reach the app's config editor' and ended at its manual step. Done over adb: Advanced settings > Configure filter update, edit the first active row (1Hosts-light) to category dumbtv, name dumbtv-blocklist and the file:///storage/emulated/0/Android/media/dnsfilter.android/dumbtv-blocklist.txt URL, untick StevenBlack ad&malware and HageziPro (three lists were active by default), then RESTART in the app: the log showed 'Building index for 415 entries' with no reboot, and verify.sh then passed"
+  - "With DNS server discovery on, personalDNSfilter selected Google's 8.8.8.8 although the network hands out a LAN resolver (a Pi-hole), so the household's resolver was bypassed. With manual servers set to the Pi-hole and Quad9, both passing the app's test button, it selected Quad9: a LAN resolver that forwards upstream loses to a public one listed beside it. The servers' raw text mode rejects two entries joined with ';', and the full-screen keyboard cannot type a newline; the + button in list mode adds the second"
+  - "Fire OS ignores cmd package set-home-activity (prints Success) on 8.1.6.2 and 8.1.8.5. LTvLauncher's accessibility Home Button Fix never sees HOME from a real remote, and Launcher Hijack was flagged by Amazon's FTVHarmfulAppActivity on 8.1.6.2. dumbtv home's Guard works: HOME lands on it in 0.4 to 2.75 s, and Amazon's settings (com.amazon.tv.launcher/.ui.MainSettingsActivity, separate from home on 8.1.8.5) stay usable"
+  - "UK Freely set: Freely (com.vewd.core.*, uk.co.freely.firetv.shortcut) and the HDMI inputs work after the full pass. 47 packages disabled, protected 0; com.amazon.tigris, com.android.nfc, com.amazon.vizzini.ftvcds, com.amazon.wha.mediabrowserservice, com.amazon.whad and com.amazon.whasettings are absent on this model"
+notes: "Bush 43USF26 UK Freely Fire TV Edition: full pass with Alexa off and SmartTube; verify.sh passed after the DNS filter's manual step was done over adb"
+verify:
+  blocked: data/blocklists/verify-blocked.txt
+  allowed: data/blocklists/verify-allowed.txt
