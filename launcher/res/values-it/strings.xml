@@ -90,6 +90,9 @@
     <string name="choice_layout">Disposizione</string>
     <string name="choice_layout_rows">Righe</string>
     <string name="choice_layout_grid">Griglia</string>
+    <string name="choice_position">Posizione app</string>
+    <string name="choice_position_top">In alto</string>
+    <string name="choice_position_bottom">In basso</string>
     <string name="choice_order">Ordine app</string>
     <string name="choice_order_custom">Il tuo ordine</string>
     <string name="choice_order_recent">Usate di recente</string>
