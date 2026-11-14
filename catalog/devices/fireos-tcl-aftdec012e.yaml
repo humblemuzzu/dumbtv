@@ -1,0 +1,32 @@
+id: fireos-tcl-aftdec012e
+title: "TCL 75Q691F Fire TV (AFTDEC012E)"
+contributors:
+  - tvenenga
+platform: fireos
+status: tested
+tested_on: "Fire OS 8.1, RS8185.389N"
+models:
+  - "AFTDEC012E (TCL 75Q691F)"
+adb:
+  port: 5555
+  transport: wifi
+developer_mode: >-
+  Settings > My Fire TV > About > click the device name 7 times, then My Fire TV > Developer Options > ADB debugging: ON
+ip_location: "Settings > About > Network"
+prompts:
+  - name: "Allow USB debugging?"
+    blocks_automation: true
+    fix: "Tick Always allow and press Allow; the first connection also asked to trust the incoming device"
+  - name: "ADB off after the first reboot"
+    blocks_automation: true
+    fix: "Developer Options > ADB debugging off and on, then allow this computer again; the run then carried on by itself"
+data:
+  packages: data/fireos/packages.txt
+  protected: data/fireos/protected.txt
+  never_disable: data/fireos/never-disable.txt
+  user_apps: data/fireos/user-apps.txt
+quirks: []
+notes: "Full pass, verify.sh exited 0. Reported in issue #191."
+verify:
+  blocked: data/blocklists/verify-blocked.txt
+  allowed: data/blocklists/verify-allowed.txt

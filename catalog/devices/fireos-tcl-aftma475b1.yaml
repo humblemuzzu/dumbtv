@@ -1,0 +1,27 @@
+id: fireos-tcl-aftma475b1
+title: "TCL 55PF650 Fire TV (AFTMA475B1)"
+contributors:
+  - nickzocchi
+platform: fireos
+status: tested
+tested_on: "Fire OS 8.1.8.5, RS8185.3885N"
+models:
+  - "AFTMA475B1 (TCL 55PF650)"
+adb:
+  port: 5555
+  transport: wifi
+developer_mode: >-
+  Settings > Device & Software > About > click Your TV 7 times, then Device & Software > Developer Options > ADB Debugging: ON
+ip_location: "Settings > About > Network"
+prompts: []
+data:
+  packages: data/fireos/packages.txt
+  protected: data/fireos/protected.txt
+  never_disable: data/fireos/never-disable.txt
+  user_apps: data/fireos/user-apps.txt
+quirks:
+  - "dnsfilter.sh did not set personalDNSfilter up by itself: the owner added the dumbtv-blocklist in the app by hand (its manual step)"
+notes: "Full pass, verify.sh exited 0, and the result held across reboots. Reported in issue #195."
+verify:
+  blocked: data/blocklists/verify-blocked.txt
+  allowed: data/blocklists/verify-allowed.txt

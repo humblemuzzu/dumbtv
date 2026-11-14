@@ -1,10 +1,12 @@
 id: fireos-hisense-aftcibfbd1
 title: "Hisense 65U65SFC Pro Fire TV Edition (AFTCIBFBD1)"
+contributors:
+  - sonofamitch86
 platform: fireos
 status: tested
 tested_on: "Fire OS 8.1.8.0, RS8180.3749N (Android 11, SDK 30)"
 models:
-  - "Hisense 65U65SFC Pro Fire TV Edition"
+  - "AFTCIBFBD1 (Hisense 65U65SFC Pro Fire TV Edition)"
 adb:
   port: 5555
   transport: wifi

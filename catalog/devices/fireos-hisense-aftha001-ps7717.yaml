@@ -1,9 +1,12 @@
 id: fireos-hisense-aftha001-ps7717
-title: "Hisense AFTHA001"
+title: "Hisense Fire TV (AFTHA001), PS7717.5746N"
+contributors:
+  - mrbell321
 platform: fireos
 status: tested
 tested_on: "PS7717.5746N"
-models: []
+models:
+  - "AFTHA001"
 adb:
   port: 5555
   transport: wifi

@@ -1,12 +1,12 @@
-id: fireos-amazon-aftle
-title: "Amazon AFTLE (Onida Fire TV Edition)"
+id: fireos-onida-aftle
+title: "Onida Fire TV Edition (AFTLE)"
 platform: fireos
 contributors:
   - Sj2594
 status: tested
-tested_on: "NS6711"
+tested_on: "NS6711 (Fire OS 6, SDK 25)"
 models:
-  - "Onida Fire TV Edition"
+  - "AFTLE (Onida Fire TV Edition)"
 adb:
   port: 5555
   transport: wifi
@@ -21,9 +21,9 @@ prompts:
     blocks_automation: true
     fix: "Set ADB debugging off and on again in Developer Options, then reconnect"
 data:
-  packages: data/fireos/packages.txt
-  protected: data/fireos/protected.txt
-  never_disable: data/fireos/never-disable.txt
+  packages: data/fireos6/packages.txt
+  protected: data/fireos6/protected.txt
+  never_disable: data/fireos6/never-disable.txt
   user_apps: data/fireos/user-apps.txt
 quirks:
   - "Fire TV Edition menus: Settings > Device and Software, not Settings > My Fire TV"
