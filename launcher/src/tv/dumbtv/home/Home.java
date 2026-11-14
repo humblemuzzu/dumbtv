@@ -16,7 +16,6 @@ import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
 import android.media.tv.TvInputManager;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -1255,12 +1254,13 @@ public final class Home extends Activity {
     }
 
     /**
-     * On Fire OS 8 the Appstore's launcher entry opens Amazon's home with its apps grid, which
-     * Guard then replaces with ours, so the tile seemed to do nothing (#133). Its store screen is
-     * opened instead. On Fire OS 7 the entry opens the store itself.
+     * On Fire OS 8, and on a Fire TV Cube on Fire OS 7, the Appstore's launcher entry opens
+     * Amazon's home with its apps grid, which Guard then replaces with ours, so the tile seemed
+     * to do nothing (#133). Its store screen is opened instead; where the entry works, it shows
+     * that same screen.
      */
     private Intent appIntent(Item it) {
-        if (Build.VERSION.SDK_INT >= 30 && APPSTORE.equals(it.id)) {
+        if (APPSTORE.equals(it.id)) {
             Intent store = new Intent(Intent.ACTION_MAIN)
                     .setClassName(APPSTORE, APPSTORE + ".ade.ADEHomeActivity");
             if (store.resolveActivity(getPackageManager()) != null) return store;
