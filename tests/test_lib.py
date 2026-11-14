@@ -65,6 +65,34 @@ class PresentTest(unittest.TestCase):
         self.assertNotIn("NO", result.stdout)
         self.assertIn("stopped responding", result.stderr)
 
+class RebootWaitTest(unittest.TestCase):
+    def reboot(self, refusals):
+        with tempfile.TemporaryDirectory() as tmp:
+            env = dict(os.environ, ADB=str(ROOT / "tests" / "fake_reboot_adb.sh"), ADB_SERIAL="test-tv",
+                       STATE=tmp, REFUSALS=str(refusals), BOOT_SECONDS="0", BOOT_POLL_SECONDS="0",
+                       PM_WRITE_SECONDS="0")
+            return subprocess.run(
+                ["bash", "-c", 'set -uo pipefail; source "$1"; reboot_wait && echo BOOTED',
+                 "bash", str(ROOT / "scripts" / "lib.sh")],
+                env=env, capture_output=True, text=True, timeout=60)
+
+    def test_a_plain_reboot_says_nothing_about_adb(self):
+        result = self.reboot(0)
+        self.assertIn("BOOTED", result.stdout, result.stderr)
+        self.assertNotIn("refuses adb", result.stderr)
+
+    def test_adb_switched_off_at_boot_is_named_once_and_the_wait_goes_on(self):
+        result = self.reboot(8)
+        self.assertIn("BOOTED", result.stdout, result.stderr)
+        self.assertEqual(result.stderr.count("ADB debugging switched itself off"), 1, result.stderr)
+
+    def test_adb_that_never_comes_back_ends_with_what_to_do(self):
+        result = self.reboot(1000)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertNotIn("BOOTED", result.stdout)
+        self.assertIn("turn ADB debugging off and on in Developer Options", result.stderr)
+
+
 class NeedDeviceTest(unittest.TestCase):
     def test_install_existing_detected_under_pipefail(self):
         with tempfile.TemporaryDirectory() as tmp:

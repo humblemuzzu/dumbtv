@@ -300,12 +300,22 @@ reboot_wait() {
   fi
   note "rebooting the TV"
   adb_reconnect
-  local i before retried=0
+  local i before retried=0 refused=0 told=0
   before=$(boot_id)
   ask_reboot
   sleep "$BOOT_SECONDS"
   for i in $(seq 1 30); do
-    "$ADB" connect "$SERIAL" >/dev/null 2>&1 || true
+    # Some Fire OS 8 TVs come back with ADB debugging switched off: the address answers and
+    # refuses port 5555 (#191, #192). Switching it off and on lets this wait carry on.
+    case $("$ADB" connect "$SERIAL" 2>&1) in
+      *refused*) refused=$((refused+1)) ;;
+      *) refused=0 ;;
+    esac
+    if [[ $refused -ge 6 && $told == 0 ]]; then
+      note "the TV refuses adb. If it shows its home screen, ADB debugging switched itself off:"
+      note "turn it off and on in Developer Options and allow this computer; this keeps waiting"
+      told=1
+    fi
     if [[ $(dev1 getprop sys.boot_completed) == 1 ]]; then
       if [[ $(boot_id) != "$before" ]]; then
         note "booted"
@@ -318,8 +328,9 @@ reboot_wait() {
       sleep "$BOOT_SECONDS"
       continue
     fi
-    sleep 5
+    sleep "${BOOT_POLL_SECONDS:-5}"
   done
+  [[ $refused -gt 0 ]] && die "the TV refuses adb: turn ADB debugging off and on in Developer Options, then run this again"
   die "device did not report boot_completed; check the TV by hand before running anything else"
 }
 
