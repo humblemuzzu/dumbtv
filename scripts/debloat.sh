@@ -37,7 +37,9 @@ needed_off() {
 
 if [[ $DRY_RUN == 1 ]]; then
   step "packages the TV needs (dry-run)"
-  for p in $(needed_off); do note "$p  would be enabled again"; done
+  needed=$(needed_off)
+  [[ -n $needed ]] || note "none of them is off"
+  for p in $needed; do note "$p  would be enabled again"; done
   step "Amazon packages (dry-run)"
   for p in $(cleanup_list); do
     protected_by_policy "$p" && { note "$p  SKIP (never-disable list)"; continue; }
