@@ -50,6 +50,15 @@ public final class Input extends Activity {
      * Keeper's fast path does.
      */
     private static Input instance;
+    private static long resumedAt;
+    /**
+     * Keeper's UsageStats check can fire within one poll of this screen opening - seen on an
+     * Insignia AFTEAMR311 switching to a CEC source that was waking from standby, not just on a
+     * real HOME press. Finishing on that immediate, spurious fire tears down the TvView session
+     * (onStop calls view.reset()) before the source has a chance to settle, over and over, so the
+     * picture never stabilizes. A screen this new is never what HOME actually meant to leave.
+     */
+    private static final long KEEPER_GRACE_MS = 1000;
 
     private final Handler ui = new Handler(Looper.getMainLooper());
     private final AudioManager.OnAudioFocusChangeListener focus = change -> { };
@@ -107,15 +116,17 @@ public final class Input extends Activity {
         return app.activityInfo != null && AMAZON_LIVE_TV.equals(app.activityInfo.packageName);
     }
 
-    /** Finishes this screen if it is still around (paused or stopped, not yet destroyed). */
+    /** Finishes this screen if it is still around (paused or stopped, not yet destroyed) and has
+     * been showing for a while - never a screen that only just opened. */
     static void finishIfOpen() {
-        if (instance != null) instance.finish();
+        if (instance != null && System.currentTimeMillis() - resumedAt >= KEEPER_GRACE_MS) instance.finish();
     }
 
     @Override
     protected void onCreate(Bundle state) {
         super.onCreate(state);
         instance = this;
+        resumedAt = System.currentTimeMillis();
         id = getIntent().getStringExtra(EXTRA_ID);
         // The video is a layer behind this window; a transparent window lets the text over it blend
         // instead of punching black boxes into the picture.
