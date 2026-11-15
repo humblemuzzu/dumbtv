@@ -116,6 +116,25 @@ Amazon's Live TV app claims every input and then shows its settings or a channel
 scan. Set Options › Open inputs with › **Automatic** (the default from launcher
 1.2), which uses the launcher's own input screen when that happens.
 
+### "Open inputs with: The TV's app" still opens the built-in screen
+
+On some Fire TV Edition sets (confirmed on an Insignia AFTEAMR311, Fire OS 6),
+`tv` and `auto` both fall back to the launcher's own input screen no matter
+what, with no warning. This is not a bug to chase: `Input.intent()` decides
+whether to hand off by checking whether any app resolves the standard Android
+passthrough URI (`content://android.media.tv/passthrough/...`). On these sets
+Amazon's own passthrough player never registers for that URI at all — it only
+answers its own `tvinput://tunenow` scheme, gated behind the signature
+permission `com.amazon.tv.permission.TUNE_INPUT`, which a sideloaded app can
+never hold. There is nothing for the generic check to find, so it always falls
+through, however `switch` is set.
+
+Confirm with `adb shell cmd package query-activities --brief -a
+android.intent.action.VIEW -d 'content://android.media.tv/passthrough/<input
+id>'`: "No activities found" on a set like this means `tv` and `auto` cannot
+work here. Set `switch=home` to stop asking and use the built-in screen on
+purpose; `catalog/devices/` is the place to confirm a specific model.
+
 ## Inputs
 
 ### The TV sleeps while something is playing on HDMI

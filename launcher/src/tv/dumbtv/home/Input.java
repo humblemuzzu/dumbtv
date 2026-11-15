@@ -104,6 +104,13 @@ public final class Input extends Activity {
         List<ResolveInfo> apps = c.getPackageManager().queryIntentActivities(it.intent, 0);
         boolean handOver = "tv".equals(mode) ? !apps.isEmpty()
                 : "auto".equals(mode) && apps.size() == 1 && !viewerIsLiveTv(apps.get(0));
+        // A deliberate choice ("tv", not the "auto" fallback) that silently does nothing is worth a
+        // line in logcat: nothing else marks this - see docs/TROUBLESHOOTING.md, "Open inputs with:
+        // The TV's app" still opens the built-in screen.
+        if ("tv".equals(mode) && apps.isEmpty()) {
+            Keeper.note("switch=tv but no app resolves the passthrough URI for " + it.id
+                    + "; using the built-in screen");
+        }
         if (handOver) return null;
         return new Intent(c, Input.class).putExtra(EXTRA_ID, it.id).putExtra(EXTRA_NAME, name);
     }
