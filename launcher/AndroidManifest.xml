@@ -16,6 +16,10 @@
     <uses-permission android:name="android.permission.REORDER_TASKS"
         android:maxSdkVersion="27" />
 
+    <!-- Offline Samsung input control on the supported Fire TV Cube. -->
+    <uses-permission android:name="android.permission.TRANSMIT_IR" />
+    <uses-feature android:name="android.hardware.consumerir" android:required="false" />
+
     <application
         android:label="@string/app_name"
         android:icon="@drawable/icon"

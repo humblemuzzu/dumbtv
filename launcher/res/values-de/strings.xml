@@ -146,4 +146,10 @@
     <string name="choice_library">Bibliotheksbanner</string>
     <string name="choice_library_on">Angezeigt</string>
     <string name="choice_library_off">Ausgeblendet</string>
+    <string name="choice_app_rows">App-Zeilen (Zeilenlayout)</string>
+    <string name="choice_app_rows_one">Eine</string>
+    <string name="choice_app_rows_two">Zwei</string>
+    <string name="choice_cube_inputs">Fire TV Cube-Eingänge</string>
+    <string name="choice_cube_inputs_on">Anzeigen</string>
+    <string name="choice_cube_inputs_off">Ausblenden</string>
 </resources>

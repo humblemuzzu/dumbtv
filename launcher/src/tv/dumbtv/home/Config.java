@@ -90,6 +90,10 @@ final class Config {
     static final Choice MEMORY = new Choice("memory", "Memory meter", "off",
             new String[] {"off", "on"},
             new String[] {"Hidden", "Shown"});
+    static final Choice APP_ROWS = new Choice("app_rows", "App rows (Rows layout)", "one",
+            new String[] {"one", "two"}, new String[] {"One", "Two"});
+    static final Choice CUBE_INPUTS = new Choice("cube_inputs", "Fire TV Cube inputs", "on",
+            new String[] {"on", "off"}, new String[] {"Shown", "Hidden"});
     static final Choice INPUTS = new Choice("inputs", "Inputs row", "on",
             new String[] {"on", "off"},
             new String[] {"Shown", "Hidden"});
@@ -123,7 +127,7 @@ final class Config {
     /** The banner of hand-picked titles from {@link Library}; hidden anyway while it has none. */
     static final Choice LIBRARY = new Choice("library", "Library banner", "on",
             new String[] {"on", "off"}, new String[] {"Shown", "Hidden"});
-    static final Choice[] CHOICES = {ACCENT, TILES, LAYOUT, POSITION, ORDER, ALL_APPS, LABELS, CLOCK, MEMORY, INPUTS, SWITCH, BACKGROUND, DIM, ROTATE, LOCK, TILE_STYLE, CHIPS, LIBRARY};
+    static final Choice[] CHOICES = {ACCENT, TILES, LAYOUT, APP_ROWS, POSITION, ORDER, ALL_APPS, LABELS, CLOCK, MEMORY, INPUTS, CUBE_INPUTS, SWITCH, BACKGROUND, DIM, ROTATE, LOCK, TILE_STYLE, CHIPS, LIBRARY};
 
     /** Folder of wallpapers, next to home.conf, that Background › Image file rotates through. */
     static final String WALLPAPERS = "wallpapers";

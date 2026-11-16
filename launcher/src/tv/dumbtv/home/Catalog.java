@@ -81,7 +81,10 @@ final class Catalog {
      */
     static List<Item> inputs(Context c, TvInputManager tv) {
         List<Item> out = new ArrayList<>();
-        if (tv == null) return out;
+        if (tv == null) {
+            SamsungIr.append(c, out);
+            return out;
+        }
         List<Item> other = new ArrayList<>();
         for (TvInputInfo in : tv.getTvInputList()) {
             if (!in.isPassthroughInput() || in.isHidden(c)) continue;
@@ -97,6 +100,7 @@ final class Catalog {
         Collections.sort(out, (a, b) -> collator.compare(a.label.toString(), b.label.toString()));
         Collections.sort(other, (a, b) -> collator.compare(a.label.toString(), b.label.toString()));
         out.addAll(other);
+        SamsungIr.append(c, out);
         return out;
     }
 

@@ -148,7 +148,7 @@ public final class Home extends Activity {
         final TextView title;
         final HorizontalScrollView scroll;
         final LinearLayout strip;
-        final Grid grid;
+        final Grid grid, twoRows;
         List<Item> all = new ArrayList<>();
 
         Row(String kind, String name, LinearLayout parent) {
@@ -179,6 +179,8 @@ public final class Home extends Activity {
             scroll.setClipToPadding(false);
             scroll.setPadding(edge - bleed, 0, edge - bleed, 0);
             scroll.addView(strip, new FrameLayout.LayoutParams(WRAP, WRAP));
+            twoRows = new Grid(Home.this, true);
+            twoRows.setPadding(bleed, dp(5), bleed, dp(3));
             grid = new Grid(Home.this);
             grid.setPadding(edge, dp(12), edge, dp(8));
             parent.addView(title, new LinearLayout.LayoutParams(MATCH, WRAP));
@@ -188,7 +190,8 @@ public final class Home extends Activity {
 
         /** Whichever container currently holds the tiles, following Options › Layout. */
         ViewGroup tiles() {
-            return "grid".equals(cfg.get(Config.LAYOUT)) ? grid : strip;
+            if ("grid".equals(cfg.get(Config.LAYOUT))) return grid;
+            return Catalog.isApp(kind) && "two".equals(cfg.get(Config.APP_ROWS)) ? twoRows : strip;
         }
 
         void setVisible(boolean on) {
@@ -388,7 +391,27 @@ public final class Home extends Activity {
 
     @Override
     public boolean dispatchKeyEvent(KeyEvent e) {
-        if (moving == null) return super.dispatchKeyEvent(e);
+        if (moving == null) {
+            int key = e.getKeyCode();
+            View focus = getCurrentFocus();
+            if (focus instanceof Tile
+                    && (key == KeyEvent.KEYCODE_DPAD_LEFT || key == KeyEvent.KEYCODE_DPAD_RIGHT)) {
+                if (e.getAction() == KeyEvent.ACTION_DOWN) {
+                    ViewGroup group = (ViewGroup) focus.getParent();
+                    int index = group.indexOfChild(focus);
+                    int cols = group instanceof Grid ? ((Grid) group).columns() : group.getChildCount();
+                    int first = index - index % cols;
+                    int last = Math.min(first + cols, group.getChildCount()) - 1;
+                    int next = key == KeyEvent.KEYCODE_DPAD_LEFT
+                            ? (index == first ? last : index - 1) : (index == last ? first : index + 1);
+                    View target = group.getChildAt(next);
+                    target.requestFocus();
+                    target.requestRectangleOnScreen(new Rect(0, 0, target.getWidth(), target.getHeight()), true);
+                }
+                return true;
+            }
+            return super.dispatchKeyEvent(e);
+        }
         if (e.getAction() == KeyEvent.ACTION_DOWN) {
             switch (e.getKeyCode()) {
                 case KeyEvent.KEYCODE_DPAD_LEFT:
@@ -489,7 +512,7 @@ public final class Home extends Activity {
     private void fitBottom(ScrollView page) {
         View content = page.getChildAt(0);
         if (content == null || page.getHeight() == 0) return;
-        int base = dp(32), height = page.getHeight();
+        int base = dp(compactRows() ? 10 : 32), height = page.getHeight();
         int natural = content.getHeight() - content.getPaddingBottom() + base;
         int want = base;
         if (natural > height) {
@@ -590,17 +613,13 @@ public final class Home extends Activity {
                     boolean grid = parent instanceof Grid;
                     int cols = grid ? ((Grid) parent).columns() : 1;
 
-                    // Left and right stop at the edge of a row instead of jumping away
-                    // from it: no tile of another row takes the focus.
-                    if (direction == View.FOCUS_LEFT) {
-                        boolean edge = grid ? idx % cols == 0 : idx == 0;
-                        if (edge) return focused;
-                    }
-                    if (direction == View.FOCUS_RIGHT) {
-                        boolean edge = grid
-                                ? (idx + 1) % cols == 0 || idx == count - 1
-                                : idx == count - 1;
-                        if (edge) return focused;
+                    if (direction == View.FOCUS_LEFT || direction == View.FOCUS_RIGHT) {
+                        int first = grid ? idx - idx % cols : 0;
+                        int last = grid ? Math.min(count - 1, first + cols - 1) : count - 1;
+                        if (direction == View.FOCUS_LEFT && idx == first)
+                            return parent.getChildAt(last);
+                        if (direction == View.FOCUS_RIGHT && idx == last)
+                            return parent.getChildAt(first);
                     }
 
                     // Up from the first line of the apps row goes to the library banner.
@@ -874,7 +893,7 @@ public final class Home extends Activity {
                 hero.setEntries(list);
                 if (was && !heroShown()) focusFirst();
                 // A shorter top keeps the clock, banner and apps row on one screen.
-                column.setPadding(0, heroShown() ? dp(26) : dp(40), 0, column.getPaddingBottom());
+                column.setPadding(0, dp(compactRows() ? 16 : heroShown() ? 26 : 40), 0, column.getPaddingBottom());
                 adjustAppRowPosition();
             });
         });
@@ -904,13 +923,25 @@ public final class Home extends Activity {
         });
     }
 
+    private boolean compactRows() {
+        return "rows".equals(cfg.get(Config.LAYOUT)) && "two".equals(cfg.get(Config.APP_ROWS));
+    }
+
     private void render(Row row) {
+        boolean compact = compactRows();
+        row.title.setPadding(dp(56), dp(compact ? 6 : 20), dp(56), dp(2));
+        row.strip.setPadding(dp(14), dp(compact ? 5 : 12), dp(14), dp(compact ? 4 : 8));
         if (moving != null && moving.kind.equals(row.kind)) stopMoving();
         View focused = getCurrentFocus();
         String keep = focused instanceof Tile && ((Tile) focused).kind.equals(row.kind)
                 ? ((Tile) focused).item.id : null;
-        boolean gridMode = "grid".equals(cfg.get(Config.LAYOUT));
-        ViewGroup target = gridMode ? row.grid : row.strip;
+        ViewGroup target = row.tiles();
+        boolean gridMode = target instanceof Grid;
+        row.twoRows.removeAllViews();
+        if (target != row.grid && row.scroll.getChildAt(0) != target) {
+            row.scroll.removeAllViews();
+            row.scroll.addView(target, new FrameLayout.LayoutParams(WRAP, WRAP));
+        }
         row.strip.removeAllViews();
         row.grid.removeAllViews();
 
@@ -918,13 +949,16 @@ public final class Home extends Activity {
         List<Item> shown = enabled ? Catalog.visible(cfg, row.kind,
                 row == allApps ? apps.all : row.all, recentFor(row.kind))
                 : new ArrayList<>();
+        if (row == inputs && "off".equals(cfg.get(Config.CUBE_INPUTS))) {
+            shown.removeIf(item -> !SamsungIr.isSamsungInput(item));
+        }
         int[] size = cardSize();
         int w = size[0], h = Catalog.isApp(row.kind) ? size[1] : Math.round(size[1] * 0.56f);
         String labels = cfg.get(Config.LABELS);
         int accent = cfg.accent();
         int index = 0, restore = -1;
         for (Item it : shown) {
-            Tile t = new Tile(this, it, row.kind, Catalog.label(cfg, it), w, h, labels, accent);
+            Tile t = new Tile(this, it, row.kind, Catalog.label(cfg, it), w, h, labels, accent, target == row.twoRows);
             t.setOnClickListener(v -> open((Tile) v));
             t.setOnFocusChangeListener((v, has) -> {
                 if (has) {
@@ -942,7 +976,7 @@ public final class Home extends Activity {
                 target.addView(t, new ViewGroup.LayoutParams(WRAP, WRAP));
             } else {
                 LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(WRAP, WRAP);
-                lp.rightMargin = dp(18);
+                lp.rightMargin = dp(compact ? 10 : 18);
                 target.addView(t, lp);
             }
             if (it.id.equals(keep)) restore = index;
@@ -1288,6 +1322,7 @@ public final class Home extends Activity {
             launch(appIntent(t.item), t.item.id);
             return;
         }
+        if (SamsungIr.open(this, t.item, R.string.could_not_open)) return;
         Intent own = Input.intent(this, cfg, t.item, Catalog.label(cfg, t.item));
         // The built-in screen goes on top of this one in the same task, so BACK returns here and
         // the HOME takeover's singleTask relaunch clears it. NEW_TASK | RESET_TASK_IF_NEEDED on an

@@ -10,7 +10,7 @@ A home screen for Fire TV that does one job: show your apps and your HDMI inputs
   Services or any other library.
 - **No network.** There is no `INTERNET` permission, so Android will not let it
   open a connection.
-- **One permission on Fire OS 7 and 8: run at startup.** personalDNSfilter only
+- **Permissions on Fire OS 7 and 8: run at startup and transmit IR.** personalDNSfilter only
   takes a restart request from an app holding it, and dumbtv home uses it for
   nothing else: when Android kills the filter under memory pressure, dumbtv home
   starts it again (on HOME, at boot and every 15 minutes). Fire OS 6 adds usage
@@ -465,3 +465,33 @@ Delete both to stop.
 3. Upload it as `dumbtv-home.apk` to a release tagged `launcher-v<VERSION>`.
 4. `./launcher/release-check.sh` fails if the tag, the APK and the hash disagree.
    CI runs `--manifest` on every push.
+
+## Samsung HDMI inputs (this fork)
+
+On the Amazon Fire TV Cube AFTGAZL with an IR emitter, the existing Inputs row
+also contains Samsung HDMI 1 through 4. These send the Samsung S90C codes from
+the owner's FireCubeIRTest v0.6 once per click at 38 kHz, including its Fire OS
+timing divisor of 10. The TV needs no network connection. Native Cube inputs
+keep their existing behavior. Rename, move and hide work through the usual tile menu.
+
+This hardware-specific timing is not enabled on other models. TRANSMIT_IR is a
+normal install-time permission; the launcher still has no INTERNET permission.
+The codes have no acknowledgement: a successful transmit does not confirm the
+TV changed input. Use the TV remote or the Cube's configured equipment control
+to return to its HDMI port. BACK in the launcher cannot switch the TV back.
+Tested with a separate launcher build on a third-generation Cube (AFTGAZL,
+Fire OS 7) and a Samsung GQ55S90CATXZG. The owner confirmed switching to
+the PC on HDMI 1. HDMI 3 was the Cube in this setup.
+
+In Options, **Fire TV Cube inputs** hides the native HDMI/ARC tiles as a group.
+**App rows** selects one or two rows in Rows layout. Two rows use compact
+spacing and place app captions inside the tile. Left and right wrap within
+each visual row of apps or inputs. Tile corners use an antialiased mask.
+The tested Cube rendered its interface at 1080p on a 4K display.
+
+Build this branch with `bash launcher/build.sh` (JDK 17, Android SDK platform
+25 and build-tools 34). The signed APK is written to
+`launcher/build/dumbtv-home.apk`. Keep the signing key for future updates.
+The default installer fetches the upstream release. Use
+`launcher/install.sh --build` for a source build. Android requires a matching
+signature to update an existing launcher and uninstalling erases its app data.

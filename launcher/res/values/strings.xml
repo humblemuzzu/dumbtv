@@ -148,4 +148,10 @@
     <string name="choice_library">Library banner</string>
     <string name="choice_library_on">Shown</string>
     <string name="choice_library_off">Hidden</string>
+    <string name="choice_app_rows">App rows (Rows layout)</string>
+    <string name="choice_app_rows_one">One</string>
+    <string name="choice_app_rows_two">Two</string>
+    <string name="choice_cube_inputs">Fire TV Cube inputs</string>
+    <string name="choice_cube_inputs_on">Shown</string>
+    <string name="choice_cube_inputs_off">Hidden</string>
 </resources>

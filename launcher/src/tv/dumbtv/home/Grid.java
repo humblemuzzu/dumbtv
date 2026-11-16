@@ -16,15 +16,23 @@ import android.view.ViewGroup;
 final class Grid extends ViewGroup {
     private final int hGap, vGap;
 
+    private final boolean twoRows;
+
     Grid(Context c) {
+        this(c, false);
+    }
+
+    Grid(Context c, boolean twoRows) {
         super(c);
+        this.twoRows = twoRows;
         setClipChildren(false);
         setClipToPadding(false);
-        hGap = Ui.dp(c, 18);
-        vGap = Ui.dp(c, 18);
+        hGap = Ui.dp(c, twoRows ? 10 : 18);
+        vGap = hGap;
     }
 
     private int columns(int availableWidth, int childWidth) {
+        if (twoRows) return Math.max(1, (getChildCount() + 1) / 2);
         return Math.max(1, (availableWidth + hGap) / (childWidth + hGap));
     }
 
@@ -49,6 +57,7 @@ final class Grid extends ViewGroup {
         if (n > 0) {
             int avail = Math.max(0, width - getPaddingLeft() - getPaddingRight());
             int cols = columns(avail, cw);
+            if (twoRows) width = getPaddingLeft() + cols * cw + (cols - 1) * hGap + getPaddingRight();
             int rows = (n + cols - 1) / cols;
             height += rows * ch + (rows - 1) * vGap;
         }

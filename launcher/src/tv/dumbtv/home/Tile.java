@@ -5,6 +5,8 @@ import android.graphics.Canvas;
 import android.graphics.DashPathEffect;
 import android.graphics.Paint;
 import android.graphics.Path;
+import android.graphics.PorterDuff;
+import android.graphics.PorterDuffXfermode;
 import android.graphics.Rect;
 import android.graphics.RectF;
 import android.graphics.drawable.Drawable;
@@ -21,10 +23,11 @@ final class Tile extends View {
     final String kind;
     private final CharSequence title;
     private final int cardW, cardH, labelH;
-    private final boolean labelAlways, labelOnFocus;
+    private final boolean labelAlways, labelOnFocus, insetLabel;
     private final float radius, stroke;
     private final RectF card = new RectF();
-    private final Path clip = new Path();
+    private final Path corners = new Path();
+    private final Paint eraseCorners = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Path arrow = new Path();
     private final Paint fill = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint ring = new Paint(Paint.ANTI_ALIAS_FLAG);
@@ -35,7 +38,7 @@ final class Tile extends View {
     private final AfterglowTile afterglow;
 
     Tile(Context c, Item item, String kind, CharSequence title, int cardW, int cardH,
-            String labels, int accent) {
+            String labels, int accent, boolean twoRows) {
         super(c);
         this.item = item;
         this.kind = kind;
@@ -45,7 +48,8 @@ final class Tile extends View {
         boolean app = Catalog.isApp(kind);
         afterglow = app && "afterglow".equals(Config.get(c).get(Config.TILE_STYLE))
                 ? new AfterglowTile(c, item.id, title, accent) : null;
-        labelH = app && afterglow == null ? Ui.dp(c, 26) : 0;
+        insetLabel = twoRows && app && afterglow == null;
+        labelH = app && afterglow == null && !insetLabel ? Ui.dp(c, 26) : 0;
         labelAlways = "always".equals(labels);
         labelOnFocus = "focus".equals(labels);
         radius = Ui.dp(c, 10);
@@ -65,6 +69,7 @@ final class Tile extends View {
         under.setTextAlign(Paint.Align.CENTER);
         under.setTextSize(Ui.dp(c, 13));
 
+        eraseCorners.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.DST_OUT));
         setFocusable(true);
         setClickable(true);
         setLongClickable(true);
@@ -84,8 +89,10 @@ final class Tile extends View {
     @Override
     protected void onSizeChanged(int w, int h, int oldW, int oldH) {
         card.set(0, 0, cardW, cardH);
-        clip.reset();
-        clip.addRoundRect(card, radius, radius, Path.Direction.CW);
+        corners.reset();
+        corners.setFillType(Path.FillType.EVEN_ODD);
+        corners.addRect(card, Path.Direction.CW);
+        corners.addRoundRect(card, radius, radius, Path.Direction.CW);
         if (afterglow != null) afterglow.resize(cardW, cardH);
         setPivotX(cardW / 2f);
         setPivotY(cardH / 2f);
@@ -107,8 +114,10 @@ final class Tile extends View {
     @Override
     protected void onDraw(Canvas canvas) {
         Drawable banner = item.banner, icon = item.icon;
-        canvas.save();
-        canvas.clipPath(clip);
+        // Erase only the four outside corners on an isolated tile layer. Drawing the
+        // mask with antialiasing gives partial pixel coverage along the curved edge.
+        canvas.saveLayer(card, null);
+        canvas.clipRect(card);
         canvas.drawRect(card, fill);
         if (afterglow != null) {
             afterglow.draw(canvas, icon, cardW, cardH);
@@ -124,7 +133,16 @@ final class Tile extends View {
         } else if (!Catalog.isApp(kind)) {
             drawLine(canvas, inner, cardW / 2f, cardH / 2f - (inner.ascent() + inner.descent()) / 2);
         }
+        if (insetLabel && banner != null && (labelAlways || labelOnFocus && isFocused())) {
+            int height = Ui.dp(getContext(), 22);
+            canvas.save();
+            canvas.clipRect(0, cardH - height, cardW, cardH);
+            canvas.drawColor(0xCC000000);
+            drawLine(canvas, under, cardW / 2f, cardH - Ui.dp(getContext(), 5));
+            canvas.restore();
+        }
         if (moving) canvas.drawColor(0x99000000);
+        canvas.drawPath(corners, eraseCorners);
         canvas.restore();
 
         if (afterglow != null) afterglow.edge(canvas, cardW, cardH, radius);
