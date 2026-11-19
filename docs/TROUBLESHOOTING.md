@@ -289,12 +289,25 @@ A host it needs is blocked. Remove that exact host from
 needs its video CDN and Amazon's push service: answer yes to Prime in
 `configure.sh` (`PRIME=1`, the default) and both stay reachable.
 
-### The clock is wrong on Fire OS 6
+### The clock is wrong on Fire OS 6 or 8
 
-Fire OS 6 syncs its clock over the active network, which is the DNS-only VPN.
-`SYSTEM_DNS=1` in `dumbtv.conf` lets system apps bypass the filter so the clock
-syncs. Every app running as the system user then bypasses it too, so it is off by
-default and ignored on Fire OS 7 and 8, which keep their clock anyway.
+Fire OS 6 syncs its clock over the active network, which is the DNS-only VPN. A Fire
+OS 8 stick (AFTKRT) that loses power when the TV turns off booted with the clock
+weeks behind and never set it while the filter ran (#196).
+
+`SYSTEM_DNS=1` in `dumbtv.conf` (`./scripts/configure.sh --system-dns 1`, then
+`./scripts/dnsfilter.sh -y`) lets system apps bypass the filter so the clock syncs.
+Every app running as the system user then bypasses it too, so it is off by default.
+Fire OS 7 sets its clock through the filter, and the setting is ignored there.
+
+Without it, give the TV an NTP server by address, which needs no lookup:
+`adb shell settings put global ntp_server <address>`, for example a time server on
+your own network. Not the router's address: the filter routes that into its tunnel,
+which only carries DNS. `adb shell settings delete global ntp_server` undoes it.
+
+If Private DNS is on (`adb shell settings get global private_dns_mode` says
+`hostname`), a clock that starts behind the server's certificate stops every lookup,
+the time sync's included: `adb shell settings put global private_dns_mode off`.
 
 ### The VPN consent box is stuck on screen
 

@@ -63,7 +63,7 @@ fi
 ALEXA=$(answer "$ALEXA_ARG" "Keep Alexa and the remote's voice button? (no = Alexa and the microphone app are switched off)" 1)
 LAUNCHER=$(answer "$LAUNCHER_ARG" "Replace Amazon's home screen with dumbtv home (open source, no ads, no internet access)?" 1)
 DNSFILTER=$(answer "$DNSFILTER_ARG" "Run the DNS filter on the TV (blocks Amazon telemetry and stops automatic updates)?" 1)
-SYSTEM_DNS=$(answer "$SYSTEM_DNS_ARG" "Fire OS 6 only: let system apps bypass the filter so the clock syncs? Amazon's system-user apps go unfiltered too" 0)
+SYSTEM_DNS=$(answer "$SYSTEM_DNS_ARG" "Fire OS 6 and 8: let system apps bypass the filter so the clock syncs? Only if the clock stays wrong; Amazon's system-user apps go unfiltered too" 0)
 # Default no: YouTube is the app people actually watch. scripts/youtube.sh is the
 # only thing that touches it, and only when this is 1.
 if [[ $(answer "$YOUTUBE_ARG" "Replace the YouTube app with SmartTube (no ads, no Shorts)? Your YouTube account and subscriptions are untouched" 0) == 1 ]]; then

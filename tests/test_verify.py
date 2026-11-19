@@ -70,6 +70,8 @@ class VerifyTests(unittest.TestCase):
                 'ip addr show': {'out': '18: tun0: <POINTOPOINT,UP,LOWER_UP> mtu 1280'},
                 'settings get secure always_on_vpn_app': {'out': 'null'},
                 'grep -c . /sdcard/Android/data/dnsfilter.android/files/PersonalDNSFilter/FILTERHOSTS.TXT 2>/dev/null': {'out': '415'},
+                'cat /sdcard/Android/data/dnsfilter.android/files/PersonalDNSFilter/dnsfilter.conf 2>/dev/null':
+                    {'out': 'filterAutoUpdateURL = \r\nfilterAutoUpdateURL_switchs = true; true\r\npreviousAutoUpdateURL = \r'},
             })
         replies.update(extra or {})
         with tempfile.TemporaryDirectory() as tmp:
@@ -336,6 +338,30 @@ class VerifyTests(unittest.TestCase):
         result, _ = self.run_verify(self.modern(LABEL), dnsfilter='1', extra=resolving)
         self.assertEqual(result.returncode, 1)
         self.assertIn('NOT BLOCKED', result.stdout)
+
+    def test_the_apps_own_lists_are_not_dumbtvs(self):
+        # A config merged with the app's defaults downloads its ad lists over the pushed one,
+        # and those miss Amazon's update and telemetry servers (#207).
+        conf = ('filterAutoUpdateURL = https://a.example/hosts; https://b.example/hosts?x=1&y=2; '
+                'https://c.example/hosts\r\nfilterAutoUpdateURL_switchs = true; false; true\r')
+        result, _ = self.run_verify(self.modern(LABEL), dnsfilter='1', extra={
+            'cat /sdcard/Android/data/dnsfilter.android/files/PersonalDNSFilter/dnsfilter.conf 2>/dev/null':
+                {'out': conf},
+            'grep -c . /sdcard/Android/data/dnsfilter.android/files/PersonalDNSFilter/FILTERHOSTS.TXT 2>/dev/null':
+                {'out': '338507'},
+        })
+        self.assertEqual(result.returncode, 1)
+        self.assertIn("338507 entries from 2 list(s) personalDNSfilter downloads itself, not dumbtv's", result.stdout)
+
+    def test_dumbtvs_list_loaded_from_media_passes(self):
+        conf = ('filterAutoUpdateURL = file:///storage/emulated/0/Android/media/dnsfilter.android/'
+                'dumbtv-blocklist-1793704950.txt\r\nfilterAutoUpdateURL_switchs = true\r')
+        result, _ = self.run_verify(self.modern(LABEL), dnsfilter='1', extra={
+            'cat /sdcard/Android/data/dnsfilter.android/files/PersonalDNSFilter/dnsfilter.conf 2>/dev/null':
+                {'out': conf},
+        })
+        self.assertEqual(result.returncode, 0, result.stdout)
+        self.assertIn('415 entries', result.stdout)
 
     def test_another_vpns_tunnel_is_not_the_filter(self):
         # The owner's Surfshark tunnel was reported as personalDNSfilter before.

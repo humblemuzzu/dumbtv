@@ -97,8 +97,9 @@ people take them.
 | 6 | "Do you want the YouTube app replaced with SmartTube?" No ads and no Shorts, a different app, same Google account. Ask once; if no, drop it. | no | `--youtube 0\|1` |
 
 `--keep "pkg pkg"` keeps a package that would otherwise be disabled, for an owner
-who wants a specific Amazon feature. Fire OS 6 has one more question
-(`--system-dns`); its default is right for almost everyone. `--dns-upstream` is
+who wants a specific Amazon feature. Fire OS 6 and 8 have one more question
+(`--system-dns`); its default is right for almost everyone, and it is only for a TV whose
+clock stays wrong with the filter on. `--dns-upstream` is
 not one of the questions: leave it unset unless the owner names resolver IPs.
 Empty means the filter forwards unknown names to the router. If the self-test says
 `NO ANSWER`, the TV cannot use the router for DNS (an IoT network that only allows

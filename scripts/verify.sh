@@ -214,10 +214,26 @@ fi
 if [[ $DNSFILTER == 0 ]]; then
   printf '%-10s %-38s %s\n' skip filter "not installed by choice"
 else
-  n=$(dev 'grep -c . /sdcard/Android/data/dnsfilter.android/files/PersonalDNSFilter/FILTERHOSTS.TXT 2>/dev/null' | tr -d '\r')
+  pdir=/sdcard/Android/data/dnsfilter.android/files/PersonalDNSFilter
+  n=$(dev "grep -c . $pdir/FILTERHOSTS.TXT 2>/dev/null" | tr -d '\r')
+  # Ticked download URLs other than dumbtv's list: dnsfilter.sh leaves none, and with any the
+  # app replaces the pushed list with its own ad lists, which miss Amazon's servers (#207).
+  own=$(dev "cat $pdir/dnsfilter.conf 2>/dev/null" | tr -d '\r' | awk '
+    /^filterAutoUpdateURL *=/ { v = $0; sub(/^[^=]*= */, "", v); n = split(v, url, ";") }
+    /^filterAutoUpdateURL_switchs *=/ { v = $0; sub(/^[^=]*= */, "", v); split(v, on, ";") }
+    END {
+      for (i = 1; i <= n; i++) {
+        u = url[i]; gsub(/ /, "", u); s = on[i]; gsub(/ /, "", s)
+        if (u != "" && s != "false" && u !~ /dumbtv-blocklist/) c++
+      }
+      print c + 0
+    }')
   if [[ $SDK -ge 30 ]] && ! [[ ${n:-0} -gt 0 ]] 2>/dev/null; then
     # Android 11 hides Android/data from adb; the blocked-host lookups above are the proof.
     printf '%-10s %-38s %s\n' skip filter "list not readable over adb on $(fireos_name); see the DNS checks"
+  elif [[ ${own:-0} -gt 0 ]]; then
+    printf '%-10s %-38s %s\n' FAIL filter "${n:-?} entries from $own list(s) personalDNSfilter downloads itself, not dumbtv's; run dnsfilter.sh"
+    fail=1
   elif [[ ${n:-0} -gt 0 ]] 2>/dev/null; then
     printf '%-10s %-38s %s entries\n' ok filter "$n"
   else

@@ -112,8 +112,10 @@ acmd dumpsys deviceidle whitelist +$PKG >/dev/null
 step "config"
 if [[ $DRY_RUN == 0 ]]; then
   fetch "$CONF_OUT" "$CONF_URL" || die "could not download the upstream config"
-  # No filterAutoUpdateURL: the list is pushed by this script, so the TV never
-  # downloads a blocklist and cannot end up with a half-written one.
+  # An empty filterAutoUpdateURL: the list is pushed by this script, so the TV never
+  # downloads a blocklist and cannot end up with a half-written one. Empty, not commented
+  # out: when the app sees a new version it merges the config with its defaults, keeping only
+  # the keys present, so a missing one came back as the app's own lists (#207).
   # previousAutoUpdateURL must match the (now empty) update URL: the template ships "<none>",
   # and a mismatch makes the app "update" at start and write an empty list over the pushed one.
   if [[ -n $upstream ]]; then
@@ -122,7 +124,7 @@ if [[ $DRY_RUN == 0 ]]; then
     fb="\\#router; [$GW]::53::UDP"
   fi
   sed -i.dumbtv \
-    -e 's|^filterAutoUpdateURL = |#filterAutoUpdateURL = |' \
+    -e 's|^filterAutoUpdateURL = .*|filterAutoUpdateURL = |' \
     -e 's|^previousAutoUpdateURL = .*|previousAutoUpdateURL = |' \
     -e 's|^detectDNS = .*|detectDNS = false|' \
     -e "s|^fallbackDNS = .*|fallbackDNS = $fb|" \
@@ -133,12 +135,13 @@ if [[ $DRY_RUN == 0 ]]; then
     -e 's|^filterHostsFile = .*|filterHostsFile = FILTERHOSTS.TXT|' \
     "$CONF_OUT"
   # Fire OS 6 sends its time sync over the active network, which is this DNS-only
-  # VPN. Whitelisting "android" lets its clock reach NTP, but it unfilters every
-  # package running as the system user (on Fire OS 7 that includes Amazon's
-  # protected logmanager). Fire OS 7/8 keep their clock without it, so it is honoured
-  # on Fire OS 6 only. Opt-in: SYSTEM_DNS=1.
-  if [[ ${SYSTEM_DNS:-0} == 1 && $SDK -ge 28 ]]; then
-    note "SYSTEM_DNS=1 only applies to Fire OS 6; $(fireos_name) keeps its clock without it, so it stays off"
+  # VPN, and a Fire OS 8 stick (AFTKRT) set its clock only from an NTP server given as an
+  # address (#196). Whitelisting "android" lets the clock reach NTP, but it unfilters every
+  # package running as the system user (on Fire OS 7 that includes Amazon's protected
+  # logmanager). Fire OS 7 sets its clock through the filter (kindle-time.amazon.com), so
+  # it is not honoured there. Opt-in: SYSTEM_DNS=1.
+  if [[ ${SYSTEM_DNS:-0} == 1 && $SDK -ge 28 && $SDK -lt 30 ]]; then
+    note "SYSTEM_DNS=1 does not apply to Fire OS 7, which keeps its clock through the filter, so it stays off"
     SYSTEM_DNS=0
   fi
   # Android 7.1 gives a VPN NET_CAPABILITY_INTERNET only when it carries the default route.
@@ -151,7 +154,7 @@ if [[ $DRY_RUN == 0 ]]; then
     WHITELIST="${WHITELIST:+$WHITELIST,}com.amazon.firebat,com.amazon.avod"
   fi
   sed -i.dumbtv2 "s|^androidAppWhiteList = .*|androidAppWhiteList = ${WHITELIST:-<none>}|" "$CONF_OUT"
-  for want in '^#filterAutoUpdateURL' '^detectDNS = false' '^routeUnderlyingDNS = true' '^previousAutoUpdateURL = $'; do
+  for want in '^filterAutoUpdateURL = $' '^detectDNS = false' '^routeUnderlyingDNS = true' '^previousAutoUpdateURL = $'; do
     grep -Eq "$want" "$CONF_OUT" || die "config template changed upstream (missing: $want) — update scripts/dnsfilter.sh"
   done
   grep -Fqx "androidAppWhiteList = ${WHITELIST:-<none>}" "$CONF_OUT" ||
@@ -251,6 +254,7 @@ configure_in_app() {
     "filterAutoUpdateURL_IDs = dumbtv" "filterAutoUpdateURL_categories = dumbtv"
     "filterAutoUpdateURL_switchs = true")
   [[ $FILTER_AUTOSTART == 0 ]] && lines+=("AUTOSTART = false")
+  [[ -n $WHITELIST ]] && lines+=("androidAppWhiteList = $WHITELIST")
   note "typing the settings into personalDNSfilter's config editor; leave the remote alone (about two minutes)"
   # Right after a first start the app's screen can stay unreadable to uiautomator ("null
   # root node") until another window has been in front; HOME and a new start clear it.
@@ -329,9 +333,12 @@ if [[ $DRY_RUN == 0 ]]; then
   # The first launch creates DIR and writes a default config; the app is stopped
   # afterwards so it cannot write that default over the config we push next.
   # Being stopped here is harmless because the reboot below is what reloads it.
+  # VERSION.TXT is the last file of that default config. Stopped before it is written, the
+  # app takes the pushed config for an older version's at the next start and merges its
+  # defaults into it.
   dev "am start -n $PKG/.DNSProxyActivity" >/dev/null 2>&1
   for i in 1 2 3 4 5; do
-    dev "test -d $DIR" >/dev/null 2>&1 && break
+    dev "test -f $DIR/VERSION.TXT" >/dev/null 2>&1 && break
     sleep 4
   done
   # Without a download-info file, the first boot after setup sees no

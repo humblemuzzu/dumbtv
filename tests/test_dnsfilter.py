@@ -74,7 +74,8 @@ class RouteTest(unittest.TestCase):
             )
             pushed = tmp / "pushed" / "dnsfilter.conf"
             lines = pushed.read_text().splitlines() if pushed.exists() else None
-            touched = [c for c in log.read_text().splitlines()
+            self.commands = log.read_text().splitlines()
+            touched = [c for c in self.commands
                        if c.startswith(("pm ", "appops set", "settings put", "am start"))]
         self.touched = touched
         return result, lines
@@ -127,14 +128,33 @@ class RouteTest(unittest.TestCase):
     def test_no_bypass_when_prime_is_blocked(self):
         self.assertEqual(self.whitelist(25, "PRIME=0\n"), ["androidAppWhiteList = <none>"])
 
+    def test_the_download_list_is_empty_not_commented_out(self):
+        # The app merges a config with its defaults when it sees a new version, keeping only the
+        # keys present; a commented-out URL came back as its own lists (#207).
+        lines = self.pushed_conf({"net.dns1": GATEWAY}, sdk=25)
+        self.assertIn("filterAutoUpdateURL = ", lines)
+        self.assertIn("previousAutoUpdateURL = ", lines)
+        self.assertFalse([line for line in lines if line.startswith("#filterAutoUpdateURL")])
+
+    def test_the_app_is_stopped_only_after_its_default_config_is_complete(self):
+        self.pushed_conf({"net.dns1": GATEWAY}, sdk=25)
+        wait = "test -f /sdcard/Android/data/dnsfilter.android/files/PersonalDNSFilter/VERSION.TXT"
+        self.assertIn(wait, self.commands)
+        self.assertLess(self.commands.index(wait), self.commands.index("am force-stop dnsfilter.android"))
+
     def test_the_filter_may_start_itself_on_tcl(self):
         # TclAppBoot blocks the VPN service of an app without AUTO_START (#176).
         self.pushed_conf({"net.dns1": GATEWAY}, sdk=34)
         self.assertIn("appops set dnsfilter.android AUTO_START allow", self.touched)
 
-    def test_no_bypass_on_fire_os_7_and_8(self):
+    def test_no_bypass_on_fire_os_7_and_8_by_default(self):
         self.assertEqual(self.whitelist(28), ["androidAppWhiteList = <none>"])
-        self.assertEqual(self.whitelist(30, "SYSTEM_DNS=1\n"), ["androidAppWhiteList = <none>"])
+        self.assertEqual(self.whitelist(30), ["androidAppWhiteList = <none>"])
+
+    def test_the_clock_opt_in_is_honoured_on_fire_os_8_but_not_7(self):
+        # A Fire OS 8 stick never set its clock behind the filter (#196); Fire OS 7 does.
+        self.assertEqual(self.whitelist(30, "SYSTEM_DNS=1\n"), ["androidAppWhiteList = android"])
+        self.assertEqual(self.whitelist(28, "SYSTEM_DNS=1\n"), ["androidAppWhiteList = <none>"])
 
 
 if __name__ == "__main__":
