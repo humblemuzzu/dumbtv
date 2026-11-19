@@ -72,6 +72,7 @@ public final class Home extends Activity {
     private FrameLayout root;
     private LinearLayout column;
     private ImageView wall;
+    private Aurora aurora;
     private View shade;
     private View tint;
     private LinearLayout head;
@@ -342,6 +343,7 @@ public final class Home extends Activity {
         resumed = false;
         inFront = false;
         hero.stop();
+        aurora.stop();
         stopColorAnimation();
         targetColor = 0;
         unregisterReceiver(time);
@@ -518,6 +520,9 @@ public final class Home extends Activity {
         wall = new ImageView(this);
         wall.setScaleType(ImageView.ScaleType.CENTER_CROP);
         root.addView(wall, new FrameLayout.LayoutParams(MATCH, MATCH));
+        aurora = new Aurora(this);
+        aurora.setVisibility(View.GONE);
+        root.addView(aurora, new FrameLayout.LayoutParams(MATCH, MATCH));
         shade = new View(this);
         root.addView(shade, new FrameLayout.LayoutParams(MATCH, MATCH));
         tint = new View(this);
@@ -1033,7 +1038,8 @@ public final class Home extends Activity {
 
     private void focusBackground(Item it) {
         String mode = cfg.get(Config.BACKGROUND);
-        if (!resumed || !"adaptive".equals(mode) && !"adaptive-tint".equals(mode)) return;
+        boolean glow = "aurora".equals(mode);
+        if (!resumed || !"adaptive".equals(mode) && !"adaptive-tint".equals(mode) && !glow) return;
         if ("adaptive-tint".equals(mode) && !tintWallpaper) return;
         if (it != null && it.info != null && it.backgroundColor == 0 && !it.colorRequested
                 && (it.banner != null || it.icon != null)) {
@@ -1045,6 +1051,11 @@ public final class Home extends Activity {
                     if (focusedItem() == it) focusBackground(it);
                 });
             });
+        }
+        if (glow) {
+            // FALLBACK is a neutral grey: the night palette, same as no colour yet
+            aurora.seed(it == null || it.backgroundColor == FocusColor.FALLBACK ? 0 : it.backgroundColor);
+            return;
         }
         int color = it == null || it.backgroundColor == 0 ? FocusColor.FALLBACK : it.backgroundColor;
         if ("adaptive-tint".equals(mode)) color = FocusColor.tint(color);
@@ -1208,8 +1219,17 @@ public final class Home extends Activity {
             tint.setBackgroundColor(Color.TRANSPARENT);
             root.setBackgroundColor(cfg.background());
         }
+        boolean glow = "aurora".equals(mode);
+        if (glow) {
+            aurora.setVisibility(View.VISIBLE);
+            if (resumed) aurora.start();
+            focusBackground(focusedItem());
+        } else if (aurora.getVisibility() != View.GONE) {
+            aurora.release();
+            aurora.setVisibility(View.GONE);
+        }
         int dim = Integer.parseInt(cfg.get(Config.DIM));
-        shade.setBackgroundColor(file == null ? Color.TRANSPARENT : Color.argb(dim * 255 / 100, 0, 0, 0));
+        shade.setBackgroundColor(file == null && !glow ? Color.TRANSPARENT : Color.argb(dim * 255 / 100, 0, 0, 0));
         String key = file == null ? null : file.getPath() + ":" + file.lastModified();
         if (key == null ? wallKey == null : key.equals(wallKey)) return;
         wallKey = key;
