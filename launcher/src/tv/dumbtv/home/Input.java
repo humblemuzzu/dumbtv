@@ -13,6 +13,7 @@ import android.media.tv.TvView;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.os.SystemClock;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.KeyEvent;
@@ -49,8 +50,8 @@ public final class Input extends Activity {
      * this screen instead of Home. Guard's singleTask relaunch does not have this problem; only
      * Keeper's fast path does.
      */
-    private static Input instance;
-    private static long resumedAt;
+    private static volatile Input instance;
+    private static volatile long openedAt;
     /**
      * Keeper's UsageStats check can fire within one poll of this screen opening - seen on an
      * Insignia AFTEAMR311 switching to a CEC source that was waking from standby, not just on a
@@ -123,17 +124,21 @@ public final class Input extends Activity {
         return app.activityInfo != null && AMAZON_LIVE_TV.equals(app.activityInfo.packageName);
     }
 
-    /** Finishes this screen if it is still around (paused or stopped, not yet destroyed) and has
-     * been showing for a while - never a screen that only just opened. */
+    /**
+     * Finishes this screen if it is still around (paused or stopped, not yet destroyed) and has
+     * been showing for a while - never a screen that only just opened. Called on Keeper's worker
+     * thread, and before its moveTaskToFront, so the task comes forward without it.
+     */
     static void finishIfOpen() {
-        if (instance != null && System.currentTimeMillis() - resumedAt >= KEEPER_GRACE_MS) instance.finish();
+        Input open = instance;
+        if (open != null && SystemClock.elapsedRealtime() - openedAt >= KEEPER_GRACE_MS) open.finish();
     }
 
     @Override
     protected void onCreate(Bundle state) {
         super.onCreate(state);
+        openedAt = SystemClock.elapsedRealtime();
         instance = this;
-        resumedAt = System.currentTimeMillis();
         id = getIntent().getStringExtra(EXTRA_ID);
         // The video is a layer behind this window; a transparent window lets the text over it blend
         // instead of punching black boxes into the picture.

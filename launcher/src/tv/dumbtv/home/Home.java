@@ -1289,8 +1289,9 @@ public final class Home extends Activity {
             return;
         }
         Intent own = Input.intent(this, cfg, t.item, Catalog.label(cfg, t.item));
-        // The built-in screen goes on top of this one in the same task, so BACK returns here and
-        // the HOME takeover's singleTask relaunch clears it. NEW_TASK | RESET_TASK_IF_NEEDED on an
+        // The built-in screen goes on top of this one in the same task, so BACK returns here. On
+        // HOME, Guard's singleTask relaunch clears it, and Keeper finishes it before bringing the
+        // task forward (Input.finishIfOpen). NEW_TASK | RESET_TASK_IF_NEEDED on an
         // activity of the task that is already in front only brings that task forward and starts
         // nothing (ActivityStarter.complyActivityFlags), so it is started plainly.
         if (own != null) startActivity(own);
