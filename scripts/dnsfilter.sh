@@ -118,6 +118,10 @@ if [[ $DRY_RUN == 0 ]]; then
   # the keys present, so a missing one came back as the app's own lists (#207).
   # previousAutoUpdateURL must match the (now empty) update URL: the template ships "<none>",
   # and a mismatch makes the app "update" at start and write an empty list over the pushed one.
+  # routeUnderlyingDNS stays off, as upstream ships it. On, the app rebuilds its VPN whenever
+  # the network's DNS servers change, as they do while a TV boots; on Fire OS 7 a rebuild that
+  # reused the name tun0 left Android routing the VPN's traffic through the old tun0's table,
+  # so DNS went around a running filter. The router is in routeIPs either way.
   if [[ -n $upstream ]]; then
     fb=$upstream
   else
@@ -129,7 +133,7 @@ if [[ $DRY_RUN == 0 ]]; then
     -e 's|^detectDNS = .*|detectDNS = false|' \
     -e "s|^fallbackDNS = .*|fallbackDNS = $fb|" \
     -e "s|^routeIPs =.*|routeIPs = $ROUTES|" \
-    -e 's|^routeUnderlyingDNS = .*|routeUnderlyingDNS = true|' \
+    -e 's|^routeUnderlyingDNS = .*|routeUnderlyingDNS = false|' \
     -e 's|^showInitialInfoPopUp = .*|showInitialInfoPopUp = false|' \
     -e 's|^reloadIntervalDays = .*|reloadIntervalDays = 3650|' \
     -e 's|^filterHostsFile = .*|filterHostsFile = FILTERHOSTS.TXT|' \
@@ -154,7 +158,7 @@ if [[ $DRY_RUN == 0 ]]; then
     WHITELIST="${WHITELIST:+$WHITELIST,}com.amazon.firebat,com.amazon.avod"
   fi
   sed -i.dumbtv2 "s|^androidAppWhiteList = .*|androidAppWhiteList = ${WHITELIST:-<none>}|" "$CONF_OUT"
-  for want in '^filterAutoUpdateURL = $' '^detectDNS = false' '^routeUnderlyingDNS = true' '^previousAutoUpdateURL = $'; do
+  for want in '^filterAutoUpdateURL = $' '^detectDNS = false' '^routeUnderlyingDNS = false' '^previousAutoUpdateURL = $'; do
     grep -Eq "$want" "$CONF_OUT" || die "config template changed upstream (missing: $want) — update scripts/dnsfilter.sh"
   done
   grep -Fqx "androidAppWhiteList = ${WHITELIST:-<none>}" "$CONF_OUT" ||
@@ -249,7 +253,7 @@ configure_in_app() {
   push_to_media "$name" || { note "could not put the list in $MEDIA"; return 1; }
   entries=$(grep -c . "$LIST")
   lines=("detectDNS = false" "fallbackDNS = ${upstream:-[$GW]::53::UDP}" "routeIPs = $ROUTES"
-    "routeUnderlyingDNS = true" "reloadIntervalDays = 3650" "filterHostsFile = FILTERHOSTS.TXT"
+    "routeUnderlyingDNS = false" "reloadIntervalDays = 3650" "filterHostsFile = FILTERHOSTS.TXT"
     "filterAutoUpdateURL = file:///storage/emulated/0/Android/media/$PKG/$name"
     "filterAutoUpdateURL_IDs = dumbtv" "filterAutoUpdateURL_categories = dumbtv"
     "filterAutoUpdateURL_switchs = true")

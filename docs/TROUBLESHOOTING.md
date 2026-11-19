@@ -186,10 +186,18 @@ own boot start brings the filter up instead. `verify.sh` accepts a running `tunN
 interface in that case. The number changes between boots (`tun0`, then `tun1`).
 
 If the setting is there and a tunnel is up, yet DNS still goes around it, the
-always-on VPN and the app's own boot start are racing (seen on an AFTTI43, issue
-#58). Add `FILTER_AUTOSTART=0` to `dumbtv.conf` and run `./scripts/dnsfilter.sh`
-again. Fire OS 6 needs the app's own start, so the script ignores this setting
-there.
+filter rebuilt its VPN during the boot. Setups from before dumbtv 1.11 let
+personalDNSfilter rebuild it whenever the network's DNS servers changed, as they do
+while a TV starts, most often with Ethernet and Wi-Fi both connected. A rebuild that
+reuses the name `tun0` can leave Fire OS 7 routing the VPN's traffic through the old
+interface's routing table, which is empty. `ip rule` then names a table that
+`ip route show table all | grep tun` does not. Run `./scripts/dnsfilter.sh` again:
+it now turns that rebuild off.
+
+If it still happens, the always-on VPN and the app's own boot start are racing
+(seen on an AFTTI43, issue #58). Add `FILTER_AUTOSTART=0` to `dumbtv.conf` and run
+`./scripts/dnsfilter.sh` again. Fire OS 6 needs the app's own start, so the script
+ignores this setting there.
 
 ### Blocked hosts resolve again after an app crashed or the TV ran out of memory
 

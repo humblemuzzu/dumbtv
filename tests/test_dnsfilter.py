@@ -18,7 +18,7 @@ previousAutoUpdateURL = <none>
 detectDNS = true
 fallbackDNS = 203.0.113.9::53::UDP
 routeIPs =
-routeUnderlyingDNS = false
+routeUnderlyingDNS = true
 showInitialInfoPopUp = true
 reloadIntervalDays = 7
 filterHostsFile = FILTERHOSTS.TXT
@@ -135,6 +135,12 @@ class RouteTest(unittest.TestCase):
         self.assertIn("filterAutoUpdateURL = ", lines)
         self.assertIn("previousAutoUpdateURL = ", lines)
         self.assertFalse([line for line in lines if line.startswith("#filterAutoUpdateURL")])
+
+    def test_the_vpn_is_not_rebuilt_when_the_networks_dns_changes(self):
+        # On, the app rebuilds its VPN as the TV's DNS servers change during boot, and a rebuild
+        # that reused tun0 left Fire OS 7 routing the VPN through the old interface's table.
+        lines = self.pushed_conf({"net.dns1": GATEWAY}, sdk=28)
+        self.assertIn("routeUnderlyingDNS = false", lines)
 
     def test_the_app_is_stopped_only_after_its_default_config_is_complete(self):
         self.pushed_conf({"net.dns1": GATEWAY}, sdk=25)
