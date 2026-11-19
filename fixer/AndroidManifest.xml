@@ -24,5 +24,17 @@
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
             </intent-filter>
         </receiver>
+
+        <!-- Re-checks after boot, fired by this app's own alarms. -->
+        <receiver
+            android:name=".CheckReceiver"
+            android:exported="false" />
+
+        <!-- Test hook (NowReceiver.java). android.permission.DUMP: adb's shell holds it,
+             installed apps cannot, so no app can switch ADB through this. -->
+        <receiver
+            android:name=".NowReceiver"
+            android:exported="true"
+            android:permission="android.permission.DUMP" />
     </application>
 </manifest>

@@ -1,17 +1,29 @@
 # dumbtv fixer
 
-A tiny optional app: 20 seconds after each boot it switches ADB debugging off and on
-(`Settings.Global.ADB_ENABLED` 1 → 0 → 1). On some Fire TVs network adb on port 5555 stays dead
-after a reboot until a person does that in Developer Options, which cuts off every script and
-every computer that manages the TV over the network.
+A tiny optional app that keeps network adb (port 5555) usable across reboots. On Fire OS 8.1.8.5
+the boot sets `Settings.Global.ADB_ENABLED` to 0, so the port stays closed until a person toggles
+ADB debugging in Developer Options, which cuts off every script and computer that manages the TV.
 
-- No UI, no INTERNET permission, one receiver for the protected `BOOT_COMPLETED` broadcast.
-- Needs `WRITE_SECURE_SETTINGS`, which no app can get at install: `install.sh` grants it over
-  adb with `pm grant`. It leaves ADB off if it was off.
-- Logs under the tag `dumbtv-fixer`.
+At `BOOT_COMPLETED`, and again 45 s and 120 s later (Fire OS may switch ADB off after the boot
+broadcast):
+- ADB off and the owner opted in (`install.sh` creates
+  `/sdcard/Android/media/tv.dumbtv.fixer/keep-adb-on`): turn it on.
+- ADB on, at the boot check: switch it off and on, which reopens the port.
+- It acts only in those first minutes, so turning ADB off later in Developer Options sticks until
+  the next boot. Delete `keep-adb-on` (or uninstall) to stop it entirely.
+
+Details:
+- No UI, no INTERNET permission. Needs `WRITE_SECURE_SETTINGS`, which no app can get at install:
+  `install.sh` grants it over adb with `pm grant`.
+- The work runs inside `onReceive`, not on a `goAsync()` thread: on this TV Android killed the
+  process ("empty") between "off" and "on" in the first version, which left ADB off.
+- Every run is appended to `/sdcard/Android/media/tv.dumbtv.fixer/fixer.log` (logcat's main
+  buffer rotates away within minutes of boot here).
+- Test hook only adb's shell can reach (`android.permission.DUMP`):
+  `adb shell am broadcast -n tv.dumbtv.fixer/.NowReceiver` (adb drops for ~2 s).
 
 ```sh
-ADB_SERIAL=<tv-ip>:5555 ./fixer/install.sh          # build, install, grant
+ADB_SERIAL=<tv-ip>:5555 ./fixer/install.sh          # build, install, grant, opt in
 ADB_SERIAL=<tv-ip>:5555 ./fixer/install.sh --undo   # remove
 ```
 

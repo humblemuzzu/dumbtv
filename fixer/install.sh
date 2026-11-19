@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-# Builds and installs dumbtv fixer and grants it WRITE_SECURE_SETTINGS. From the next boot on it
-# switches ADB debugging off and on once, which brings network adb back on TVs where it stays
-# dead after a reboot.
+# Builds and installs dumbtv fixer, grants it WRITE_SECURE_SETTINGS and opts in to keep-adb-on.
+# From the next boot on it turns ADB debugging back on after Fire OS switches it off during boot
+# (or switches it off and on when it is on), so network adb survives reboots.
 #   ./fixer/install.sh          build, install, grant
 #   ./fixer/install.sh --undo   uninstall it
 # Pick the device with ADB_SERIAL when more than one is connected.
@@ -28,4 +28,7 @@ out=$(adb_ install -r build/dumbtv-fixer.apk 2>&1 | grep -m1 -E 'Success|Failure
 sh_ pm grant $PKG android.permission.WRITE_SECURE_SETTINGS
 granted=$(sh_ dumpsys package $PKG | grep -c 'WRITE_SECURE_SETTINGS: granted=true' || true)
 [[ $granted -ge 1 ]] || { echo "error: WRITE_SECURE_SETTINGS was not granted" >&2; exit 1; }
-echo "installed $PKG; it switches ADB debugging off and on 20 s after each boot (logcat tag dumbtv-fixer)"
+# The owner's opt-in to have ADB turned back on after Fire OS switches it off during boot.
+# Remove it to stop that: adb shell rm /sdcard/Android/media/$PKG/keep-adb-on
+sh_ "mkdir -p /sdcard/Android/media/$PKG && touch /sdcard/Android/media/$PKG/keep-adb-on"
+echo "installed $PKG; after each boot it turns ADB back on / reopens port 5555 (log: /sdcard/Android/media/$PKG/fixer.log; test now: adb shell am broadcast -n $PKG/.NowReceiver)"
