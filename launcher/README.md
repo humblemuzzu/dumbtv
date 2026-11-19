@@ -187,7 +187,8 @@ The icons are the pack author's, under the pack's licence.
 
 ## Languages
 
-dumbtv home follows the TV's language: English, German, Italian, Portuguese (Brazil) and Spanish so far.
+dumbtv home follows the TV's language: English, French, German, Italian, Portuguese (Brazil)
+and Spanish so far.
 Any other language, and any string a translation lacks, shows in English.
 
 To add one, copy `res/values/strings.xml` to `res/values-<code>/strings.xml` (for
