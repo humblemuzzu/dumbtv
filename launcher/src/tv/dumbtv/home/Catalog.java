@@ -21,6 +21,8 @@ import java.util.Map;
 /** Where tiles come from, and which of them the user wants on the home screen. */
 final class Catalog {
     static final String APPS = "apps", ALL_APPS = "allapps", INPUTS = "inputs";
+    static final String LIVE_TV = "com.amazon.tv.livetv";
+    private static final String CHANNEL = "vnd.android.cursor.item/channel";
 
     private Catalog() {}
 
@@ -75,7 +77,8 @@ final class Catalog {
     }
 
     /**
-     * HDMI, AV and other passthrough inputs; HDMI first in port order. The intent is the TV's own
+     * HDMI, AV and other passthrough inputs; HDMI first in port order, then Live TV when the TV
+     * has a tuner. The intent is the TV's own
      * app for the input; {@link Input#intent} decides whether a tile opens that or the built-in
      * screen.
      */
@@ -83,7 +86,9 @@ final class Catalog {
         List<Item> out = new ArrayList<>();
         if (tv == null) return out;
         List<Item> other = new ArrayList<>();
+        Item live = null;
         for (TvInputInfo in : tv.getTvInputList()) {
+            if (live == null && isTuner(in) && !in.isHidden(c)) live = liveTv(c, in.getId());
             if (!in.isPassthroughInput() || in.isHidden(c)) continue;
             CharSequence label = in.loadCustomLabel(c);
             if (TextUtils.isEmpty(label)) label = in.loadLabel(c);
@@ -97,7 +102,30 @@ final class Catalog {
         Collections.sort(out, (a, b) -> collator.compare(a.label.toString(), b.label.toString()));
         Collections.sort(other, (a, b) -> collator.compare(a.label.toString(), b.label.toString()));
         out.addAll(other);
+        if (live != null) out.add(live);
         return out;
+    }
+
+    /** Apps' own inputs (Prime Video's, VLC's preview) report TYPE_TUNER too; only hardware has /HW. */
+    private static boolean isTuner(TvInputInfo in) {
+        return in.getType() == TvInputInfo.TYPE_TUNER && in.getId().matches(".*/HW\\d+");
+    }
+
+    /**
+     * A channel that does not exist opens Live TV's player on the last channel, or its channel scan
+     * when there is none, without the permissions its tune and guide actions need (#199).
+     */
+    private static Item liveTv(Context c, String tunerId) {
+        Intent view = new Intent(Intent.ACTION_VIEW)
+                .setDataAndType(TvContract.buildChannelUri(Integer.MAX_VALUE), CHANNEL)
+                .setPackage(LIVE_TV);
+        PackageManager pm = c.getPackageManager();
+        ResolveInfo app = pm.resolveActivity(view, 0);
+        return app == null ? null : new Item(tunerId, app.loadLabel(pm), view);
+    }
+
+    static boolean isLiveTv(Item it) {
+        return CHANNEL.equals(it.intent.getType());
     }
 
     static CharSequence label(Config cfg, Item it) {

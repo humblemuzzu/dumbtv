@@ -126,6 +126,11 @@ separate choices.
   is connected. Back returns to the home screen, and HOME releases the input at
   once. Nothing new is requested to do this.
 
+On a Fire TV Edition television with a tuner, the row ends with a **Live TV** tile. It
+opens Amazon's Live TV on the last channel watched, with its guide and channel up and
+down, or its channel scan when no channels are set up yet. It is not affected by
+**Open inputs with**, and hides, renames and moves like any other input.
+
 ## Child lock
 
 For a TV children use. **Options › Child lock › On** hides the Options and Settings

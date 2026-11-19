@@ -101,6 +101,7 @@ public final class Input extends Activity {
      * than Amazon's Live TV claims it.
      */
     static Intent intent(Context c, Config cfg, Item it, CharSequence name) {
+        if (Catalog.isLiveTv(it)) return null;
         String mode = cfg.get(Config.SWITCH);
         List<ResolveInfo> apps = c.getPackageManager().queryIntentActivities(it.intent, 0);
         boolean handOver = "tv".equals(mode) ? !apps.isEmpty()
