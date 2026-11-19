@@ -114,7 +114,12 @@ public final class Input extends Activity {
                     + "; using the built-in screen");
         }
         if (handOver) return null;
-        return new Intent(c, Input.class).putExtra(EXTRA_ID, it.id).putExtra(EXTRA_NAME, name);
+        return open(c, it.id, name);
+    }
+
+    /** Opens input {@code id} on this screen, whatever "Open inputs with" says. */
+    static Intent open(Context c, String id, CharSequence name) {
+        return new Intent(c, Input.class).putExtra(EXTRA_ID, id).putExtra(EXTRA_NAME, name);
     }
 
     /**
