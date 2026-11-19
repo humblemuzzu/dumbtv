@@ -1,0 +1,41 @@
+id: androidtv-sony-kd-50x85ju
+title: "Sony BRAVIA KD-50X85JU (Google TV, Android 12)"
+contributors:
+  - Cabana7105
+platform: androidtv
+status: partial
+tested_on: "BRAVIA_VH2_EU-user 12 STT2.230505.001.S136"
+models:
+  - "KD-50X85JU"
+  - "BRAVIA 4K VH2 (BRAVIA_VH2)"
+adb:
+  port: 5555
+  transport: wifi
+  first_connection_prompt: "accept the adb authorisation on the TV"
+developer_mode: >-
+  Settings > System > About > Android TV OS build (press OK 7 times), then Developer options > USB debugging: ON
+ip_location: "Settings > Network & Internet > the connected network > IP address"
+prompts:
+  - name: "Play Protect: app targets an older Android version"
+    blocks_automation: true
+    fix: "the first adb install fails with INSTALL_FAILED_VERIFICATION_FAILURE and the TV warns; press Install anyway, then adb install -r again"
+data:
+  packages: data/androidtv/packages.txt
+  protected: data/androidtv/protected.txt
+  never_disable: data/androidtv/never-disable.txt
+  user_apps: data/androidtv/user-apps.txt
+launcher:
+  mechanism: set_home_activity
+  package: tv.dumbtv.home
+  reason: "cmd package set-home-activity tv.dumbtv.home/.Home printed Success, but HOME still opened Google TV"
+  fallback: "pm enable --user 0 com.google.android.apps.tv.launcherx brings Google TV back"
+  quirk: "dumbtv home took HOME only once com.google.android.apps.tv.launcherx and com.google.android.tungsten.setupwraith were disabled for user 0, as docs/OTHER-TVS.md describes; both are on never-disable.txt for the scripts, so this is done by hand and on purpose"
+quirks:
+  - "The launcher swap survived a full reboot"
+  - "HDMI switching, the Yamaha AV receiver over HDMI-CEC, Sony's own menus and the streaming apps worked as before"
+known_limits:
+  - "Launcher only: no packages were disabled and no DNS filter was set up; the Fire OS scripts were not run"
+notes: "dumbtv home installed by hand with adb from a Windows 11 PC; HOME stays on it after a reboot and the TV's own functions are intact (issue #204)."
+verify:
+  blocked: data/blocklists/verify-blocked.txt
+  allowed: data/blocklists/verify-allowed.txt

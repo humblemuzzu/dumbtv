@@ -2,6 +2,7 @@ id: fireos-amazon-aftmm
 title: "Amazon Fire TV Stick 4K, 1st gen (AFTMM)"
 contributors:
   - niz-coder
+  - JonnyTech
 platform: fireos
 status: tested
 tested_on: "Fire TV Stick 4K 1st gen (mantis), Fire OS 6.7.1.1: debloat, lockdown, DNS filter and the Keeper launcher; verify.sh exited 0; HOME lands on dumbtv in under 0.3 s with a real remote; boot takes ~45–50 s (BOOT_COMPLETED)"
@@ -45,6 +46,7 @@ quirks:
   - "no cmd package install-existing: system apps are only disabled, never uninstalled"
   - "com.amazon.firebat is Prime Video, not an OTA helper"
   - "com.amazon.vizzini re-enables itself at every boot"
+  - "Second unit, NS6711/5908 (issue #207): verify.sh showed the filter with 338507 entries while softwareupdates.amazon.com and arcus-uswest.amazon.com resolved: personalDNSfilter had merged its own default lists back into the config. dnsfilter.sh keeps its download list empty since then, and verify.sh fails on a filter downloading lists of its own; run dnsfilter.sh -y again on a unit set up before. dumbtv home's Keeper, 43 disabled packages, settings and data saver all passed"
   - "ps is the old toolbox one: ps -A -o NAME fails with bad pid '-A'"
   - "no RUN_ANY_IN_BACKGROUND app-op; RUN_IN_BACKGROUND ignore blocks background starts only"
   - "always_on_vpn_app is dropped at boot; the DNS filter starts from its own boot receiver once it has been opened"

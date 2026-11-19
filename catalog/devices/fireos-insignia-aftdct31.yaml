@@ -1,16 +1,19 @@
 id: fireos-insignia-aftdct31
-title: "Insignia Fire TV (AFTDCT31): 50\" F30 and 65\" DF710"
+title: "Insignia Fire TV (AFTDCT31): 50\" and 58\" F30, 65\" DF710"
 contributors:
   - timcunningham-sv
   - twwebb3
   - PirateKng
+  - chrisdwalker
+  - rckmcnll
 platform: fireos
 status: tested
-tested_on: "PS7717.5741N (50 inch); also PS7715.5585N, Fire OS 7.7.1.5, on a 65 inch set"
+tested_on: "PS7717.5741N (50 inch); also PS7715.5585N, Fire OS 7.7.1.5, on a 65 inch set; PS7717.5746N on a 58 inch set; PS7685.4487N, Fire OS 7.6.8.5"
 models:
   - "AFTDCT31 (duckie)"
   - "Insignia NS-50F301NA24 F30 series"
   - "Insignia NS-65DF710NA21 (65 inch 4K Fire TV Edition)"
+  - "Insignia NS-58F301NA25 (58 inch F30 series)"
 adb:
   port: 5555
   transport: wifi
@@ -34,8 +37,11 @@ quirks:
   - "com.android.nfc reports SUSPECT: 'Security exception: Shell cannot change component state'. Harmless - it stays enabled. On the PS7715.5585N unit it was already system-disabled out of the box, so debloat reported 'already disabled by the system' and the run had no SUSPECT lines at all"
   - "FILTERHOSTS.TXT.idx is a directory, so the index rebuild needs rm -rf, not rm"
   - "On a Fire TV Edition television the antenna gets no tile on dumbtv home, by design rather than as a fault: Catalog.inputs() keeps only isPassthroughInput() entries and an ATSC tuner is not one (here com.mediatek.tvinput/.tuner.TunerInputService/HW0, registered and bound). apps.show cannot rescue it either, because com.amazon.tv.livetv/.guide.GuideActivity declares MAIN with CATEGORY_DEFAULT only, no LAUNCHER and no LEANBACK_LAUNCHER, so Catalog.apps() never collects it and shown() can only un-hide what is already collected. Nothing breaks - the tuner stays enabled and the channel guide still carries programme data behind the DNS filter - but broadcast TV moves off the home screen. Routes to it: the remote's own Live TV button (what this owner uses), holding HOME, or Options > Open Amazon's home screen. Open inputs with > The TV's app does NOT help: it changes what existing input tiles do, and there is no tuner tile. Worth saying before launcher.sh on any Fire TV Edition set with an aerial"
-  - "adb exec-out screencap -p > file.png produces a corrupt file on this build: screencap prints 'Init wrapper sys mutex successful. Pid:N' to stdout ahead of the PNG. Use adb shell screencap -p /sdcard/x.png followed by adb pull"
-notes: "Fire OS 7.7.1.7 (PS7717.5741N, Android 9, SDK 28), MediaTek panel. Full pass works with com.amazon.firebat kept enabled: 65 packages disabled, 7 protected starved, DNS filter and launcher both good, verify.sh exits 0. Nothing was uninstalled, so the pass was fully reversible. A second report on PS7715.5585N (Fire OS 7.7.1.5, 65 inch, Wi-Fi) also passed step by step with the same answers plus YOUTUBE=1: verify.sh reports 37 packages disabled, 13 settings, filter 387 entries, launcher 1.9, and exits 0 with all checks passed. That run had 0 PROTECTED and 0 SUSPECT during debloat, and again nothing was uninstalled."
+  - "adb exec-out screencap -p > file.png produces a corrupt file on this build, and on PS7685.4487N too: screencap prints 'Init wrapper sys mutex successful. Pid:N' to stdout ahead of the PNG. Use adb shell screencap -p /sdcard/x.png followed by adb pull"
+  - "PS7685.4487N (issue #209): launcher.sh failed with 'Fire OS did not bind the HOME guard' on both of its attempts, with no A11yAuthorizer lines and parental controls off. The service bound within about 5 s once accessibility_enabled itself went 0 -> 1 around the new list; launcher.sh does that since this report. verify.sh then passed, and the Guard stayed bound after a reboot"
+  - "58 inch set (issue #203): an Amazon Appstore auto-update of Amazon Music (com.amazon.bueller.music) switched it back on after debloat.sh had disabled it, and its tile came back on dumbtv home; Fire OS itself did not update. verify.sh reports such a package as 'enabled again'; debloat.sh -y disables it again"
+  - "58 inch set: the DNS filter came up on the first try after dnsfilter.sh's own reboot. With a second adb device on the network, the scripts need ADB_SERIAL, as verify.sh's error says"
+notes: "Fire OS 7.7.1.7 (PS7717.5741N, Android 9, SDK 28), MediaTek panel. Full pass works with com.amazon.firebat kept enabled: 65 packages disabled, 7 protected starved, DNS filter and launcher both good, verify.sh exits 0. Nothing was uninstalled, so the pass was fully reversible. A second report on PS7715.5585N (Fire OS 7.7.1.5, 65 inch, Wi-Fi) also passed step by step with the same answers plus YOUTUBE=1: verify.sh reports 37 packages disabled, 13 settings, filter 387 entries, launcher 1.9, and exits 0 with all checks passed. That run had 0 PROTECTED and 0 SUSPECT during debloat, and again nothing was uninstalled. A 58 inch F30 on PS7717.5746N passed in full: 42 packages disabled, 13 settings, filter 396 entries, launcher 1.10, data saver on, verify.sh all checks passed. A unit on PS7685.4487N (ALEXA=1, PRIME=1, YOUTUBE=1) passed verify.sh with 39 disabled once the HOME guard was bound by hand, and again after a reboot."
 verify:
   blocked: data/blocklists/verify-blocked.txt
   allowed: data/blocklists/verify-allowed.txt

@@ -1,0 +1,31 @@
+id: fireos-panasonic-aftlas01
+title: "Panasonic W95 Fire TV (AFTLAS01)"
+contributors:
+  - b-siide
+platform: fireos
+status: tested
+tested_on: "Fire OS 8.1.8.0 (RS8180/3742)"
+models:
+  - "AFTLAS01"
+  - "Panasonic W95 series"
+adb:
+  port: 5555
+  transport: wifi
+  first_connection_prompt: "Allow USB debugging? - tick Always allow before accepting"
+developer_mode: >-
+  Settings > Devices & Software > About > click 'Your TV' 7 times, then Devices & Software > Developer options > ADB debugging: ON
+ip_location: "Settings > Devices & Software > About > Network"
+prompts:
+  - name: "USB debugging authorization"
+    blocks_automation: true
+    fix: "tick Always allow this computer, then accept; the pass reboots the TV"
+data:
+  packages: data/fireos/packages.txt
+  protected: data/fireos/protected.txt
+  never_disable: data/fireos/never-disable.txt
+  user_apps: data/fireos/user-apps.txt
+quirks: []
+notes: "Full pass: telemetry blocked by the DNS filter, dumbtv home in place of Amazon's home, verify.sh exited 0 (issue #208)."
+verify:
+  blocked: data/blocklists/verify-blocked.txt
+  allowed: data/blocklists/verify-allowed.txt

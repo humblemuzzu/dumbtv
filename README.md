@@ -166,7 +166,7 @@ every model with its menu paths and quirks.
 
 | Device | Fire OS | Status | Tested by |
 |---|---|---|---|
-| [Fire TV Stick 4K, 1st gen (AFTMM)](catalog/devices/fireos-amazon-aftmm.yaml) | 6.7 | tested | [@niz-coder](https://github.com/niz-coder) |
+| [Fire TV Stick 4K, 1st gen (AFTMM)](catalog/devices/fireos-amazon-aftmm.yaml) | 6.7 | tested | [@niz-coder](https://github.com/niz-coder), [@JonnyTech](https://github.com/JonnyTech) |
 | [Insignia Fire TV Edition (AFTEAMR311)](catalog/devices/fireos-insignia-afteamr311.yaml) | 6.7 | tested | [@gtalusan](https://github.com/gtalusan) |
 | [Toshiba 50LF621U19, 55LF711U20 Fire TV Edition (AFTKMST12)](catalog/devices/fireos-toshiba-aftkmst12.yaml) | 6.7 | tested | [@ryanlucht](https://github.com/ryanlucht), [@zekesax](https://github.com/zekesax) |
 | [Insignia NS-43DF710NA19 Fire TV Edition (AFTJMST12)](catalog/devices/fireos-insignia-aftjmst12.yaml) | 6.7 | tested | [@Muffy0906](https://github.com/Muffy0906) |
@@ -178,7 +178,7 @@ every model with its menu paths and quirks.
 | [Amazon AFTALMO](catalog/devices/fireos-amazon-aftalmo.yaml) | 7.7 | tested | [@TheiMacNoob](https://github.com/TheiMacNoob) |
 | [Xiaomi L55M7-FVEU Fire TV (AFTANNA0)](catalog/devices/fireos-xiaomi-aftanna0.yaml) | 7.7 | tested | [@jmcerrejon](https://github.com/jmcerrejon) |
 | [Fire TV Stick 4K Max, 1st gen (AFTKA)](catalog/devices/fireos-amazon-aftka-ps7713.yaml) | 7.7 | tested | [@harupong](https://github.com/harupong), [@Elv1sh](https://github.com/Elv1sh), [@rotenaple](https://github.com/rotenaple) |
-| [Insignia 50" F30, 65" DF710 (AFTDCT31)](catalog/devices/fireos-insignia-aftdct31.yaml) | 7.7 | tested | [@timcunningham-sv](https://github.com/timcunningham-sv), [@twwebb3](https://github.com/twwebb3), [@PirateKng](https://github.com/PirateKng) |
+| [Insignia 50" and 58" F30, 65" DF710 (AFTDCT31)](catalog/devices/fireos-insignia-aftdct31.yaml) | 7.7 | tested | [@timcunningham-sv](https://github.com/timcunningham-sv), [@twwebb3](https://github.com/twwebb3), [@PirateKng](https://github.com/PirateKng), [@chrisdwalker](https://github.com/chrisdwalker), [@rckmcnll](https://github.com/rckmcnll) |
 | [Onida 43" Fire TV Edition (AFTGRO001)](catalog/devices/fireos-onida-aftgro001.yaml) | 7.7 | tested | [@humblemuzzu](https://github.com/humblemuzzu) |
 | [Fire TV Stick HD 2024, Stick Lite 2020 (AFTSS)](catalog/devices/fireos-amazon-aftss.yaml) | 7.7 | tested | [@RabeJonas](https://github.com/RabeJonas), [@Prathamesh913](https://github.com/Prathamesh913), [@arielvieira](https://github.com/arielvieira) |
 | [Hisense 55QD65NF (AFTHA004)](catalog/devices/fireos-hisense-aftha004.yaml) | 7.7 | tested | [@stedrow](https://github.com/stedrow) |
@@ -187,7 +187,7 @@ every model with its menu paths and quirks.
 | [Fire TV Stick, 3rd gen (AFTSSS)](catalog/devices/fireos-amazon-aftsss.yaml) | 7.7 | tested | [@B3NR1S](https://github.com/B3NR1S), [@jgcoronado](https://github.com/jgcoronado), [@Zarafos](https://github.com/Zarafos) |
 | [Hisense Fire TV (AFTHA001), PS7717.5746N](catalog/devices/fireos-hisense-aftha001-ps7717.yaml) | 7.7 | tested | [@mrbell321](https://github.com/mrbell321) |
 | [Ember 55, Fire TV Omni Mini-LED (AFTOMNA003)](catalog/devices/fireos-amazon-aftomna003.yaml) | 8.0 | tested | [@zaco-tm](https://github.com/zaco-tm) |
-| [Fire TV Stick 4K Max, 2nd gen (AFTKRT)](catalog/devices/fireos-amazon-aftkrt.yaml) | 8.1 | tested | [@gerardo-galvez-hl](https://github.com/gerardo-galvez-hl), [@derkstample](https://github.com/derkstample), [@aboubakrine](https://github.com/aboubakrine), [@s-razaq](https://github.com/s-razaq) |
+| [Fire TV Stick 4K Max, 2nd gen (AFTKRT)](catalog/devices/fireos-amazon-aftkrt.yaml) | 8.1 | tested | [@gerardo-galvez-hl](https://github.com/gerardo-galvez-hl), [@derkstample](https://github.com/derkstample), [@aboubakrine](https://github.com/aboubakrine), [@s-razaq](https://github.com/s-razaq), [@OrionGarcia20](https://github.com/OrionGarcia20) |
 | [Fire TV Stick 4K Plus (AFTMA08C15)](catalog/devices/fireos-amazon-aftma08c15.yaml) | 8.1 | tested | [@edrmundy](https://github.com/edrmundy) |
 | [Fire TV Edition television (AFTOLCBC82)](catalog/devices/fireos-amazon-aftolcbc82.yaml) | 8.1 | tested | [@koconnorgit](https://github.com/koconnorgit), [@iotemylabs](https://github.com/iotemylabs), [@gmckeever](https://github.com/gmckeever) |
 | [Fire TV smart TV (AFTHY7ABBA)](catalog/devices/fireos-amazon-afthy7abba.yaml) | 8.1 | tested | [@bring-nirachornkul](https://github.com/bring-nirachornkul) |
@@ -198,6 +198,7 @@ every model with its menu paths and quirks.
 | [Hisense 65U65SFC Pro Fire TV Edition (AFTCIBFBD1)](catalog/devices/fireos-hisense-aftcibfbd1.yaml) | 8.1 | tested | [@sonofamitch86](https://github.com/sonofamitch86) |
 | [TCL 55PF650 Fire TV (AFTMA475B1)](catalog/devices/fireos-tcl-aftma475b1.yaml) | 8.1 | tested | [@nickzocchi](https://github.com/nickzocchi) |
 | [TCL 75Q691F Fire TV (AFTDEC012E)](catalog/devices/fireos-tcl-aftdec012e.yaml) | 8.1 | tested | [@tvenenga](https://github.com/tvenenga) |
+| [Panasonic W95 Fire TV (AFTLAS01)](catalog/devices/fireos-panasonic-aftlas01.yaml) | 8.1 | tested | [@b-siide](https://github.com/b-siide) |
 | [Hisense 55QD75SFC Fire TV (AFTCU9343B)](catalog/devices/fireos-hisense-aftcu9343b.yaml) | 14 | tested | [@sockmonkey0223](https://github.com/sockmonkey0223) |
 | [TCL 65M8LF Fire TV (AFTCHE92D8)](catalog/devices/fireos-tcl-aftche92d8.yaml) | 14 | tested | [@alexanderkoh](https://github.com/alexanderkoh) |
 | [Fire TV Stick 4K Max, 1st gen (AFTKA)](catalog/devices/fireos-amazon-aftka-ps7697.yaml) | 7.6 | partial | [@dchuk](https://github.com/dchuk) |
@@ -208,6 +209,7 @@ every model with its menu paths and quirks.
 | [Insignia 50" F50 (AFTHY7ABBA)](catalog/devices/fireos-insignia-afthy7abba.yaml) | 8.1 | partial | [@dave137-beep](https://github.com/dave137-beep) |
 | [Fire TV 4-Series 55" EU (AFTNA67200)](catalog/devices/fireos-amazon-aftna67200.yaml) | 8.1 | partial | [@Chartmann96](https://github.com/Chartmann96) |
 | [Hisense 58U6HF Fire TV (AFTHA001), PS7715.5585N](catalog/devices/fireos-hisense-aftha001-ps7715.yaml) | 7.7 | untested | [@w3dd1e](https://github.com/w3dd1e) |
+| [Amazon Fire TV Omni QLED (AFTKADE001)](catalog/devices/fireos-amazon-aftkade001.yaml) | 7.7 | untested | [@Garfonso](https://github.com/Garfonso) |
 
 Android TV and Google TV reports, run by hand from the lists in
 `data/androidtv/`:
@@ -223,6 +225,7 @@ Android TV and Google TV reports, run by hand from the lists in
 | [onn. Streaming Device 4K Pro](catalog/devices/androidtv-onn-streaming-device-4k-pro.yaml) | 14 | [@OSikorsky](https://github.com/OSikorsky) |
 | [Philips 24NA 4K](catalog/devices/androidtv-philips-24na-4k.yaml) | 14 | [@lsukev](https://github.com/lsukev) |
 | [Philips TA6 LT](catalog/devices/androidtv-philips-ta6-lt.yaml) | 14 | [@fabricio00101](https://github.com/fabricio00101) |
+| [Sony BRAVIA KD-50X85JU (launcher only)](catalog/devices/androidtv-sony-kd-50x85ju.yaml) | 12 | [@Cabana7105](https://github.com/Cabana7105) |
 | [OnePlus TV Y Series](catalog/devices/androidtv-oneplus-y-series.yaml) | 11 | [@priyank-saarthios-ai](https://github.com/priyank-saarthios-ai) |
 | [Philips OLED705, PUS7304, PUS7334 (TPM191E)](catalog/devices/androidtv-philips-tpm191e.yaml) | 12 | [@tkightly](https://github.com/tkightly), [@damsma](https://github.com/damsma), [@PazkaL](https://github.com/PazkaL) |
 | [TCL Smart TV Pro G08](catalog/devices/androidtv-tcl-g08.yaml) | 14 | [@maam00](https://github.com/maam00) |
@@ -338,18 +341,26 @@ the devices above because of you.
 [@acornelissen](https://github.com/acornelissen),
 [@alexanderkoh](https://github.com/alexanderkoh),
 [@Anny0nn](https://github.com/Anny0nn),
+[@b-siide](https://github.com/b-siide),
 [@bring-nirachornkul](https://github.com/bring-nirachornkul),
+[@Cabana7105](https://github.com/Cabana7105),
 [@Chartmann96](https://github.com/Chartmann96),
+[@chrisdwalker](https://github.com/chrisdwalker),
 [@dave137-beep](https://github.com/dave137-beep),
 [@dcowern](https://github.com/dcowern),
 [@dleslie](https://github.com/dleslie),
 [@Elv1sh](https://github.com/Elv1sh),
+[@Garfonso](https://github.com/Garfonso),
 [@gmckeever](https://github.com/gmckeever),
+[@gnacho](https://github.com/gnacho),
+[@Gornak3](https://github.com/Gornak3),
+[@gusdslara](https://github.com/gusdslara),
 [@JBolanle](https://github.com/JBolanle),
 [@Jeff909Dev](https://github.com/Jeff909Dev),
 [@jgcoronado](https://github.com/jgcoronado),
 [@jlaska](https://github.com/jlaska),
 [@jmcerrejon](https://github.com/jmcerrejon),
+[@JonnyTech](https://github.com/JonnyTech),
 [@leonardopieralli](https://github.com/leonardopieralli),
 [@lisanet](https://github.com/lisanet),
 [@lunar-me](https://github.com/lunar-me),
@@ -360,13 +371,16 @@ the devices above because of you.
 [@Namiato](https://github.com/Namiato),
 [@nickzocchi](https://github.com/nickzocchi),
 [@oddeyed](https://github.com/oddeyed),
+[@OrionGarcia20](https://github.com/OrionGarcia20),
 [@PazkaL](https://github.com/PazkaL),
 [@PicaPicaDev](https://github.com/PicaPicaDev),
 [@PirateKng](https://github.com/PirateKng),
 [@priyank-saarthios-ai](https://github.com/priyank-saarthios-ai),
 [@rawIce](https://github.com/rawIce),
+[@rckmcnll](https://github.com/rckmcnll),
 [@rotenaple](https://github.com/rotenaple),
 [@Rouchekoff](https://github.com/Rouchekoff),
+[@rschwager](https://github.com/rschwager),
 [@s-razaq](https://github.com/s-razaq),
 [@sakalliAI](https://github.com/sakalliAI),
 [@SandheepSridar](https://github.com/SandheepSridar),
@@ -402,7 +416,9 @@ the devices above because of you.
 [@alrubearb-sys](https://github.com/alrubearb-sys),
 [@rixialmenar](https://github.com/rixialmenar),
 [@Dlay2017](https://github.com/Dlay2017),
-[@githububub](https://github.com/githububub)
+[@githububub](https://github.com/githububub),
+[@FerrisYJ](https://github.com/FerrisYJ),
+[@martinodini](https://github.com/martinodini)
 
 And to the projects dumbtv stands on:
 [personalDNSfilter](https://github.com/IngoZenz/personaldnsfilter) by Ingo Zenz,

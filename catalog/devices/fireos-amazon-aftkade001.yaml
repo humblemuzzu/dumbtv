@@ -1,12 +1,13 @@
 id: fireos-amazon-aftkade001
-title: "Amazon AFTKADE001"
+title: "Amazon Fire TV Omni QLED (AFTKADE001)"
 contributors:
   - Garfonso
 platform: fireos
 status: untested
 tested_on: "PS7717.5746N"
 models:
-  - "Amazon Fire TV Omni QLED"
+  - "AFTKADE001"
+  - "Amazon Fire TV Omni QLED (sold in Germany)"
 adb:
   port: 5555
   transport: wifi
@@ -20,7 +21,7 @@ data:
   never_disable: data/fireos/never-disable.txt
   user_apps: data/fireos/user-apps.txt
 quirks: []
-notes: "Works as expected."
+notes: "Works as expected. Before the pass the TV was unusable for a few minutes after waking; afterwards it answers at once, and the household missed nothing (PR #211). verify.sh was not reported, so the status stays untested."
 verify:
   blocked: data/blocklists/verify-blocked.txt
   allowed: data/blocklists/verify-allowed.txt
