@@ -147,6 +147,10 @@ public final class Keeper extends Service {
 
     private void launch(long now) {
         lastLaunch = now;
+        // Input only finishes itself on BACK (Menu/Info just re-show the name), so a screen left
+        // paused in the background is still on top of this task's stack. moveTaskToFront below
+        // restores the task exactly as it was, Input included, unless it is finished first.
+        Input.finishIfOpen();
         ActivityManager manager = (ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
         if (manager != null) {
             try {

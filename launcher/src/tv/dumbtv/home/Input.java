@@ -42,6 +42,24 @@ public final class Input extends Activity {
     private static final int FAILED = R.string.input_failed, NO_SIGNAL = R.string.input_no_signal;
     private static final String AMAZON_LIVE_TV = "com.amazon.tv.livetv";
 
+    /**
+     * The Keeper (Fire OS 6) brings this task forward with moveTaskToFront, which restores
+     * whatever was on top rather than relaunching Home. Without this, HOME pressed while this
+     * screen is paused in the background (not finished - only BACK finishes it) comes back to
+     * this screen instead of Home. Guard's singleTask relaunch does not have this problem; only
+     * Keeper's fast path does.
+     */
+    private static Input instance;
+    private static long resumedAt;
+    /**
+     * Keeper's UsageStats check can fire within one poll of this screen opening - seen on an
+     * Insignia AFTEAMR311 switching to a CEC source that was waking from standby, not just on a
+     * real HOME press. Finishing on that immediate, spurious fire tears down the TvView session
+     * (onStop calls view.reset()) before the source has a chance to settle, over and over, so the
+     * picture never stabilizes. A screen this new is never what HOME actually meant to leave.
+     */
+    private static final long KEEPER_GRACE_MS = 1000;
+
     private final Handler ui = new Handler(Looper.getMainLooper());
     private final AudioManager.OnAudioFocusChangeListener focus = change -> { };
     private TvView view;
@@ -86,6 +104,13 @@ public final class Input extends Activity {
         List<ResolveInfo> apps = c.getPackageManager().queryIntentActivities(it.intent, 0);
         boolean handOver = "tv".equals(mode) ? !apps.isEmpty()
                 : "auto".equals(mode) && apps.size() == 1 && !viewerIsLiveTv(apps.get(0));
+        // A deliberate choice ("tv", not the "auto" fallback) that silently does nothing is worth a
+        // line in logcat: nothing else marks this - see docs/TROUBLESHOOTING.md, "Open inputs with:
+        // The TV's app" still opens the built-in screen.
+        if ("tv".equals(mode) && apps.isEmpty()) {
+            Keeper.note("switch=tv but no app resolves the passthrough URI for " + it.id
+                    + "; using the built-in screen");
+        }
         if (handOver) return null;
         return new Intent(c, Input.class).putExtra(EXTRA_ID, it.id).putExtra(EXTRA_NAME, name);
     }
@@ -98,9 +123,17 @@ public final class Input extends Activity {
         return app.activityInfo != null && AMAZON_LIVE_TV.equals(app.activityInfo.packageName);
     }
 
+    /** Finishes this screen if it is still around (paused or stopped, not yet destroyed) and has
+     * been showing for a while - never a screen that only just opened. */
+    static void finishIfOpen() {
+        if (instance != null && System.currentTimeMillis() - resumedAt >= KEEPER_GRACE_MS) instance.finish();
+    }
+
     @Override
     protected void onCreate(Bundle state) {
         super.onCreate(state);
+        instance = this;
+        resumedAt = System.currentTimeMillis();
         id = getIntent().getStringExtra(EXTRA_ID);
         // The video is a layer behind this window; a transparent window lets the text over it blend
         // instead of punching black boxes into the picture.
@@ -157,6 +190,12 @@ public final class Input extends Activity {
             ((AudioManager) getSystemService(Context.AUDIO_SERVICE)).abandonAudioFocus(focus);
         }
         super.onStop();
+    }
+
+    @Override
+    protected void onDestroy() {
+        if (instance == this) instance = null;
+        super.onDestroy();
     }
 
     /** BACK leaves; Menu or Info shows the input's name again. Other keys go to the input. */
