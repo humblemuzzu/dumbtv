@@ -48,6 +48,18 @@ class LauncherUndoTest(unittest.TestCase):
         self.assertIn("appops set tv.dumbtv.home AUTO_START default", commands)
         self.assertNotIn(GUARD, settings.get("secure/enabled_accessibility_services", ""))
 
+    def test_accessibility_goes_off_before_the_list_changes_and_on_after(self):
+        other = "com.example.reader/com.example.reader.Service"
+        commands, settings = self.undo({"secure/enabled_accessibility_services": f"{other}:{GUARD}",
+                                        "secure/accessibility_enabled": "1"})
+        puts = [c for c in commands if c.startswith("settings put secure ")]
+        self.assertEqual(puts, ["settings put secure accessibility_enabled 0",
+                                'settings put secure enabled_accessibility_services ""',
+                                f"settings put secure enabled_accessibility_services {other}",
+                                "settings put secure accessibility_enabled 1"])
+        self.assertEqual(settings["secure/enabled_accessibility_services"], other)
+        self.assertEqual(settings["secure/accessibility_enabled"], "1")
+
     def test_other_accessibility_services_are_kept(self):
         _, settings = self.undo({"secure/enabled_accessibility_services": f"example.reader/.Service:{GUARD}"})
         self.assertEqual(settings["secure/enabled_accessibility_services"], "example.reader/.Service")

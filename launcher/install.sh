@@ -52,12 +52,17 @@ set_guard() {
   local cur
   orig=$(sh_ settings get secure enabled_accessibility_services | tr -d '\r')
   [[ $orig == null ]] && orig=
+  orig_on=$(sh_ settings get secure accessibility_enabled | tr -d '\r')
+  [[ $orig_on == 1 ]] || orig_on=0
   cur=$(printf '%s' "$orig" | tr ':' '\n' | { grep -vxF -e "$GUARD" -e "$PKG/.Guard" -e "$OLD_GUARD" -e '' || true; } | paste -sd: -)
   if [[ -n ${1:-} ]]; then cur=${cur:+$cur:}$1; fi
-  # Clearing first makes the accessibility manager rebind a service whose process died. The
-  # other services live only in $orig meanwhile: if this is cut short, the trap puts them back.
-  trap 'put_secure enabled_accessibility_services "$orig" || true' EXIT
+  # Clearing first makes the accessibility manager rebind a service whose process died, and
+  # an AFTDCT31 on PS7685.4487N bound nothing until accessibility_enabled itself went 0 -> 1
+  # (#209). The other services live only in $orig meanwhile: if this is cut short, the trap
+  # puts them back.
+  trap 'put_secure enabled_accessibility_services "$orig" || true; put_secure accessibility_enabled "$orig_on" || true' EXIT
   trap 'exit 130' INT TERM
+  put_secure accessibility_enabled 0
   put_secure enabled_accessibility_services ""
   sleep 1
   if [[ -n $cur ]]; then
