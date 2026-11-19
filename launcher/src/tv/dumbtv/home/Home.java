@@ -19,11 +19,13 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.os.SystemClock;
 import android.provider.Settings;
 import android.text.SpannableString;
 import android.text.Spanned;
 import android.text.format.DateFormat;
 import android.text.style.RelativeSizeSpan;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.View;
@@ -66,12 +68,19 @@ public final class Home extends Activity {
     private int applied = -1, appsGeneration;
     /** Whether the home screen is the resumed activity; Guard reads it on the same main thread. */
     static boolean inFront;
+    /** The resumed home screen, for {@link #woke}; null while another screen is in front. */
+    private static Home current;
+    /** A wake older than this is not acted on: Home was resumed for another reason. */
+    private static final long WAKE_WINDOW_MS = 10_000;
+    private final Runnable idle = this::idleInput;
     private boolean resumed, landed, unlockOpened;
     private String lastFocusedKind;
     private final Map<String, String> lastIds = new HashMap<>();
     private FrameLayout root;
     private LinearLayout column;
     private ImageView wall;
+    private Aurora aurora;
+    private Backdrop backdrop;
     private View shade;
     private View tint;
     private LinearLayout head;
@@ -329,6 +338,61 @@ public final class Home extends Activity {
         f.addAction(Intent.ACTION_TIMEZONE_CHANGED);
         registerReceiver(time, f);
         tick();
+        current = this;
+        if (!wakeInput()) scheduleIdle();
+    }
+
+    /** Guard saw the screen come on while this screen was already resumed. */
+    static void woke() {
+        if (current != null) current.wakeInput();
+    }
+
+    /**
+     * {@code wake_input=<input id>} in home.conf: right after the TV wakes, open that input
+     * instead of staying on the home screen. Returns whether it did.
+     */
+    private boolean wakeInput() {
+        long at = Guard.wokeAt;
+        if (at == 0 || SystemClock.elapsedRealtime() - at > WAKE_WINDOW_MS) return false;
+        Guard.wokeAt = 0;
+        if (!openConfiguredInput("wake")) return false;
+        Guard.shown(); // the input goes on top at once; do not keep the cover up over it
+        return true;
+    }
+
+    /**
+     * {@code idle_input=<minutes>}: after that long on the home screen with no key pressed, open
+     * the {@code wake_input}. Set it below the screensaver delay (Settings, 5 minutes by default)
+     * and the input's own picture takes the screensaver's place.
+     */
+    private void scheduleIdle() {
+        ui.removeCallbacks(idle);
+        int minutes;
+        try {
+            minutes = Integer.parseInt(cfg.get("idle_input", "0").trim());
+        } catch (NumberFormatException e) {
+            minutes = 0;
+        }
+        if (minutes > 0 && cfg.get("wake_input", null) != null) ui.postDelayed(idle, minutes * 60_000L);
+    }
+
+    private void idleInput() {
+        if (resumed) openConfiguredInput("idle");
+    }
+
+    private boolean openConfiguredInput(String why) {
+        String id = cfg.get("wake_input", null);
+        if (id == null) return false;
+        CharSequence name = id;
+        for (Item it : Catalog.inputs(this, tv)) if (it.id.equals(id)) name = Catalog.label(cfg, it);
+        Log.i("dumbtv", why + ": opening " + id);
+        try {
+            startActivity(Input.open(this, id, name));
+            return true;
+        } catch (RuntimeException e) {
+            Log.w("dumbtv", why + ": could not open " + id, e);
+            return false;
+        }
     }
 
     @Override
@@ -341,7 +405,11 @@ public final class Home extends Activity {
         super.onPause();
         resumed = false;
         inFront = false;
+        if (current == this) current = null;
+        ui.removeCallbacks(idle);
         hero.stop();
+        aurora.stop();
+        backdrop.pause();
         stopColorAnimation();
         targetColor = 0;
         unregisterReceiver(time);
@@ -388,6 +456,7 @@ public final class Home extends Activity {
 
     @Override
     public boolean dispatchKeyEvent(KeyEvent e) {
+        if (resumed) scheduleIdle();
         if (moving == null) return super.dispatchKeyEvent(e);
         if (e.getAction() == KeyEvent.ACTION_DOWN) {
             switch (e.getKeyCode()) {
@@ -518,6 +587,12 @@ public final class Home extends Activity {
         wall = new ImageView(this);
         wall.setScaleType(ImageView.ScaleType.CENTER_CROP);
         root.addView(wall, new FrameLayout.LayoutParams(MATCH, MATCH));
+        aurora = new Aurora(this);
+        aurora.setVisibility(View.GONE);
+        root.addView(aurora, new FrameLayout.LayoutParams(MATCH, MATCH));
+        backdrop = new Backdrop(this);
+        backdrop.setVisibility(View.GONE);
+        root.addView(backdrop, new FrameLayout.LayoutParams(MATCH, MATCH));
         shade = new View(this);
         root.addView(shade, new FrameLayout.LayoutParams(MATCH, MATCH));
         tint = new View(this);
@@ -1033,7 +1108,8 @@ public final class Home extends Activity {
 
     private void focusBackground(Item it) {
         String mode = cfg.get(Config.BACKGROUND);
-        if (!resumed || !"adaptive".equals(mode) && !"adaptive-tint".equals(mode)) return;
+        boolean glow = "aurora".equals(mode);
+        if (!resumed || !"adaptive".equals(mode) && !"adaptive-tint".equals(mode) && !glow) return;
         if ("adaptive-tint".equals(mode) && !tintWallpaper) return;
         if (it != null && it.info != null && it.backgroundColor == 0 && !it.colorRequested
                 && (it.banner != null || it.icon != null)) {
@@ -1045,6 +1121,11 @@ public final class Home extends Activity {
                     if (focusedItem() == it) focusBackground(it);
                 });
             });
+        }
+        if (glow) {
+            // FALLBACK is a neutral grey: the night palette, same as no colour yet
+            aurora.seed(it == null || it.backgroundColor == FocusColor.FALLBACK ? 0 : it.backgroundColor);
+            return;
         }
         int color = it == null || it.backgroundColor == 0 ? FocusColor.FALLBACK : it.backgroundColor;
         if ("adaptive-tint".equals(mode)) color = FocusColor.tint(color);
@@ -1208,8 +1289,26 @@ public final class Home extends Activity {
             tint.setBackgroundColor(Color.TRANSPARENT);
             root.setBackgroundColor(cfg.background());
         }
+        boolean glow = "aurora".equals(mode);
+        if (glow) {
+            aurora.setVisibility(View.VISIBLE);
+            if (resumed) aurora.start();
+            focusBackground(focusedItem());
+        } else if (aurora.getVisibility() != View.GONE) {
+            aurora.release();
+            aurora.setVisibility(View.GONE);
+        }
+        File video = "video".equals(mode) ? cfg.video() : null;
+        if (video != null) {
+            backdrop.setVisibility(View.VISIBLE);
+            if (resumed) backdrop.play(video);
+        } else if (backdrop.getVisibility() != View.GONE) {
+            backdrop.play(null);
+            backdrop.setVisibility(View.GONE);
+        }
         int dim = Integer.parseInt(cfg.get(Config.DIM));
-        shade.setBackgroundColor(file == null ? Color.TRANSPARENT : Color.argb(dim * 255 / 100, 0, 0, 0));
+        boolean shaded = file != null || glow || video != null;
+        shade.setBackgroundColor(shaded ? Color.argb(dim * 255 / 100, 0, 0, 0) : Color.TRANSPARENT);
         String key = file == null ? null : file.getPath() + ":" + file.lastModified();
         if (key == null ? wallKey == null : key.equals(wallKey)) return;
         wallKey = key;

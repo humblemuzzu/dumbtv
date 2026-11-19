@@ -54,6 +54,12 @@ public final class Guard extends AccessibilityService {
 
     private static volatile boolean paused;
     private static Guard running;
+    /**
+     * elapsedRealtime of the last screen-on, 0 once {@link Home} has acted on it. Home reads it to
+     * go on to the {@code wake_input} from home.conf; the resume and the broadcast arrive in either
+     * order, so both sides check.
+     */
+    static volatile long wokeAt;
 
     private final Handler handler = new Handler(Looper.getMainLooper());
     private final Runnable uncover = this::uncover;
@@ -65,7 +71,9 @@ public final class Guard extends AccessibilityService {
     private final BroadcastReceiver screenOn = new BroadcastReceiver() {
         @Override
         public void onReceive(Context c, Intent i) {
-            if (!paused && onAmazonHome && !Home.inFront) launchWhenCovered();
+            wokeAt = SystemClock.elapsedRealtime();
+            if (Home.inFront) Home.woke();
+            else if (!paused && onAmazonHome) launchWhenCovered();
         }
     };
 
