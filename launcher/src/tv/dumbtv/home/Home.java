@@ -73,6 +73,7 @@ public final class Home extends Activity {
     private LinearLayout column;
     private ImageView wall;
     private Aurora aurora;
+    private Backdrop backdrop;
     private View shade;
     private View tint;
     private LinearLayout head;
@@ -344,6 +345,7 @@ public final class Home extends Activity {
         inFront = false;
         hero.stop();
         aurora.stop();
+        backdrop.pause();
         stopColorAnimation();
         targetColor = 0;
         unregisterReceiver(time);
@@ -523,6 +525,9 @@ public final class Home extends Activity {
         aurora = new Aurora(this);
         aurora.setVisibility(View.GONE);
         root.addView(aurora, new FrameLayout.LayoutParams(MATCH, MATCH));
+        backdrop = new Backdrop(this);
+        backdrop.setVisibility(View.GONE);
+        root.addView(backdrop, new FrameLayout.LayoutParams(MATCH, MATCH));
         shade = new View(this);
         root.addView(shade, new FrameLayout.LayoutParams(MATCH, MATCH));
         tint = new View(this);
@@ -1228,8 +1233,17 @@ public final class Home extends Activity {
             aurora.release();
             aurora.setVisibility(View.GONE);
         }
+        File video = "video".equals(mode) ? cfg.video() : null;
+        if (video != null) {
+            backdrop.setVisibility(View.VISIBLE);
+            if (resumed) backdrop.play(video);
+        } else if (backdrop.getVisibility() != View.GONE) {
+            backdrop.play(null);
+            backdrop.setVisibility(View.GONE);
+        }
         int dim = Integer.parseInt(cfg.get(Config.DIM));
-        shade.setBackgroundColor(file == null && !glow ? Color.TRANSPARENT : Color.argb(dim * 255 / 100, 0, 0, 0));
+        boolean shaded = file != null || glow || video != null;
+        shade.setBackgroundColor(shaded ? Color.argb(dim * 255 / 100, 0, 0, 0) : Color.TRANSPARENT);
         String key = file == null ? null : file.getPath() + ":" + file.lastModified();
         if (key == null ? wallKey == null : key.equals(wallKey)) return;
         wallKey = key;

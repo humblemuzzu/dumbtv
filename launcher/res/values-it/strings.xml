@@ -122,6 +122,7 @@
     <string name="choice_background_adaptive">Colore adattivo</string>
     <string name="choice_background_adaptive_tint">Immagine con velatura adattiva</string>
     <string name="choice_background_aurora">Aurora boreale</string>
+    <string name="choice_background_video">Video</string>
     <string name="choice_dim">Oscuramento immagine</string>
     <string name="choice_rotate">Cambio sfondo</string>
     <string name="choice_rotate_off">Spento</string>
