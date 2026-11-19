@@ -122,6 +122,7 @@
     <string name="choice_background_adaptive">Adaptiv einfarbig</string>
     <string name="choice_background_adaptive_tint">Adaptiver Farbton des Hintergrundbildes</string>
     <string name="choice_background_aurora">Polarlicht</string>
+    <string name="choice_background_video">Videodatei</string>
     <string name="choice_dim">Bild abdunkeln</string>
     <string name="choice_rotate">Wechsel des Hintergrundbildes</string>
     <string name="choice_rotate_off">Aus</string>
