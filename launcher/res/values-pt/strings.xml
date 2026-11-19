@@ -119,6 +119,8 @@
     <string name="choice_background_image">Arquivo de imagem</string>
     <string name="choice_background_adaptive">Cor adaptativa</string>
     <string name="choice_background_adaptive_tint">Tom adaptativo do papel de parede</string>
+    <string name="choice_background_aurora">Aurora boreal</string>
+    <string name="choice_background_video">Arquivo de vídeo</string>
     <string name="choice_dim">Escurecer imagem</string>
     <string name="choice_rotate">Rotação do papel de parede</string>
     <string name="choice_rotate_off">Desligada</string>
