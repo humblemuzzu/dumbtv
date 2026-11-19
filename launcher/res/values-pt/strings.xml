@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="guard_description">Envia o botão HOME para a tela inicial do dumbtv em vez da tela inicial da Amazon. Não lê o conteúdo da tela e não tem acesso à internet.</string>
+
+    <!-- Home screen -->
+    <string name="options">Opções</string>
+    <string name="settings">Configurações</string>
+    <string name="row_apps">Apps</string>
+    <string name="row_inputs">Entradas</string>
+    <string name="row_all_apps">Todos os apps</string>
+    <string name="row_pinned_apps">Apps fixados</string>
+    <string name="could_not_open">Não foi possível abrir</string>
+    <string name="tile_move">Mover</string>
+    <string name="tile_rename">Renomear</string>
+    <string name="tile_hide">Ocultar</string>
+    <string name="tile_pin">Fixar</string>
+    <string name="tile_unpin">Desafixar</string>
+    <string name="tile_icon">Ícone</string>
+    <string name="tile_app_info">Info do app</string>
+    <string name="move_needs_order">A ordem dos apps está em Usados recentemente. Escolha Sua ordem em Opções para mover os blocos.</string>
+    <string name="hidden_toast">Ocultado. Traga de volta em Opções.</string>
+    <string name="unpinned_toast">Desafixado. Ele está em Todos os apps.</string>
+    <string name="rename_title">Renomear</string>
+    <string name="save">Salvar</string>
+    <string name="original">Original</string>
+    <string name="cancel">Cancelar</string>
+
+    <!-- Inputs -->
+    <string name="input_failed">Não foi possível abrir a entrada</string>
+    <string name="input_no_signal">Sem sinal</string>
+
+    <!-- Memory meter -->
+    <string name="meter_title">Memória</string>
+    <string name="meter_free">%1$d MB livres de %2$d MB</string>
+    <string name="meter_low">pouca memória</string>
+
+    <!-- Fire OS 6 settings list -->
+    <string name="fire_all_settings">Todas as configurações…</string>
+    <string name="fire_notifications">Notificações</string>
+    <string name="fire_network">Rede</string>
+    <string name="fire_applications">Aplicativos</string>
+    <string name="fire_equipment_control">Controle de equipamentos</string>
+    <string name="fire_controllers">Controles e dispositivos Bluetooth</string>
+    <string name="fire_device">Dispositivo e software</string>
+
+    <!-- Options -->
+    <string name="next_wallpaper">Próximo papel de parede</string>
+    <string name="apps_on_home">Apps na tela inicial</string>
+    <string name="inputs_on_home">Entradas na tela inicial</string>
+    <string name="reset_layout">Redefinir ordem, nomes e blocos ocultos</string>
+    <string name="export_settings">Exportar configurações para adb pull</string>
+    <string name="export_done">Salvo em %1$s</string>
+    <string name="export_failed">Não foi possível gravar a cópia</string>
+    <string name="open_amazon_home">Abrir a tela inicial da Amazon</string>
+    <string name="done">Concluído</string>
+    <string name="reset_title">Redefinir o layout da tela inicial?</string>
+    <string name="reset_message">Ordem, nomes, ícones escolhidos e blocos ocultos voltam ao padrão. Cores e tamanhos são mantidos.</string>
+    <string name="reset">Redefinir</string>
+    <string name="lock_on">Opções e Configurações agora estão ocultas na tela inicial. Segure ☰ Menu por %1$d segundos para voltar aqui.</string>
+    <string name="about">Arquivo de configurações: %1$s\nUm papel de parede: nomeie exatamente wallpaper.jpg (ou .png) e coloque nessa pasta\nVários papéis de parede: coloque em %2$s/ com qualquer nome e escolha uma rotação\nDepois escolha Fundo › Arquivo de imagem ou Tom adaptativo do papel de parede. Não precisa de permissão\nNo Fire OS 8 o adb não alcança essa pasta; use %3$s (Exportar configurações coloca uma cópia lá)\nTom adaptativo do papel de parede mostra grafite até você adicionar um papel de parede\nBanner da biblioteca: coloque imagens e %4$s em %5$s/ nessa pasta\nPacote de ícones: instale um e escolha acima; segure OK em um bloco › Ícone para escolher o ícone de um app\nSem permissão de internet. Sem rastreamento, sem anúncios, sem contas.</string>
+
+    <string name="icon_for">Ícone de %1$s</string>
+    <string name="icon_filter">Filtrar por nome</string>
+    <string name="icon_reading">Lendo o pacote de ícones…</string>
+    <string name="icon_automatic">Automático</string>
+    <string name="icon_own">Imagem do próprio app</string>
+    <string name="icon_no_pack">Nenhum pacote de ícones escolhido. Escolha em Opções › Pacote de ícones.</string>
+    <string name="icon_count">%1$d ícones</string>
+    <string name="icon_count_of">%1$d de %2$d ícones</string>
+
+    <string name="library_watch">OK para assistir</string>
+    <string name="library_more">◀ ▶ mais</string>
+
+    <!-- Options rows -->
+    <string name="choice_accent">Cor de destaque</string>
+    <string name="choice_accent_white">Branco</string>
+    <string name="choice_accent_blue">Azul</string>
+    <string name="choice_accent_cyan">Ciano</string>
+    <string name="choice_accent_green">Verde</string>
+    <string name="choice_accent_amber">Âmbar</string>
+    <string name="choice_accent_red">Vermelho</string>
+    <string name="choice_accent_pink">Rosa</string>
+    <string name="choice_accent_violet">Violeta</string>
+    <string name="choice_tiles">Tamanho dos blocos</string>
+    <string name="choice_tiles_small">Pequeno</string>
+    <string name="choice_tiles_medium">Médio</string>
+    <string name="choice_tiles_large">Grande</string>
+    <string name="choice_layout">Layout</string>
+    <string name="choice_layout_rows">Linhas</string>
+    <string name="choice_layout_grid">Grade</string>
+    <string name="choice_position">Posição na tela</string>
+    <string name="choice_position_top">Em cima</string>
+    <string name="choice_position_bottom">Embaixo</string>
+    <string name="choice_order">Ordem dos apps</string>
+    <string name="choice_order_custom">Sua ordem</string>
+    <string name="choice_order_recent">Usados recentemente</string>
+    <string name="choice_labels">Nomes dos apps</string>
+    <string name="choice_labels_focus">Ao focar</string>
+    <string name="choice_labels_always">Sempre</string>
+    <string name="choice_labels_never">Nunca</string>
+    <string name="choice_clock">Relógio</string>
+    <string name="choice_clock_auto">Sistema</string>
+    <string name="choice_clock_24h">24 horas</string>
+    <string name="choice_clock_12h">12 horas</string>
+    <string name="choice_memory">Medidor de memória</string>
+    <string name="choice_memory_off">Oculto</string>
+    <string name="choice_memory_on">Visível</string>
+    <string name="choice_inputs">Linha de entradas</string>
+    <string name="choice_inputs_on">Visível</string>
+    <string name="choice_inputs_off">Oculta</string>
+    <string name="choice_switch">Abrir entradas com</string>
+    <string name="choice_switch_auto">Automático</string>
+    <string name="choice_switch_tv">App da TV</string>
+    <string name="choice_switch_home">dumbtv home</string>
+    <string name="choice_background">Fundo</string>
+    <string name="choice_background_black">Preto</string>
+    <string name="choice_background_graphite">Grafite</string>
+    <string name="choice_background_midnight">Meia-noite</string>
+    <string name="choice_background_image">Arquivo de imagem</string>
+    <string name="choice_background_adaptive">Cor adaptativa</string>
+    <string name="choice_background_adaptive_tint">Tom adaptativo do papel de parede</string>
+    <string name="choice_dim">Escurecer imagem</string>
+    <string name="choice_rotate">Rotação do papel de parede</string>
+    <string name="choice_rotate_off">Desligada</string>
+    <string name="choice_rotate_visit">A cada volta ao início</string>
+    <string name="choice_rotate_hourly">A cada hora</string>
+    <string name="choice_rotate_daily">Todo dia</string>
+    <string name="choice_rotate_daytime">Pela hora do dia</string>
+    <string name="choice_lock">Bloqueio infantil</string>
+    <string name="choice_lock_off">Desligado</string>
+    <string name="choice_lock_on">Ligado</string>
+    <string name="choice_tile_style">Estilo dos blocos</string>
+    <string name="choice_tile_style_original">Original</string>
+    <string name="choice_tile_style_afterglow">Afterglow</string>
+    <string name="choice_chips">Estilo dos botões</string>
+    <string name="choice_chips_text">Texto</string>
+    <string name="choice_chips_icons">Ícones</string>
+    <string name="choice_all_apps">Seção Todos os apps</string>
+    <string name="choice_all_apps_off">Oculta</string>
+    <string name="choice_all_apps_on">Visível</string>
+    <string name="choice_icon_pack">Pacote de ícones</string>
+    <string name="icon_pack_off">Desligado</string>
+    <string name="icon_pack_none">Nenhum instalado</string>
+    <string name="choice_library">Banner da biblioteca</string>
+    <string name="choice_library_on">Visível</string>
+    <string name="choice_library_off">Oculto</string>
+</resources>
