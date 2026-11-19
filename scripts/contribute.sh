@@ -118,8 +118,25 @@ if [[ $ASSUME_YES == 1 && ( -z $BRAND || -z $MODEL ) ]]; then
   die "unattended mode needs --brand and --model (or drop --no-device so they can be read from the TV)"
 fi
 slug() { printf '%s' "$1" | tr 'A-Z' 'a-z' | tr -c 'a-z0-9.\n' '-' | sed 's/--*/-/g; s/^-//; s/-$//'; }
-[[ -z $ID ]] && ID=$(printf '%s-%s-%s' "$PLATFORM" "$(slug "$BRAND")" "$(slug "$MODEL")")
+id_given=0
+if [[ -n $ID ]]; then
+  id_given=1
+else
+  ID=$(printf '%s-%s-%s' "$PLATFORM" "$(slug "$BRAND")" "$(slug "$MODEL")")
+fi
 printf '%s' "$ID" | grep -Eq '^[a-z0-9][a-z0-9.-]*$' || die "id '$ID' must be lowercase letters, digits, dots or dashes"
+# Checked before the questions, so nobody types answers for a file that cannot be written (#206).
+# A second report on a model goes next to the first under its build, as the catalog's other
+# repeat reports do (fireos-amazon-aftka-ps7713).
+if [[ -e $ROOT/catalog/devices/$ID.yaml ]]; then
+  build=$(slug "${BUILD%%.*}")
+  if [[ $id_given == 0 && -n $build && $build != unknown && ! -e $ROOT/catalog/devices/$ID-$build.yaml ]]; then
+    note "catalog/devices/$ID.yaml exists already; this report goes in $ID-$build.yaml"
+    ID=$ID-$build
+  else
+    die "catalog/devices/$ID.yaml already exists: add your findings to it, or pass --id with another name"
+  fi
+fi
 
 step "the parts only a human knows"
 if [[ -z $DEV_MODE ]]; then
@@ -169,7 +186,6 @@ case $PLATFORM in
   *) DATA_DIR="" ;;
 esac
 OUT="$ROOT/catalog/devices/$ID.yaml"
-[[ -e $OUT ]] && die "$OUT already exists: add your findings to it, or pass --id with the build appended (e.g. $ID-ps7717)"
 [[ $DRY_RUN == 1 ]] && OUT=/dev/stdout
 
 step "writing"
@@ -203,10 +219,12 @@ step "writing"
   fi
   if [[ -n $DATA_DIR ]]; then
     printf 'data:\n'
-    printf '  packages: %s/packages.txt\n' "$DATA_DIR"
-    printf '  protected: %s/protected.txt\n' "$DATA_DIR"
-    printf '  never_disable: %s/never-disable.txt\n' "$DATA_DIR"
-    printf '  user_apps: %s/user-apps.txt\n' "$DATA_DIR"
+    for f in packages protected never-disable user-apps; do
+      # The lists the scripts read on this TV: fos() in lib.sh picks data/fireos6/ below sdk 28.
+      d=$DATA_DIR
+      [[ $DATA_DIR == data/fireos && $SDK =~ ^[0-9]+$ && $SDK -lt 28 && -f $ROOT/data/fireos6/$f.txt ]] && d=data/fireos6
+      printf '  %s: %s/%s.txt\n' "${f//-/_}" "$d" "$f"
+    done
   else
     printf 'data: {}\n'
   fi

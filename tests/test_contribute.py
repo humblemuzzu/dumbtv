@@ -60,6 +60,35 @@ class ContributeTest(unittest.TestCase):
                 self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
                 self.assertIn(f"id: {want}", result.stdout)
 
+    def test_a_model_already_in_the_catalog_gets_its_build_in_the_name(self):
+        # Refusing it only after every question had been answered was #206.
+        import json, os, tempfile
+        with tempfile.TemporaryDirectory() as tmp:
+            state = Path(tmp) / "state.json"
+            state.write_text(json.dumps({"packages": {}, "sdk": 25, "props": {
+                "ro.product.brand": "Amazon", "ro.product.model": "AFTMM",
+                "ro.build.display.id": "NS6711"}}))
+            env = dict(os.environ, ADB=str(ROOT / "tests" / "fake_tv.py"), ADB_SERIAL="test-tv",
+                       FAKE_TV_STATE=str(state), FAKE_TV_LOG=str(Path(tmp) / "log"))
+            result = subprocess.run(
+                ["bash", str(ROOT / "scripts" / "contribute.sh"), "-y", "--dry-run"],
+                env=env, capture_output=True, text=True, stdin=subprocess.DEVNULL, timeout=60)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertIn("id: fireos-amazon-aftmm-ns6711", result.stdout)
+        self.assertIn("fireos-amazon-aftmm.yaml exists already", result.stderr)
+        # Fire OS 6 reads its own lists, as the scripts do on it.
+        self.assertIn("  packages: data/fireos6/packages.txt\n", result.stdout)
+        self.assertIn("  user_apps: data/fireos/user-apps.txt\n", result.stdout)
+
+    def test_an_id_that_exists_stops_before_the_questions(self):
+        result = subprocess.run(
+            ["bash", str(ROOT / "scripts" / "contribute.sh"), "--no-device", "--brand", "Amazon",
+             "--model", "AFTMM", "--id", "fireos-amazon-aftmm"],
+            capture_output=True, text=True, input="\n" * 20, timeout=60)
+        self.assertEqual(result.returncode, 1)
+        self.assertIn("fireos-amazon-aftmm.yaml already exists", result.stderr)
+        self.assertNotIn("developer mode", result.stderr)
+
     def test_every_existing_entry_passes(self):
         # What is already in the catalog was reviewed by hand; the filter must not refuse it.
         lines = [line for f in sorted((ROOT / "catalog" / "devices").glob("*.yaml"))
