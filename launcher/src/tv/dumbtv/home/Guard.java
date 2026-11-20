@@ -82,11 +82,31 @@ public final class Guard extends AccessibilityService {
             Config cfg = Config.get(Guard.this);
             cfg.refresh();
             if (!Quick.enabled(Guard.this, cfg)) return;
-            setResultCode(Activity.RESULT_OK);
+            if (isOrderedBroadcast()) {
+                setResultCode(Activity.RESULT_OK);
+                android.os.Bundle res = new android.os.Bundle();
+                res.putInt(Quick.EXTRA_ACCENT, cfg.accent());
+                if (Home.inFront) {
+                    res.putString(Quick.EXTRA_FROM, "home");
+                    res.putString(Quick.EXTRA_IDLE_PAUSE, cfg.get(Quick.CONF_IDLE_PAUSE, null));
+                    int idleMin = 0;
+                    try {
+                        idleMin = Integer.parseInt(cfg.get("idle_input", "0").trim());
+                    } catch (NumberFormatException ignored) {}
+                    res.putInt(Quick.EXTRA_IDLE_MINUTES, idleMin);
+                } else if (Input.isOpen()) {
+                    res.putString(Quick.EXTRA_FROM, "input");
+                } else {
+                    res.putString(Quick.EXTRA_FROM, "app");
+                }
+                setResultExtras(res);
+            }
             settingsKeyAt = SystemClock.uptimeMillis();
             if (intent.getBooleanExtra("close", false)) return;
-            handler.removeCallbacks(openQuick);
-            handler.post(openQuick);
+            if (!isOrderedBroadcast()) {
+                handler.removeCallbacks(openQuick);
+                handler.post(openQuick);
+            }
         }
     };
     private long settingsKeyAt = -QUICK_DEBOUNCE_MS;
@@ -112,6 +132,7 @@ public final class Guard extends AccessibilityService {
     }
 
     private static void home(Context c, long delayMs) {
+        c.sendBroadcast(new Intent("tv.dumbtv.quick.CLOSE").setPackage("tv.dumbtv.quick"));
         AlarmManager alarms = (AlarmManager) c.getSystemService(Context.ALARM_SERVICE);
         alarms.setExact(AlarmManager.ELAPSED_REALTIME_WAKEUP, SystemClock.elapsedRealtime() + delayMs,
                 launch(c));
@@ -223,6 +244,7 @@ public final class Guard extends AccessibilityService {
         long now = SystemClock.uptimeMillis();
         if (now - quickReplacedAt < QUICK_DEBOUNCE_MS) return;
         quickReplacedAt = now;
+        sendBroadcast(new Intent("tv.dumbtv.quick.IGNORE_BACK").setPackage("tv.dumbtv.quick"));
         performGlobalAction(GLOBAL_ACTION_BACK);
         if (now - settingsKeyAt > 2000) {
             handler.removeCallbacks(openQuick);

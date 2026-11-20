@@ -58,9 +58,14 @@ final class Quick {
      * singleTop: a second press while it is showing reaches its onNewIntent, which closes it.
      */
     static boolean open(Context c, int accent) {
-        Intent i = intent(accent, "app").addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        Intent i = intent(accent, "app");
         try {
-            c.startActivity(i, ActivityOptions.makeCustomAnimation(c, 0, 0).toBundle());
+            c.sendBroadcast(new Intent("tv.dumbtv.quick.SHOW").setPackage(PACKAGE).putExtras(i));
+            return true;
+        } catch (Exception ignored) {}
+        Intent act = intent(accent, "app").addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        try {
+            c.startActivity(act, ActivityOptions.makeCustomAnimation(c, 0, 0).toBundle());
             return true;
         } catch (ActivityNotFoundException | SecurityException e) {
             return false;
@@ -72,6 +77,10 @@ final class Quick {
         if (idlePause != null) i.putExtra(EXTRA_IDLE_PAUSE, idlePause);
         if (idleMinutes > 0) i.putExtra(EXTRA_IDLE_MINUTES, idleMinutes);
         if (i.resolveActivity(a.getPackageManager()) == null) return false;
+        try {
+            a.sendBroadcast(new Intent("tv.dumbtv.quick.SHOW").setPackage(PACKAGE).putExtras(i));
+            return true;
+        } catch (Exception ignored) {}
         try {
             if ("home".equals(from)) {
                 a.startActivityForResult(i, REQUEST_CODE, ActivityOptions.makeCustomAnimation(a, 0, 0).toBundle());

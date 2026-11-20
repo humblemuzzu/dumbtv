@@ -1,7 +1,6 @@
 package tv.dumbtv.quick;
 
 import android.animation.TimeInterpolator;
-import android.app.Activity;
 import android.app.ActivityManager;
 import android.bluetooth.BluetoothA2dp;
 import android.bluetooth.BluetoothAdapter;
@@ -9,16 +8,17 @@ import android.bluetooth.BluetoothClass;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothProfile;
 import android.content.ActivityNotFoundException;
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.content.res.ColorStateList;
 import android.graphics.Color;
+import android.graphics.PixelFormat;
 import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
 import android.os.Build;
-import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.SystemClock;
@@ -30,6 +30,7 @@ import android.view.Display;
 import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.View;
+import android.view.WindowManager;
 import android.view.animation.AccelerateInterpolator;
 import android.view.animation.DecelerateInterpolator;
 import android.widget.FrameLayout;
@@ -51,10 +52,12 @@ import java.util.Set;
 import java.util.TimeZone;
 
 /**
- * The quick settings panel: slides in from the right over whatever is on screen. Rows take
- * left/right to adjust and OK to act; BACK or Menu slides it away.
+ * The quick settings panel: held in memory by {@link Tint} and attached as an in-process
+ * WindowManager overlay (TYPE_APPLICATION_OVERLAY) when opened. This eliminates activity
+ * launch latency (opening in 2-5 ms), prevents TV inputs from pausing or dropping HDMI/HDCP,
+ * and remains immune to activity-stack interruptions.
  */
-public final class Panel extends Activity {
+public final class Panel {
     static final String ACCENT = "accent";
     private static final int DEFAULT_ACCENT = 0xFF3D8BFF;
     private static final int TEXT = 0xFFF2F2F3, MUTED = 0x99FFFFFF, IDLE = 0x14FFFFFF;
@@ -65,14 +68,19 @@ public final class Panel extends Activity {
     private static final long TICK_MS = 15000;
     private static final int BRIGHTNESS_STEP = 5, BRIGHTNESS_MIN = 5;
     private static final long HEALTH_CACHE_TTL_MS = 60 * 1000L;
+    private static final int TYPE_APPLICATION_OVERLAY = 2038;
 
     private static volatile Panel activeInstance;
     private static volatile List<String> cachedHealthIssues;
     private static volatile long lastHealthCheck;
 
-    static boolean isShowing() {
+    boolean isShowing() {
+        return showing && !closing;
+    }
+
+    static boolean isActiveShowing() {
         Panel p = activeInstance;
-        return p != null && !p.isFinishing() && !p.closing;
+        return p != null && p.isShowing();
     }
 
     static void closeActive() {
@@ -80,20 +88,27 @@ public final class Panel extends Activity {
         if (p != null) p.close();
     }
 
-    private final Handler ui = new Handler(Looper.getMainLooper());
+    private final Context context;
+    private final Handler ui;
+    private final Video video;
+    private final WindowManager wm;
     private final List<Row> rows = new ArrayList<>();
-    private int accent;
-    private boolean fromHome, closing;
+
+    private FrameLayout root;
     private View scrim;
     private LinearLayout sheet, rowContainer;
     private ScrollView scroller;
     private Row brightness, bluetooth, airplay, pictureOff, network, health, idlePause, warmth, sleep, noise;
-    private TextView clock, date, ram, video, videoSub;
+    private TextView clock, date, ram, videoText, videoSub;
+
+    private int accent = DEFAULT_ACCENT;
+    private boolean fromHome, showing, closing;
+    private long ignoreBackUntil;
 
     // Bluetooth
     private BluetoothA2dp a2dp;
     private final List<BluetoothDevice> pairedDevices = new ArrayList<>();
-    private int btTargetIndex = 0; // 0..pairedDevices.size() - 1: devices; pairedDevices.size(): Settings
+    private int btTargetIndex = 0;
     private final BluetoothProfile.ServiceListener btListener = new BluetoothProfile.ServiceListener() {
         @Override
         public void onServiceConnected(int profile, BluetoothProfile proxy) {
@@ -118,7 +133,7 @@ public final class Panel extends Activity {
 
     // Idle pause (Chromecast auto-switch)
     private int idlePauseMode = 0; // 0: active ("after 4 min"), 1: paused until morning, 2: off
-    private int idleMinutes = 4;
+    private int idleMinutes = 0;
     private String idlePauseResult;
 
     // Noise meter
@@ -127,99 +142,151 @@ public final class Panel extends Activity {
     private final Runnable tick = new Runnable() {
         @Override
         public void run() {
+            if (!showing || closing) return;
             refresh();
             ui.postDelayed(this, TICK_MS);
         }
     };
 
-    @Override
-    protected void onCreate(Bundle state) {
-        super.onCreate(state);
-        activeInstance = this;
-        overridePendingTransition(0, 0);
-        SharedPreferences p = Tint.prefs(this);
-        accent = getIntent().getIntExtra(ACCENT, p.getInt(ACCENT, DEFAULT_ACCENT)) | 0xFF000000;
-        p.edit().putInt(ACCENT, accent).apply();
-        fromHome = "home".equals(getIntent().getStringExtra("from"));
-        idleMinutes = getIntent().getIntExtra("idle_minutes", 0);
-        initIdlePauseMode();
-
-        Tint.refresh(this);
+    public Panel(Context context, Handler ui, Video video) {
+        this.context = context;
+        this.ui = ui;
+        this.video = video;
+        this.wm = (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);
+        SharedPreferences p = Tint.prefs(context);
+        this.accent = p.getInt(ACCENT, DEFAULT_ACCENT) | 0xFF000000;
         build();
-        initBluetooth();
-        slide(true);
     }
 
-    /** The remote's settings button again while the panel shows (singleTop): close it. */
-    @Override
-    protected void onNewIntent(Intent intent) {
-        super.onNewIntent(intent);
-        close();
+    public void ignoreNextBack() {
+        ignoreBackUntil = SystemClock.uptimeMillis() + 600;
     }
 
-    @Override
-    protected void onResume() {
-        super.onResume();
+    public void show(Intent intent) {
+        SharedPreferences p = Tint.prefs(context);
+        int acc = p.getInt(ACCENT, DEFAULT_ACCENT);
+        String from = null;
+        String idlePause = null;
+        int idleMin = 0;
+        if (intent != null) {
+            acc = intent.getIntExtra(ACCENT, acc);
+            from = intent.getStringExtra("from");
+            idlePause = intent.getStringExtra("idle_pause");
+            idleMin = intent.getIntExtra("idle_minutes", 0);
+        }
+        show(acc, from, idlePause, idleMin);
+    }
+
+    public void show(int newAccent, String from, String idlePauseStr, int idleMin) {
+        if (closing) return;
         activeInstance = this;
+        this.accent = newAccent | 0xFF000000;
+        this.fromHome = "home".equals(from);
+        this.idleMinutes = idleMin;
+        initIdlePauseMode(idlePauseStr);
+
+        SharedPreferences p = Tint.prefs(context);
+        p.edit().putInt(ACCENT, accent).apply();
+
+        if (root == null) build();
+        applyAccent();
+        updateRowsVisibility();
+
+        if (!showing) {
+            WindowManager.LayoutParams lp = new WindowManager.LayoutParams(
+                    WindowManager.LayoutParams.MATCH_PARENT, WindowManager.LayoutParams.MATCH_PARENT,
+                    Build.VERSION.SDK_INT >= 26 ? TYPE_APPLICATION_OVERLAY : WindowManager.LayoutParams.TYPE_PHONE,
+                    WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN | WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
+                    PixelFormat.TRANSLUCENT);
+            lp.setTitle("dumbtv quick settings");
+            try {
+                wm.addView(root, lp);
+                showing = true;
+            } catch (RuntimeException e) {
+                Log.w(Tint.TAG, "quick settings: could not add overlay window", e);
+                showing = false;
+                return;
+            }
+        }
+
+        initBluetooth();
         refreshBluetoothDevices();
         refreshHealth();
+        refresh();
+
+        ui.removeCallbacks(tick);
         ui.post(tick);
+
         if (noise != null) {
-            noiseSampler.start(this, (fraction, db) -> {
-                if (noise != null) {
+            noiseSampler.start(context, (fraction, db) -> {
+                if (noise != null && showing && !closing) {
                     noise.bar.setValue(fraction);
-                    noise.value.setText(getString(R.string.noise_db, db));
+                    noise.value.setText(context.getString(R.string.noise_db, db));
                 }
             });
         }
+
+        slide(true);
     }
 
-    @Override
-    protected void onPause() {
+    public void close() {
+        if (!showing || closing) return;
+        closing = true;
         ui.removeCallbacks(tick);
         noiseSampler.stop();
-        super.onPause();
-    }
-
-    @Override
-    protected void onDestroy() {
-        if (activeInstance == this) activeInstance = null;
-        if (a2dp != null && a2dp != Tint.getA2dp()) {
-            BluetoothAdapter a = BluetoothAdapter.getDefaultAdapter();
-            if (a != null) a.closeProfileProxy(BluetoothProfile.A2DP, a2dp);
-        }
-        super.onDestroy();
-    }
-
-    @Override
-    public void finish() {
-        if (fromHome && idlePauseResult != null) {
-            Intent res = new Intent();
-            res.putExtra("idle_pause", idlePauseResult);
-            setResult(RESULT_OK, res);
-        }
-        super.finish();
-        overridePendingTransition(0, 0);
+        slide(false);
     }
 
     // ---- layout ----
 
     private void build() {
-        FrameLayout root = new FrameLayout(this);
-        scrim = new View(this);
+        root = new FrameLayout(context) {
+            @Override
+            public boolean dispatchKeyEvent(KeyEvent e) {
+                int code = e.getKeyCode();
+                boolean down = e.getAction() == KeyEvent.ACTION_DOWN;
+                switch (code) {
+                    case KeyEvent.KEYCODE_BACK:
+                        if (SystemClock.uptimeMillis() < ignoreBackUntil) {
+                            Log.i(Tint.TAG, "ignoring synthetic BACK during Amazon QS suppression");
+                            if (wm != null && root != null && root.isAttachedToWindow()) {
+                                try {
+                                    wm.updateViewLayout(root, root.getLayoutParams());
+                                } catch (Exception ignored) {}
+                                root.requestFocus();
+                            }
+                            return true;
+                        }
+                        if (down && e.getRepeatCount() == 0) close();
+                        return true;
+                    case KeyEvent.KEYCODE_MENU:
+                    case KeyEvent.KEYCODE_SETTINGS:
+                        if (down && e.getRepeatCount() == 0) close();
+                        return true;
+                    case KeyEvent.KEYCODE_DPAD_LEFT:
+                    case KeyEvent.KEYCODE_DPAD_RIGHT: {
+                        Row r = focusedRow();
+                        if (down && r != null && r.adjust != null) {
+                            r.adjust.by(code == KeyEvent.KEYCODE_DPAD_RIGHT ? 1 : -1);
+                        }
+                        return true;
+                    }
+                    default:
+                        return super.dispatchKeyEvent(e);
+                }
+            }
+        };
+        root.setFocusable(true);
+        root.setFocusableInTouchMode(true);
+
+        scrim = new View(context);
         scrim.setBackgroundColor(0x8C000000);
         scrim.setOnClickListener(v -> close());
         root.addView(scrim, new FrameLayout.LayoutParams(-1, -1));
 
-        sheet = new LinearLayout(this);
+        sheet = new LinearLayout(context);
         sheet.setOrientation(LinearLayout.VERTICAL);
         sheet.setPadding(dp(24), dp(24), dp(24), dp(20));
-        GradientDrawable bg = new GradientDrawable();
-        bg.setColor(blend(SURFACE, accent, 0.14f));
-        float r = dp(26);
-        bg.setCornerRadii(new float[] {r, r, 0, 0, 0, 0, r, r});
-        bg.setStroke(dp(1), (accent & 0x00FFFFFF) | 0x59000000);
-        sheet.setBackground(bg);
         sheet.setElevation(dp(16));
 
         TextView title = text(22, TEXT, LIGHT);
@@ -229,25 +296,25 @@ public final class Panel extends Activity {
         tl.leftMargin = dp(4);
         sheet.addView(title, tl);
 
-        scroller = new ScrollView(this);
+        scroller = new ScrollView(context);
         scroller.setVerticalScrollBarEnabled(false);
         scroller.setOverScrollMode(View.OVER_SCROLL_NEVER);
-        rowContainer = new LinearLayout(this);
+        rowContainer = new LinearLayout(context);
         rowContainer.setOrientation(LinearLayout.VERTICAL);
         scroller.addView(rowContainer, new ScrollView.LayoutParams(-1, -2));
         sheet.addView(scroller, new LinearLayout.LayoutParams(-1, 0, 1f));
 
-        // 1. Brightness with Dim after sunset
+        // 1. Brightness
         brightness = row(R.drawable.ic_brightness, R.string.brightness, true);
         brightness.adjust = this::stepBrightness;
         brightness.press = this::toggleBrightnessAuto;
 
-        // 2. Bluetooth reworked
+        // 2. Bluetooth
         bluetooth = row(R.drawable.ic_bluetooth, R.string.bluetooth, false);
         bluetooth.adjust = this::stepBluetooth;
         bluetooth.press = this::pressBluetooth;
 
-        // 3. AirPlay status + Make room
+        // 3. AirPlay
         airplay = row(R.drawable.ic_airplay, R.string.airplay, false);
         airplay.press = this::makeRoom;
 
@@ -255,23 +322,17 @@ public final class Panel extends Activity {
         pictureOff = row(R.drawable.ic_picture_off, R.string.picture_off, false);
         pictureOff.press = this::triggerPictureOff;
 
-        // 5. Filter + Wi-Fi status
+        // 5. Network
         network = row(R.drawable.ic_wifi, R.string.network, false);
         network.press = this::restartFilter;
 
-        // 6. TV Health check
-        // Only where the owner pushed an expected state (install.sh, from quick/expected.conf).
-        if (new File(Health.CONF_FILE).exists()) {
-            health = row(R.drawable.ic_health, R.string.health, false);
-            health.press = this::cycleHealthDetails;
-        }
+        // 6. TV Health
+        health = row(R.drawable.ic_health, R.string.health, false);
+        health.press = this::cycleHealthDetails;
 
-        // 7. Pause Chromecast switch (home only)
-        // Home passes idle_minutes only where it has idle_input (open an input when idle) set.
-        if (fromHome && idleMinutes > 0) {
-            idlePause = row(R.drawable.ic_pause, R.string.idle_pause, false);
-            idlePause.adjust = this::stepIdlePause;
-        }
+        // 7. Idle pause
+        idlePause = row(R.drawable.ic_pause, R.string.idle_pause, false);
+        idlePause.adjust = this::stepIdlePause;
 
         // 8. Warmth
         warmth = row(R.drawable.ic_warmth, R.string.warmth, true);
@@ -284,7 +345,7 @@ public final class Panel extends Activity {
         sleep.adjust = this::stepSleep;
 
         // 10. Noise meter
-        if (Noise.hasPermission(this) && Noise.builtInMic(this) != null) {
+        if (Noise.hasPermission(context) && Noise.builtInMic(context) != null) {
             noise = row(R.drawable.ic_mic, R.string.noise, true);
             noise.bar.setGradient(0xFF4CAF50, 0xFFFFEB3B, 0xFFF44336);
         }
@@ -293,13 +354,31 @@ public final class Panel extends Activity {
 
         FrameLayout.LayoutParams sl = new FrameLayout.LayoutParams(dp(WIDTH_DP), -1, Gravity.END);
         root.addView(sheet, sl);
-        setContentView(root);
-        for (Row row : rows) row.look(false);
-        brightness.requestFocus();
+        applyAccent();
+    }
+
+    private void applyAccent() {
+        if (sheet == null) return;
+        GradientDrawable bg = new GradientDrawable();
+        bg.setColor(blend(SURFACE, accent, 0.14f));
+        float r = dp(26);
+        bg.setCornerRadii(new float[] {r, r, 0, 0, 0, 0, r, r});
+        bg.setStroke(dp(1), (accent & 0x00FFFFFF) | 0x59000000);
+        sheet.setBackground(bg);
+        for (Row row : rows) row.look(row.isFocused());
+    }
+
+    private void updateRowsVisibility() {
+        if (health != null) {
+            health.setVisibility(new File(Health.CONF_FILE).exists() ? View.VISIBLE : View.GONE);
+        }
+        if (idlePause != null) {
+            idlePause.setVisibility(fromHome && idleMinutes > 0 ? View.VISIBLE : View.GONE);
+        }
     }
 
     private LinearLayout footer() {
-        LinearLayout f = new LinearLayout(this);
+        LinearLayout f = new LinearLayout(context);
         f.setOrientation(LinearLayout.HORIZONTAL);
         TextView[] when = cell(f, 0);
         clock = when[0];
@@ -308,13 +387,13 @@ public final class Panel extends Activity {
         ram = mem[0];
         mem[1].setText(R.string.ram);
         TextView[] vid = cell(f, dp(8));
-        video = vid[0];
+        videoText = vid[0];
         videoSub = vid[1];
         return f;
     }
 
     private TextView[] cell(LinearLayout parent, int gap) {
-        LinearLayout c = new LinearLayout(this);
+        LinearLayout c = new LinearLayout(context);
         c.setOrientation(LinearLayout.VERTICAL);
         c.setGravity(Gravity.CENTER);
         c.setPadding(dp(6), dp(10), dp(6), dp(10));
@@ -345,7 +424,7 @@ public final class Panel extends Activity {
     }
 
     private final class Row extends LinearLayout {
-        final ImageView icon = new ImageView(Panel.this);
+        final ImageView icon = new ImageView(context);
         final TextView label = text(15, TEXT, MEDIUM);
         final TextView value = text(14, TEXT, MEDIUM);
         final TextView sub = text(12, MUTED, Typeface.DEFAULT);
@@ -354,11 +433,11 @@ public final class Panel extends Activity {
         Runnable press;
 
         Row(int iconRes, int labelRes, boolean withBar) {
-            super(Panel.this);
+            super(context);
             setOrientation(VERTICAL);
             setFocusable(true);
             setPadding(dp(16), dp(12), dp(16), dp(12));
-            LinearLayout head = new LinearLayout(Panel.this);
+            LinearLayout head = new LinearLayout(context);
             head.setGravity(Gravity.CENTER_VERTICAL);
             icon.setImageResource(iconRes);
             head.addView(icon, new LayoutParams(dp(20), dp(20)));
@@ -371,7 +450,7 @@ public final class Panel extends Activity {
             head.addView(value, new LayoutParams(-2, -2));
             addView(head, new LayoutParams(-1, -2));
             if (withBar) {
-                bar = new Bar(Panel.this);
+                bar = new Bar(context);
                 LayoutParams bl = new LayoutParams(-1, dp(6));
                 bl.topMargin = dp(9);
                 addView(bar, bl);
@@ -407,33 +486,9 @@ public final class Panel extends Activity {
         void by(int direction);
     }
 
-    // ---- keys ----
-
-    @Override
-    public boolean dispatchKeyEvent(KeyEvent e) {
-        int code = e.getKeyCode();
-        boolean down = e.getAction() == KeyEvent.ACTION_DOWN;
-        switch (code) {
-            case KeyEvent.KEYCODE_BACK:
-            case KeyEvent.KEYCODE_MENU:
-            case KeyEvent.KEYCODE_SETTINGS:
-                if (down && e.getRepeatCount() == 0) close();
-                return true;
-            case KeyEvent.KEYCODE_DPAD_LEFT:
-            case KeyEvent.KEYCODE_DPAD_RIGHT: {
-                Row r = focusedRow();
-                if (down && r != null && r.adjust != null) {
-                    r.adjust.by(code == KeyEvent.KEYCODE_DPAD_RIGHT ? 1 : -1);
-                }
-                return true;
-            }
-            default:
-                return super.dispatchKeyEvent(e);
-        }
-    }
-
     private Row focusedRow() {
-        View f = getCurrentFocus();
+        if (root == null) return null;
+        View f = root.findFocus();
         return f instanceof Row ? (Row) f : null;
     }
 
@@ -446,13 +501,25 @@ public final class Panel extends Activity {
         }
         scrim.animate().alpha(in ? 1f : 0f).setDuration(in ? 140 : 110).setInterpolator(ease).start();
         sheet.animate().translationX(in ? 0 : w).setDuration(in ? 140 : 110).setInterpolator(ease)
-                .withEndAction(in ? null : this::finish).start();
+                .withEndAction(in ? () -> {
+                    if (brightness != null) brightness.requestFocus();
+                } : this::onClosed).start();
     }
 
-    private void close() {
-        if (closing) return;
-        closing = true;
-        slide(false);
+    private void onClosed() {
+        showing = false;
+        closing = false;
+        if (activeInstance == this) activeInstance = null;
+        if (wm != null && root != null && root.isAttachedToWindow()) {
+            try {
+                wm.removeView(root);
+            } catch (RuntimeException ignored) {}
+        }
+        if (fromHome && idlePauseResult != null) {
+            Intent res = new Intent("tv.dumbtv.home.SET_IDLE_PAUSE").setPackage("tv.dumbtv.home");
+            res.putExtra("idle_pause", idlePauseResult);
+            context.sendBroadcast(res);
+        }
     }
 
     // ---- row logic ----
@@ -464,7 +531,7 @@ public final class Panel extends Activity {
         showPictureOff();
         showNetwork();
         showHealth();
-        if (idlePause != null) showIdlePause();
+        if (idlePause != null && idlePause.getVisibility() == View.VISIBLE) showIdlePause();
         showWarmth();
         showSleep();
         showStatus();
@@ -472,37 +539,37 @@ public final class Panel extends Activity {
 
     // 1. Brightness
     private void showBrightness() {
-        int p = Math.round(Backlight.get(this) * 100f / 255f);
-        brightness.value.setText(getString(R.string.percent, p));
+        int p = Math.round(Backlight.get(context) * 100f / 255f);
+        brightness.value.setText(context.getString(R.string.percent, p));
         brightness.bar.setValue(p / 100f);
-        boolean can = Settings.System.canWrite(this);
+        boolean can = Settings.System.canWrite(context);
         if (!can) {
             brightness.sub.setText(R.string.needs_install);
-        } else if (Backlight.isAuto(this)) {
-            int nightP = Math.round(Backlight.nightLevel(this) * 100f / 255f);
-            brightness.sub.setText(getString(R.string.brightness_auto, nightP));
+        } else if (Backlight.isAuto(context)) {
+            int nightP = Math.round(Backlight.nightLevel(context) * 100f / 255f);
+            brightness.sub.setText(context.getString(R.string.brightness_auto, nightP));
         } else {
             brightness.sub.setText(R.string.brightness_hint);
         }
     }
 
     private void stepBrightness(int dir) {
-        if (!Settings.System.canWrite(this)) return;
-        boolean atNight = Backlight.isAuto(this) && Backlight.isNight();
-        int current = atNight ? Backlight.nightLevel(this) : Backlight.dayLevel(this);
+        if (!Settings.System.canWrite(context)) return;
+        boolean atNight = Backlight.isAuto(context) && Backlight.isNight();
+        int current = atNight ? Backlight.nightLevel(context) : Backlight.dayLevel(context);
         int p = Math.round(current * 100f / 255f / BRIGHTNESS_STEP) * BRIGHTNESS_STEP + dir * BRIGHTNESS_STEP;
         p = Math.max(BRIGHTNESS_MIN, Math.min(100, p));
-        Backlight.set(this, Math.round(p * 255f / 100f));
+        Backlight.set(context, Math.round(p * 255f / 100f));
         showBrightness();
     }
 
     private void toggleBrightnessAuto() {
-        if (!Settings.System.canWrite(this)) return;
-        Backlight.setAuto(this, !Backlight.isAuto(this));
+        if (!Settings.System.canWrite(context)) return;
+        Backlight.setAuto(context, !Backlight.isAuto(context));
         showBrightness();
     }
 
-    // 2. Bluetooth reworked
+    // 2. Bluetooth
     private void initBluetooth() {
         BluetoothA2dp shared = Tint.getA2dp();
         if (shared != null) {
@@ -513,7 +580,7 @@ public final class Panel extends Activity {
         }
         BluetoothAdapter a = BluetoothAdapter.getDefaultAdapter();
         if (a != null && a.isEnabled()) {
-            a.getProfileProxy(this, btListener, BluetoothProfile.A2DP);
+            a.getProfileProxy(context, btListener, BluetoothProfile.A2DP);
         }
     }
 
@@ -522,7 +589,6 @@ public final class Panel extends Activity {
         BluetoothAdapter a = BluetoothAdapter.getDefaultAdapter();
         if (a != null && a.isEnabled()) {
             Set<BluetoothDevice> bonded = a.getBondedDevices();
-            // Audio devices only: the remote and game controllers are bonded too.
             if (bonded != null) {
                 for (BluetoothDevice d : bonded) {
                     BluetoothClass k = d.getBluetoothClass();
@@ -560,7 +626,7 @@ public final class Panel extends Activity {
         int state = a2dp != null ? a2dp.getConnectionState(d) : BluetoothProfile.STATE_DISCONNECTED;
         if (state == BluetoothProfile.STATE_CONNECTED) {
             int battery = getBatteryLevel(d);
-            bluetooth.sub.setText(battery >= 0 ? getString(R.string.bt_connected_battery, battery) : getString(R.string.bt_connected));
+            bluetooth.sub.setText(battery >= 0 ? context.getString(R.string.bt_connected_battery, battery) : context.getString(R.string.bt_connected));
         } else if (state == BluetoothProfile.STATE_CONNECTING) {
             bluetooth.sub.setText(R.string.bt_connecting);
         } else if (state == BluetoothProfile.STATE_DISCONNECTING) {
@@ -571,7 +637,7 @@ public final class Panel extends Activity {
     }
 
     private void stepBluetooth(int dir) {
-        int total = pairedDevices.size() + 1; // devices + settings
+        int total = pairedDevices.size() + 1;
         btTargetIndex = (btTargetIndex + dir + total) % total;
         showBluetooth();
     }
@@ -614,7 +680,7 @@ public final class Panel extends Activity {
         };
         for (Intent i : tries) {
             try {
-                startActivity(i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+                context.startActivity(i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
                 return;
             } catch (ActivityNotFoundException | SecurityException ignored) {}
         }
@@ -636,11 +702,11 @@ public final class Panel extends Activity {
     }
 
     private void makeRoom() {
-        Tint.makeRoom(this);
+        Tint.makeRoom(context);
         ActivityManager.MemoryInfo mi = new ActivityManager.MemoryInfo();
-        ((ActivityManager) getSystemService(ACTIVITY_SERVICE)).getMemoryInfo(mi);
+        ((ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE)).getMemoryInfo(mi);
         String free = String.format(Locale.US, "%.1f GB", mi.availMem / 1e9);
-        airplay.sub.setText(getString(R.string.airplay_room_made, free));
+        airplay.sub.setText(context.getString(R.string.airplay_room_made, free));
     }
 
     // 4. Picture off
@@ -650,18 +716,18 @@ public final class Panel extends Activity {
     }
 
     private void triggerPictureOff() {
-        Tint.setPictureOff(this, true);
+        Tint.setPictureOff(context, true);
         close();
     }
 
     // 5. Network (Filter + Wi-Fi)
     private void showNetwork() {
         network.value.setText("›");
-        network.sub.setText(Network.glance(this));
+        network.sub.setText(Network.glance(context));
     }
 
     private void restartFilter() {
-        Network.restartFilter(this);
+        Network.restartFilter(context);
         ui.postDelayed(this::showNetwork, 1000);
     }
 
@@ -678,7 +744,7 @@ public final class Panel extends Activity {
         new Thread(() -> {
             File conf = new File(Health.CONF_FILE);
             if (!conf.exists()) {
-                updateHealthIssues(Collections.singletonList(getString(R.string.health_no_conf)));
+                updateHealthIssues(Collections.singletonList(context.getString(R.string.health_no_conf)));
                 return;
             }
             Health.Expected exp = Health.loadExpected(conf);
@@ -688,9 +754,9 @@ public final class Panel extends Activity {
             }
             Health.Actual act = new Health.Actual();
             act.build = Build.DISPLAY != null ? Build.DISPLAY : Build.ID;
-            act.accessibility = Settings.Secure.getString(getContentResolver(), Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES);
+            act.accessibility = Settings.Secure.getString(context.getContentResolver(), Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES);
 
-            PackageManager pm = getPackageManager();
+            PackageManager pm = context.getPackageManager();
             for (String pkg : exp.disabledPackages) {
                 try {
                     ApplicationInfo info = pm.getApplicationInfo(pkg, 0);
@@ -729,10 +795,10 @@ public final class Panel extends Activity {
             name = key.substring(sep + 1);
         }
         switch (ns) {
-            case "global": return Settings.Global.getString(getContentResolver(), name);
-            case "system": return Settings.System.getString(getContentResolver(), name);
+            case "global": return Settings.Global.getString(context.getContentResolver(), name);
+            case "system": return Settings.System.getString(context.getContentResolver(), name);
             case "secure":
-            default: return Settings.Secure.getString(getContentResolver(), name);
+            default: return Settings.Secure.getString(context.getContentResolver(), name);
         }
     }
 
@@ -756,8 +822,7 @@ public final class Panel extends Activity {
     }
 
     // 7. Idle Pause (Home only)
-    private void initIdlePauseMode() {
-        String p = getIntent().getStringExtra("idle_pause");
+    private void initIdlePauseMode(String p) {
         if ("off".equalsIgnoreCase(p)) {
             idlePauseMode = 2;
         } else if (p != null && !p.isEmpty() && !"0".equals(p)) {
@@ -770,8 +835,6 @@ public final class Panel extends Activity {
         } else {
             idlePauseMode = 0;
         }
-        // No result until the owner steps the row: home keeps what it has (a reopen at night
-        // must not move "until morning" a day further).
         idlePauseResult = null;
     }
 
@@ -785,7 +848,6 @@ public final class Panel extends Activity {
         if (idlePauseMode == 0) {
             idlePauseResult = "0";
         } else if (idlePauseMode == 1) {
-            // The next 06:00: today's if it is still before it.
             Calendar c = Calendar.getInstance();
             c.set(Calendar.HOUR_OF_DAY, 6);
             c.set(Calendar.MINUTE, 0);
@@ -800,7 +862,7 @@ public final class Panel extends Activity {
 
     private void showIdlePause() {
         if (idlePauseMode == 0) {
-            idlePause.value.setText(getString(R.string.idle_pause_active, idleMinutes));
+            idlePause.value.setText(context.getString(R.string.idle_pause_active, idleMinutes));
             idlePause.sub.setText("Switches to Chromecast when idle");
         } else if (idlePauseMode == 1) {
             idlePause.value.setText(R.string.idle_pause_morning);
@@ -813,14 +875,14 @@ public final class Panel extends Activity {
 
     // 8. Warmth
     private void showWarmth() {
-        SharedPreferences p = Tint.prefs(this);
+        SharedPreferences p = Tint.prefs(context);
         int level = p.getInt(Tint.WARMTH, 0);
         boolean auto = p.getBoolean(Tint.AUTO, false);
-        warmth.value.setText(level == 0 ? getString(R.string.off) : getString(R.string.percent, level * 100 / Tint.STEPS));
+        warmth.value.setText(level == 0 ? context.getString(R.string.off) : context.getString(R.string.percent, level * 100 / Tint.STEPS));
         warmth.bar.setValue(level / (float) Tint.STEPS);
         String sub;
-        if (!Settings.canDrawOverlays(this)) {
-            sub = getString(R.string.needs_install);
+        if (!Settings.canDrawOverlays(context)) {
+            sub = context.getString(R.string.needs_install);
         } else if (auto) {
             long now = System.currentTimeMillis();
             TimeZone tz = TimeZone.getDefault();
@@ -828,48 +890,48 @@ public final class Panel extends Activity {
             double[] today = Sun.times(now, tz, at[0], at[1]);
             boolean night = Sun.night(now, tz, at[0], at[1]) > 0;
             if (Double.isNaN(today[0])) {
-                sub = getString(R.string.warmth_auto);
+                sub = context.getString(R.string.warmth_auto);
             } else if (night) {
                 double rise = now < today[0] ? today[0] : Sun.times(now + 86400000L, tz, at[0], at[1])[0];
-                sub = getString(R.string.warmth_auto_until, hm((long) rise));
+                sub = context.getString(R.string.warmth_auto_until, hm((long) rise));
             } else {
-                sub = getString(R.string.warmth_auto_from, hm((long) today[1]));
+                sub = context.getString(R.string.warmth_auto_from, hm((long) today[1]));
             }
         } else {
-            sub = getString(level == 0 ? R.string.warmth_hint : R.string.warmth_always);
+            sub = context.getString(level == 0 ? R.string.warmth_hint : R.string.warmth_always);
         }
         warmth.sub.setText(sub);
     }
 
     private void stepWarmth(int dir) {
-        SharedPreferences p = Tint.prefs(this);
+        SharedPreferences p = Tint.prefs(context);
         int level = Math.max(0, Math.min(Tint.STEPS, p.getInt(Tint.WARMTH, 0) + dir));
         p.edit().putInt(Tint.WARMTH, level).apply();
-        Tint.refresh(this);
+        Tint.refresh(context);
         showWarmth();
     }
 
     private void toggleWarmthAuto() {
-        SharedPreferences p = Tint.prefs(this);
+        SharedPreferences p = Tint.prefs(context);
         boolean auto = !p.getBoolean(Tint.AUTO, false);
         SharedPreferences.Editor e = p.edit().putBoolean(Tint.AUTO, auto);
         if (auto && p.getInt(Tint.WARMTH, 0) == 0) e.putInt(Tint.WARMTH, Tint.STEPS / 2);
         e.apply();
-        Tint.refresh(this);
+        Tint.refresh(context);
         showWarmth();
     }
 
     // 9. Sleep
     private void showSleep() {
-        int left = Sleep.minutesLeft(this);
-        sleep.value.setText(left == 0 ? getString(R.string.off) : getString(R.string.minutes, left));
-        if (!Sleep.canSleep(this)) sleep.sub.setText(R.string.needs_install);
+        int left = Sleep.minutesLeft(context);
+        sleep.value.setText(left == 0 ? context.getString(R.string.off) : context.getString(R.string.minutes, left));
+        if (!Sleep.canSleep(context)) sleep.sub.setText(R.string.needs_install);
         else if (left == 0) sleep.sub.setText(R.string.sleep_hint);
-        else sleep.sub.setText(getString(R.string.sleep_at, hm(Sleep.at(this))));
+        else sleep.sub.setText(context.getString(R.string.sleep_at, hm(Sleep.at(context))));
     }
 
     private void stepSleep(int dir) {
-        Sleep.set(this, Sleep.step(Sleep.minutesLeft(this), dir));
+        Sleep.set(context, Sleep.step(Sleep.minutesLeft(context), dir));
         showSleep();
     }
 
@@ -881,17 +943,17 @@ public final class Panel extends Activity {
         date.setText(new SimpleDateFormat("EEE MM-dd", Locale.getDefault()).format(now));
 
         ActivityManager.MemoryInfo mi = new ActivityManager.MemoryInfo();
-        ((ActivityManager) getSystemService(ACTIVITY_SERVICE)).getMemoryInfo(mi);
+        ((ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE)).getMemoryInfo(mi);
         ram.setText(String.format(Locale.US, "%.1f/%.1f", (mi.totalMem - mi.availMem) / 1e9, mi.totalMem / 1e9));
 
-        Video.Format f = fromHome ? null : Tint.video.current(true);
+        Video.Format f = fromHome ? null : video.current(true);
         if (f != null) {
-            video.setText(f.resolution());
-            videoSub.setText(getString(f.srcType == Video.SRC_HDMI ? R.string.video_hdmi : R.string.video_app, f.range()));
+            videoText.setText(f.resolution());
+            videoSub.setText(context.getString(f.srcType == Video.SRC_HDMI ? R.string.video_hdmi : R.string.video_app, f.range()));
         } else {
-            Display.Mode m = getWindowManager().getDefaultDisplay().getMode();
+            Display.Mode m = wm.getDefaultDisplay().getMode();
             int h = Math.min(m.getPhysicalWidth(), m.getPhysicalHeight());
-            video.setText((h >= 2100 ? "4K" : h + "p") + Math.round(m.getRefreshRate()));
+            videoText.setText((h >= 2100 ? "4K" : h + "p") + Math.round(m.getRefreshRate()));
             videoSub.setText(R.string.video_panel);
         }
     }
@@ -903,7 +965,7 @@ public final class Panel extends Activity {
     }
 
     private TextView text(float sp, int color, Typeface face) {
-        TextView v = new TextView(this);
+        TextView v = new TextView(context);
         v.setTextSize(TypedValue.COMPLEX_UNIT_SP, sp);
         v.setTextColor(color);
         v.setTypeface(face);
@@ -929,6 +991,6 @@ public final class Panel extends Activity {
     }
 
     private int dp(float v) {
-        return Math.round(v * getResources().getDisplayMetrics().density);
+        return Math.round(v * context.getResources().getDisplayMetrics().density);
     }
 }

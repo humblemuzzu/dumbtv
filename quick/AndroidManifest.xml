@@ -32,11 +32,10 @@
         android:allowBackup="false">
 
         <activity
-            android:name=".Panel"
+            android:name=".PanelActivity"
             android:exported="true"
             android:excludeFromRecents="true"
-            android:launchMode="singleTop"
-            android:noHistory="false"
+            android:noHistory="true"
             android:theme="@android:style/Theme.Translucent.NoTitleBar.Fullscreen"
             android:screenOrientation="landscape"
             android:configChanges="keyboard|keyboardHidden|navigation|orientation|screenSize|screenLayout|uiMode">
