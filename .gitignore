@@ -4,9 +4,9 @@ report/
 *.dumbtv
 dumbtv.conf
 launcher/build/
-quick/build/
 launcher/*.keystore
 video/
 __pycache__/
 *.pyc
+quick/build/
 quick/expected.conf

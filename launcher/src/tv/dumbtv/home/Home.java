@@ -62,12 +62,12 @@ public final class Home extends Activity {
     private final ExecutorService colorIo = Executors.newSingleThreadExecutor();
     private final List<TextView> chips = new ArrayList<>();
     private Config cfg;
+    /** The resumed home screen, for {@link #openQuick}; null while another screen is in front. */
+    private static Home front;
     private TvInputManager tv;
     private int applied = -1, appsGeneration;
     /** Whether the home screen is the resumed activity; Guard reads it on the same main thread. */
     static boolean inFront;
-    /** The resumed home screen, for {@link #openQuick}; null while another screen is in front. */
-    private static Home front;
     private boolean resumed, landed, unlockOpened;
     private String lastFocusedKind;
     private final Map<String, String> lastIds = new HashMap<>();
@@ -344,11 +344,11 @@ public final class Home extends Activity {
         super.onPause();
         resumed = false;
         inFront = false;
-        if (front == this) front = null;
         hero.stop();
         stopColorAnimation();
         targetColor = 0;
         unregisterReceiver(time);
+        if (front == this) front = null;
         if (moving != null) stopMoving();
     }
 
