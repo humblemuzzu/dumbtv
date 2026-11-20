@@ -9,3 +9,4 @@ launcher/*.keystore
 video/
 __pycache__/
 *.pyc
+quick/expected.conf

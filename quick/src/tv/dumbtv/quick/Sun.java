@@ -129,6 +129,15 @@ final class Sun {
         return 0f;
     }
 
+    /**
+     * Blends between {@code day} and {@code night} brightness levels (0-255) using
+     * {@code nightFactor} (0.0 by day to 1.0 at night).
+     */
+    static int blend(int day, int night, float nightFactor) {
+        float f = Math.max(0f, Math.min(1f, nightFactor));
+        return Math.round(day + (night - day) * f);
+    }
+
     private static boolean isNorthernWinter(long now, TimeZone tz) {
         Calendar c = Calendar.getInstance(tz);
         c.setTimeInMillis(now);

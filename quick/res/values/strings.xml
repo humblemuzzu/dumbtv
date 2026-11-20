@@ -2,21 +2,60 @@
 <resources>
     <string name="app_name">dumbtv quick settings</string>
     <string name="title">Quick settings</string>
+
     <string name="brightness">Brightness</string>
-    <string name="brightness_hint">Backlight</string>
+    <string name="brightness_hint">Backlight · OK: dim after sunset</string>
+    <string name="brightness_auto">After sunset · %1$d%%</string>
+
     <string name="bluetooth">Bluetooth</string>
     <string name="bt_off">Off</string>
     <string name="bt_none">Not available</string>
-    <string name="bt_no_audio">No audio device connected</string>
+    <string name="bt_no_audio">No audio device</string>
+    <string name="bt_settings">Settings…</string>
+    <string name="bt_connected">Connected</string>
+    <string name="bt_connected_battery">Connected · %1$d%%</string>
+    <string name="bt_disconnected">Disconnected</string>
+    <string name="bt_connecting">Connecting…</string>
+    <string name="bt_disconnecting">Disconnecting…</string>
+    <string name="bt_settings_hint">OK opens Bluetooth settings</string>
+
+    <string name="airplay">AirPlay</string>
+    <string name="airplay_ready">Ready</string>
+    <string name="airplay_in_use">In use</string>
+    <string name="airplay_broken">Macs can\'t see the TV, restart it</string>
+    <string name="airplay_room_made">Made room · %1$s RAM free</string>
+
+    <string name="picture_off">Picture off</string>
+    <string name="picture_off_hint">OK: sound plays, key restores picture</string>
+
+    <string name="network">Network</string>
+    <string name="filter_on">Filter on</string>
+    <string name="filter_off">Filter off</string>
+
+    <string name="health">TV health</string>
+    <string name="health_ok">All as set</string>
+    <string name="health_no_conf">No expected.conf file</string>
+
+    <string name="idle_pause">Auto-switch</string>
+    <string name="idle_pause_active">After %1$d min</string>
+    <string name="idle_pause_morning">Paused until morning</string>
+    <string name="idle_pause_off">Off</string>
+
+    <string name="noise">Noise level</string>
+    <string name="noise_db">%1$d dB</string>
+    <string name="noise_no_mic">No microphone</string>
+
     <string name="warmth">Warmth</string>
     <string name="warmth_hint">OK: warm after sunset</string>
     <string name="warmth_always">Always on · OK: after sunset only</string>
     <string name="warmth_auto">After sunset</string>
     <string name="warmth_auto_from">After sunset · from %1$s</string>
     <string name="warmth_auto_until">After sunset · on until %1$s</string>
+
     <string name="sleep">Sleep timer</string>
     <string name="sleep_hint">Left and right: 15 minutes</string>
     <string name="sleep_at">TV turns off at %1$s</string>
+
     <string name="off">Off</string>
     <string name="percent">%1$d%%</string>
     <string name="minutes">%1$d min</string>

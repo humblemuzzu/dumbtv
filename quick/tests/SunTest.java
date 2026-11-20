@@ -56,6 +56,14 @@ public final class SunTest {
         TimeZone oslo = TimeZone.getTimeZone("Europe/Oslo");
         check(Sun.night(at(oslo, 2026, 12, 21, 12, 0), oslo, 69.6, 18.9) == 1f, "polar night");
         check(Sun.night(at(oslo, 2026, 6, 21, 23, 0), oslo, 69.6, 18.9) == 0f, "midnight sun");
+
+        // Dim blend between day and night brightness levels
+        check(Sun.blend(200, 100, 0f) == 200, "blend day factor 0");
+        check(Sun.blend(200, 100, 1f) == 100, "blend night factor 1");
+        check(Sun.blend(200, 100, 0.5f) == 150, "blend half factor");
+        check(Sun.blend(200, 100, -0.2f) == 200, "clamp lower bound");
+        check(Sun.blend(200, 100, 1.5f) == 100, "clamp upper bound");
+
         System.out.println("SunTest ok");
     }
 }
