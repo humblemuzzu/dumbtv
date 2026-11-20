@@ -819,7 +819,7 @@ public final class Home extends Activity {
         int accent = cfg.accent();
         boolean icons = iconChips();
         for (TextView c : chips) {
-            Ui.focusStyle(c, accent, 0x14FFFFFF, dp(icons ? 21 : 18));
+            Ui.focusStyle(c, accent, Ui.CHIP_IDLE, dp(icons ? 21 : 18));
             int[] art = (int[]) c.getTag();
             c.setCompoundDrawablesRelative(icons ? Ui.chipIcon(getDrawable(art[0]), getDrawable(art[1]),
                     accent, dp(22)) : null, null, null, null);

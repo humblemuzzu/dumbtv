@@ -31,6 +31,9 @@ final class Tile extends View {
     private final Paint dot = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final TextPaint inner = new TextPaint(Paint.ANTI_ALIAS_FLAG);
     private final TextPaint under = new TextPaint(Paint.ANTI_ALIAS_FLAG);
+    /** Inputs wear the corner chips' look: a faint see-through fill, the accent fill on focus. */
+    private final boolean chip;
+    private final int accent;
     private boolean moving;
     private final AfterglowTile afterglow;
 
@@ -51,7 +54,9 @@ final class Tile extends View {
         radius = Ui.dp(c, 10);
         stroke = Ui.dp(c, afterglow == null ? 2.5f : 1f);
 
-        fill.setColor(app ? Ui.SURFACE : 0xFF17181B);
+        chip = !app;
+        this.accent = accent;
+        fill.setColor(app ? Ui.SURFACE : Ui.CHIP_IDLE);
         ring.setStyle(Paint.Style.STROKE);
         ring.setStrokeWidth(stroke);
         ring.setColor(accent);
@@ -107,6 +112,11 @@ final class Tile extends View {
     @Override
     protected void onDraw(Canvas canvas) {
         Drawable banner = item.banner, icon = item.icon;
+        if (chip) {
+            boolean on = isFocused() && !moving;
+            fill.setColor(on ? accent : Ui.CHIP_IDLE);
+            inner.setColor(on ? Ui.ink(accent) : Ui.CHIP_TEXT);
+        }
         canvas.save();
         canvas.clipPath(clip);
         canvas.drawRect(card, fill);
@@ -133,7 +143,7 @@ final class Tile extends View {
             float r = Ui.dp(getContext(), 3.5f);
             canvas.drawCircle(cardW - r * 3, r * 3, r, dot);
         }
-        if (isFocused() || moving) {
+        if (moving || isFocused() && !chip) {
             float half = stroke / 2;
             ring.setPathEffect(moving ? new DashPathEffect(new float[] {stroke * 3, stroke * 2}, 0) : null);
             canvas.drawRoundRect(half, half, cardW - half, cardH - half, radius - half, radius - half, ring);
