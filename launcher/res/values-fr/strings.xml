@@ -145,4 +145,7 @@
     <string name="choice_library">Bannières de bibliothèque</string>
     <string name="choice_library_on">Affichées</string>
     <string name="choice_library_off">Masquées</string>
+    <string name="choice_quick">Panneau de réglages rapides</string>
+    <string name="choice_quick_on">Activé</string>
+    <string name="choice_quick_off">Désactivé</string>
 </resources>

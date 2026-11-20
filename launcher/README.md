@@ -48,7 +48,7 @@ Undo: `./launcher/install.sh --undo` gives HOME back to Amazon's launcher.
 | Up from the top row | Options and Settings |
 | Back on the home screen | jump to the first tile |
 | On an input: Back | back to the home screen |
-| Settings (the cog) | the quick settings panel when [dumbtv quick settings](../quick/README.md) is installed, otherwise the TV's settings |
+| Settings (the cog) | the TV's settings. The settings button on the remote opens [dumbtv quick settings](../quick/README.md) where it is installed (Options › Quick settings panel, on by default) |
 | On an input: ☰ Menu | the quick settings panel when it is installed (and Child lock is off), otherwise the input's name again |
 | Hold HOME | Fire OS quick menu (Amazon's, unchanged) |
 
@@ -242,6 +242,8 @@ dim=40
 rotate=off
 # off on
 lock=off
+# on off: the remote's settings button opens dumbtv quick settings, where it is installed
+quick=on
 # off, or an installed icon pack's package
 icon_pack=off
 icon.com.stremio.one=com.example.iconpack/stremio

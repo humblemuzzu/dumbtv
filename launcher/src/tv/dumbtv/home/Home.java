@@ -66,6 +66,8 @@ public final class Home extends Activity {
     private int applied = -1, appsGeneration;
     /** Whether the home screen is the resumed activity; Guard reads it on the same main thread. */
     static boolean inFront;
+    /** The resumed home screen, for {@link #openQuick}; null while another screen is in front. */
+    private static Home front;
     private boolean resumed, landed, unlockOpened;
     private String lastFocusedKind;
     private final Map<String, String> lastIds = new HashMap<>();
@@ -315,6 +317,7 @@ public final class Home extends Activity {
         super.onResume();
         resumed = true;
         inFront = true;
+        front = this;
         Guard.arrived(this);
         Filter.wake(this);
         cfg.refresh();
@@ -341,6 +344,7 @@ public final class Home extends Activity {
         super.onPause();
         resumed = false;
         inFront = false;
+        if (front == this) front = null;
         hero.stop();
         stopColorAnimation();
         targetColor = 0;
@@ -1239,12 +1243,36 @@ public final class Home extends Activity {
     }
 
     /**
+     * The remote's settings button, from {@link Guard} while this screen is in front: the quick
+     * settings panel, started for a result so its Auto-switch row can pause {@code idle_input}
+     * where home has it. Returns false when the panel is off, not installed, or home is locked.
+     */
+    static boolean openQuick() {
+        Home h = front;
+        if (h == null || !Quick.enabled(h, h.cfg)) return false;
+        int idleMin = 0;
+        try {
+            idleMin = Integer.parseInt(h.cfg.get("idle_input", "0").trim());
+        } catch (NumberFormatException ignored) {
+        }
+        return Quick.open(h, h.cfg.accent(), "home", h.cfg.get(Quick.CONF_IDLE_PAUSE, null), idleMin);
+    }
+
+    /** The panel's Auto-switch row changed: keep it; onResume, next, reschedules the idle switch. */
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode != Quick.REQUEST_CODE || resultCode != RESULT_OK || data == null) return;
+        String paused = data.getStringExtra(Quick.EXTRA_IDLE_PAUSE);
+        if (paused != null) cfg.set(Quick.CONF_IDLE_PAUSE, "0".equals(paused) ? null : paused);
+    }
+
+    /**
      * Fire OS answers the generic settings action with a stub that reopens Amazon's home, which
      * Guard then replaces with ours. The TV settings entry point opens the real settings screen,
      * except on Fire OS 6, where that page draws off the top of the screen: see FireSettings.
      */
     private void openSettings() {
-        if (Quick.open(this, cfg.accent(), "home")) return;
         Intent tvSettings = new Intent(Intent.ACTION_MAIN)
                 .addCategory("android.intent.category.LEANBACK_SETTINGS");
         if (FireSettings.applies(getPackageManager(), tvSettings)) {
