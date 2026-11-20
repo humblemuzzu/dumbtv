@@ -363,7 +363,7 @@ runs only while the home screen is in front and holds still when animations are 
 `background=video` loops `background.mp4` from the settings folder, muted, behind the
 rows. It plays only while the home screen is in front (the decoder is free for whatever
 opens next) and resumes where it stopped. Use 1080p H.264 High@4.1: an x265 HEVC
-encode decoded no frames on a Fire OS 7 MediaTek TV. `dim` applies.
+encode decoded no frames on a Fire OS 8 MediaTek TV (AFTHY7ABBA). `dim` applies.
 
 ```sh
 adb push loop.mp4 /sdcard/Android/media/tv.dumbtv.home/background.mp4
