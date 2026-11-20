@@ -95,6 +95,7 @@ public final class Panel {
     private final List<Row> rows = new ArrayList<>();
 
     private FrameLayout root;
+    private WindowManager.LayoutParams lp;
     private View scrim;
     private LinearLayout sheet, rowContainer;
     private ScrollView scroller;
@@ -160,6 +161,20 @@ public final class Panel {
 
     public void ignoreNextBack() {
         ignoreBackUntil = SystemClock.uptimeMillis() + 600;
+        bringToTop();
+    }
+
+    public void bringToTop() {
+        ui.post(() -> {
+            if (wm != null && root != null && root.isAttachedToWindow() && showing && !closing) {
+                try {
+                    wm.removeView(root);
+                    wm.addView(root, lp);
+                    if (brightness != null) brightness.requestFocus();
+                    else root.requestFocus();
+                } catch (RuntimeException ignored) {}
+            }
+        });
     }
 
     public void show(Intent intent) {
@@ -193,7 +208,7 @@ public final class Panel {
         updateRowsVisibility();
 
         if (!showing) {
-            WindowManager.LayoutParams lp = new WindowManager.LayoutParams(
+            lp = new WindowManager.LayoutParams(
                     WindowManager.LayoutParams.MATCH_PARENT, WindowManager.LayoutParams.MATCH_PARENT,
                     Build.VERSION.SDK_INT >= 26 ? TYPE_APPLICATION_OVERLAY : WindowManager.LayoutParams.TYPE_PHONE,
                     WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN | WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,

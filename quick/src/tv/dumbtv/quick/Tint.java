@@ -376,6 +376,10 @@ public final class Tint extends Service {
                         }
                     } else if (line.contains("FireTVKeyPolicyManager") && line.contains("keycode 176")) {
                         handleSettingsKey();
+                    } else if (line.contains("am_proc_start") && line.contains("com.amazon.tv.quicksettings.ui")) {
+                        if (panel != null && panel.isShowing()) {
+                            suppressAmazonQuickSettings();
+                        }
                     } else {
                         airplayState = AirPlay.next(airplayState, line);
                     }
@@ -394,7 +398,9 @@ public final class Tint extends Service {
         lastSettingsKeyAt = now;
 
         if (panel != null && panel.isShowing()) {
-            panel.close();
+            suppressAmazonQuickSettings();
+            ui.post(panel::close);
+            sendBroadcast(new Intent(ACTION_SETTINGS_KEY).setPackage("tv.dumbtv.home").putExtra("close", true));
             return;
         }
 
@@ -403,6 +409,7 @@ public final class Tint extends Service {
             @Override
             public void onReceive(Context context, Intent intent) {
                 if (getResultCode() == Activity.RESULT_OK) {
+                    suppressAmazonQuickSettings();
                     Bundle res = getResultExtras(false);
                     int accent = res != null ? res.getInt("accent", 0xFF3D8BFF) : 0xFF3D8BFF;
                     String from = res != null ? res.getString("from") : null;
@@ -418,6 +425,15 @@ public final class Tint extends Service {
                 }
             }
         }, null, Activity.RESULT_CANCELED, null, null);
+    }
+
+    private void suppressAmazonQuickSettings() {
+        ActivityManager am = (ActivityManager) getSystemService(ACTIVITY_SERVICE);
+        if (am == null) return;
+        try {
+            am.killBackgroundProcesses("com.amazon.tv.quicksettings.ui");
+            am.killBackgroundProcesses("com.amazon.tv.quicksettings");
+        } catch (SecurityException ignored) {}
     }
 
     private static boolean isHomeInstalled(Context c) {
