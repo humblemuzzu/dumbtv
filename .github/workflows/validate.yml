@@ -27,6 +27,8 @@ jobs:
         run: yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platforms;android-25" "build-tools;34.0.0" >/dev/null
       - name: build (sdk 25 for fire os 6-8; fails on any android.* API that Android 7.1 lacks)
         run: ./launcher/build.sh
+      - name: build dumbtv fixer (signed with the key launcher/build.sh just made)
+        run: ./fixer/build.sh
       - name: host-side launcher tests
         run: |
           jar="$ANDROID_HOME/platforms/android-25/android.jar"
