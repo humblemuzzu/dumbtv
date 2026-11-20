@@ -5,6 +5,7 @@ report/
 dumbtv.conf
 launcher/build/
 fixer/build/
+quick/build/
 launcher/*.keystore
 video/
 __pycache__/

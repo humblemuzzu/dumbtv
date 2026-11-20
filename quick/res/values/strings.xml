@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">dumbtv quick settings</string>
+    <string name="title">Quick settings</string>
+    <string name="brightness">Brightness</string>
+    <string name="brightness_hint">Backlight</string>
+    <string name="bluetooth">Bluetooth</string>
+    <string name="bt_off">Off</string>
+    <string name="bt_none">Not available</string>
+    <string name="bt_no_audio">No audio device connected</string>
+    <string name="warmth">Warmth</string>
+    <string name="warmth_hint">OK: warm after sunset</string>
+    <string name="warmth_always">Always on · OK: after sunset only</string>
+    <string name="warmth_auto">After sunset</string>
+    <string name="warmth_auto_from">After sunset · from %1$s</string>
+    <string name="warmth_auto_until">After sunset · on until %1$s</string>
+    <string name="sleep">Sleep timer</string>
+    <string name="sleep_hint">Left and right: 15 minutes</string>
+    <string name="sleep_at">TV turns off at %1$s</string>
+    <string name="off">Off</string>
+    <string name="percent">%1$d%%</string>
+    <string name="minutes">%1$d min</string>
+    <string name="ram">RAM GB</string>
+    <string name="video_hdmi">%1$s · HDMI</string>
+    <string name="video_app">%1$s · App</string>
+    <string name="video_panel">Panel</string>
+    <string name="needs_install">Needs quick/install.sh</string>
+</resources>

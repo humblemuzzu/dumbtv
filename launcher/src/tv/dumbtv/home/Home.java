@@ -1343,6 +1343,7 @@ public final class Home extends Activity {
      * except on Fire OS 6, where that page draws off the top of the screen: see FireSettings.
      */
     private void openSettings() {
+        if (Quick.open(this, cfg.accent(), "home")) return;
         Intent tvSettings = new Intent(Intent.ACTION_MAIN)
                 .addCategory("android.intent.category.LEANBACK_SETTINGS");
         if (FireSettings.applies(getPackageManager(), tvSettings)) {
