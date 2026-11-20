@@ -312,7 +312,7 @@ configure_in_app() {
 manual_steps() {
   adb_reconnect
   push_to_media "${SAVED_LIST:-dumbtv-blocklist.txt}" || die "push to $MEDIA failed"
-  acmd settings put secure always_on_vpn_app $PKG >/dev/null
+  if [[ ${FILTER_ALWAYS_ON:-1} == 0 ]]; then acmd settings delete secure always_on_vpn_app >/dev/null 2>&1; else acmd settings put secure always_on_vpn_app $PKG >/dev/null; fi
   step "one manual step ($(fireos_name) hides the app's files from adb)"
   if [[ -n $SAVED_LIST ]]; then
     note "the settings are saved in personalDNSfilter and point at the list; it only has to load it:"
@@ -385,7 +385,7 @@ if [[ $DRY_RUN == 0 && $restored == 0 ]]; then
     || die "push of FILTERHOSTS.TXT.DLD_CNT failed"
 fi
 
-acmd settings put secure always_on_vpn_app $PKG >/dev/null
+if [[ ${FILTER_ALWAYS_ON:-1} == 0 ]]; then acmd settings delete secure always_on_vpn_app >/dev/null 2>&1; else acmd settings put secure always_on_vpn_app $PKG >/dev/null; fi
 
 if [[ $SDK -lt 28 && $DRY_RUN == 0 ]]; then
   # Fire OS 6 drops always_on_vpn_app at boot, so the app's own boot receiver (AUTOSTART = true)

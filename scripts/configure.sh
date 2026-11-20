@@ -110,6 +110,8 @@ done
 # Not asked: an advanced switch for one filter problem (docs/TROUBLESHOOTING.md). Keep a set value.
 FILTER_AUTOSTART=$([[ -f $CONF ]] && sed -n 's/^FILTER_AUTOSTART=//p' "$CONF" | tail -1)
 FILTER_AUTOSTART=${FILTER_AUTOSTART:-1}
+FILTER_ALWAYS_ON=$([[ -f $CONF ]] && sed -n 's/^FILTER_ALWAYS_ON=//p' "$CONF" | tail -1)
+FILTER_ALWAYS_ON=${FILTER_ALWAYS_ON:-1}
 # Not asked. Resolver IPs for names the local list does not cover. Empty keeps the router.
 if [[ $DNS_UPSTREAM_SET == 1 ]]; then
   DNS_UPSTREAM=$DNS_UPSTREAM_ARG
@@ -142,13 +144,14 @@ DNSFILTER=$DNSFILTER
 SYSTEM_DNS=$SYSTEM_DNS
 YOUTUBE=$YOUTUBE
 FILTER_AUTOSTART=$FILTER_AUTOSTART
+FILTER_ALWAYS_ON=$FILTER_ALWAYS_ON
 DNS_UPSTREAM="$DNS_UPSTREAM"
 EOF_CONF
 
 # Prove the file before anyone sources it.
 # shellcheck disable=SC1090
 source "$CONF"
-for v in PRIME ALEXA LAUNCHER DNSFILTER SYSTEM_DNS YOUTUBE FILTER_AUTOSTART; do
+for v in PRIME ALEXA LAUNCHER DNSFILTER SYSTEM_DNS YOUTUBE FILTER_AUTOSTART FILTER_ALWAYS_ON; do
   case ${!v} in 0|1) ;; *) die "$v must be 0 or 1 in $CONF" ;; esac
 done
 
