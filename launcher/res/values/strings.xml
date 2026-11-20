@@ -116,6 +116,8 @@
     <string name="choice_switch_auto">Automatic</string>
     <string name="choice_switch_tv">The TV\'s app</string>
     <string name="choice_switch_home">dumbtv home</string>
+    <string name="choice_wake_input">Show on startup</string>
+    <string name="choice_wake_input_home">Home screen</string>
     <string name="choice_background">Background</string>
     <string name="choice_background_black">Black</string>
     <string name="choice_background_graphite">Graphite</string>

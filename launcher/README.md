@@ -133,21 +133,18 @@ down, or its channel scan when no channels are set up yet. It is not affected by
 
 ### Open an input on wake or when idle
 
-Two keys in [the settings file](#the-settings-file), for a TV that mostly shows one
-source (a Chromecast, a cable box):
+For a TV that mostly shows one source (a Chromecast, a cable box):
 
-```sh
-wake_input=<input id>   # right after the TV wakes, open this input instead of home
-idle_input=4            # and after 4 minutes on home with no key pressed
-```
-
-The input id is the one Diagnostics lists (for example
-`com.mediatek.tis/.HdmiInputService/HW2`). Set `idle_input` below the screensaver
-delay (Settings, 5 minutes by default) and the input's own picture, such as a
-Chromecast's ambient photos, takes the screensaver's place. HOME still returns to the
-home screen. `idle_pause=off` stops the idle switch, and `idle_pause=<epoch ms>` stops
-it until then; [dumbtv quick settings](../quick/README.md) sets this from its
-Auto-switch row where it is installed.
+- **Options › Show on startup**: pick whether the TV wakes to the Home screen or
+  directly to an input (HDMI 1, Chromecast, Live TV, etc.). Saved as `wake_input`
+  in [the settings file](#the-settings-file).
+- `idle_input=<minutes>` in the settings file: after that long on home with no key
+  pressed, switch to the startup input. Set `idle_input` below the screensaver delay
+  (Settings, 5 minutes by default) and the input's own picture, such as a Chromecast's
+  ambient photos, takes the screensaver's place. HOME still returns to the home screen.
+  `idle_pause=off` stops the idle switch, and `idle_pause=<epoch ms>` stops it until then;
+  [dumbtv quick settings](../quick/README.md) sets this from its Auto-switch row where it
+  is installed.
 
 ## Child lock
 
