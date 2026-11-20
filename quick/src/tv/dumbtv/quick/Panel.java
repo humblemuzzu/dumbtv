@@ -21,6 +21,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.os.SystemClock;
 import android.provider.Settings;
 import android.text.TextUtils;
 import android.util.Log;
@@ -63,6 +64,21 @@ public final class Panel extends Activity {
     private static final int WIDTH_DP = 330;
     private static final long TICK_MS = 15000;
     private static final int BRIGHTNESS_STEP = 5, BRIGHTNESS_MIN = 5;
+    private static final long HEALTH_CACHE_TTL_MS = 60 * 1000L;
+
+    private static volatile Panel activeInstance;
+    private static volatile List<String> cachedHealthIssues;
+    private static volatile long lastHealthCheck;
+
+    static boolean isShowing() {
+        Panel p = activeInstance;
+        return p != null && !p.isFinishing() && !p.closing;
+    }
+
+    static void closeActive() {
+        Panel p = activeInstance;
+        if (p != null) p.close();
+    }
 
     private final Handler ui = new Handler(Looper.getMainLooper());
     private final List<Row> rows = new ArrayList<>();
@@ -119,6 +135,7 @@ public final class Panel extends Activity {
     @Override
     protected void onCreate(Bundle state) {
         super.onCreate(state);
+        activeInstance = this;
         overridePendingTransition(0, 0);
         SharedPreferences p = Tint.prefs(this);
         accent = getIntent().getIntExtra(ACCENT, p.getInt(ACCENT, DEFAULT_ACCENT)) | 0xFF000000;
@@ -128,8 +145,8 @@ public final class Panel extends Activity {
         initIdlePauseMode();
 
         Tint.refresh(this);
-        initBluetooth();
         build();
+        initBluetooth();
         slide(true);
     }
 
@@ -143,6 +160,7 @@ public final class Panel extends Activity {
     @Override
     protected void onResume() {
         super.onResume();
+        activeInstance = this;
         refreshBluetoothDevices();
         refreshHealth();
         ui.post(tick);
@@ -165,7 +183,8 @@ public final class Panel extends Activity {
 
     @Override
     protected void onDestroy() {
-        if (a2dp != null) {
+        if (activeInstance == this) activeInstance = null;
+        if (a2dp != null && a2dp != Tint.getA2dp()) {
             BluetoothAdapter a = BluetoothAdapter.getDefaultAdapter();
             if (a != null) a.closeProfileProxy(BluetoothProfile.A2DP, a2dp);
         }
@@ -420,13 +439,13 @@ public final class Panel extends Activity {
 
     private void slide(boolean in) {
         float w = dp(WIDTH_DP);
-        TimeInterpolator ease = in ? new DecelerateInterpolator(2f) : new AccelerateInterpolator(1.5f);
+        TimeInterpolator ease = in ? new DecelerateInterpolator(2.5f) : new AccelerateInterpolator(2f);
         if (in) {
             sheet.setTranslationX(w);
             scrim.setAlpha(0f);
         }
-        scrim.animate().alpha(in ? 1f : 0f).setDuration(in ? 240 : 180).setInterpolator(ease).start();
-        sheet.animate().translationX(in ? 0 : w).setDuration(in ? 240 : 180).setInterpolator(ease)
+        scrim.animate().alpha(in ? 1f : 0f).setDuration(in ? 140 : 110).setInterpolator(ease).start();
+        sheet.animate().translationX(in ? 0 : w).setDuration(in ? 140 : 110).setInterpolator(ease)
                 .withEndAction(in ? null : this::finish).start();
     }
 
@@ -485,6 +504,13 @@ public final class Panel extends Activity {
 
     // 2. Bluetooth reworked
     private void initBluetooth() {
+        BluetoothA2dp shared = Tint.getA2dp();
+        if (shared != null) {
+            a2dp = shared;
+            refreshBluetoothDevices();
+            showBluetooth();
+            return;
+        }
         BluetoothAdapter a = BluetoothAdapter.getDefaultAdapter();
         if (a != null && a.isEnabled()) {
             a.getProfileProxy(this, btListener, BluetoothProfile.A2DP);
@@ -510,6 +536,7 @@ public final class Panel extends Activity {
     }
 
     private void showBluetooth() {
+        if (bluetooth == null) return;
         BluetoothAdapter a = BluetoothAdapter.getDefaultAdapter();
         if (a == null) {
             bluetooth.value.setText("");
@@ -641,39 +668,56 @@ public final class Panel extends Activity {
     // 6. TV Health
     private void refreshHealth() {
         if (health == null) return;
-        File conf = new File(Health.CONF_FILE);
-        if (!conf.exists()) {
-            healthIssues.clear();
-            healthIssues.add(getString(R.string.health_no_conf));
-            return;
+        List<String> cached = cachedHealthIssues;
+        if (cached != null) {
+            healthIssues = cached;
+            showHealth();
         }
-        Health.Expected exp = Health.loadExpected(conf);
-        if (exp == null) {
-            healthIssues.clear();
-            healthIssues.add("Could not parse expected.conf");
-            return;
-        }
-        Health.Actual act = new Health.Actual();
-        act.build = Build.DISPLAY != null ? Build.DISPLAY : Build.ID;
-        act.accessibility = Settings.Secure.getString(getContentResolver(), Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES);
-
-        PackageManager pm = getPackageManager();
-        for (String pkg : exp.disabledPackages) {
-            try {
-                ApplicationInfo info = pm.getApplicationInfo(pkg, 0);
-                if (info.enabled) act.enabledPackages.add(pkg);
-                else act.disabledPackages.add(pkg);
-            } catch (PackageManager.NameNotFoundException e) {
-                act.disabledPackages.add(pkg);
+        long now = SystemClock.uptimeMillis();
+        if (cached != null && (now - lastHealthCheck < HEALTH_CACHE_TTL_MS)) return;
+        new Thread(() -> {
+            File conf = new File(Health.CONF_FILE);
+            if (!conf.exists()) {
+                updateHealthIssues(Collections.singletonList(getString(R.string.health_no_conf)));
+                return;
             }
-        }
+            Health.Expected exp = Health.loadExpected(conf);
+            if (exp == null) {
+                updateHealthIssues(Collections.singletonList("Could not parse expected.conf"));
+                return;
+            }
+            Health.Actual act = new Health.Actual();
+            act.build = Build.DISPLAY != null ? Build.DISPLAY : Build.ID;
+            act.accessibility = Settings.Secure.getString(getContentResolver(), Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES);
 
-        for (String key : exp.settings.keySet()) {
-            String val = readSetting(key);
-            if (val != null) act.settings.put(key, val);
-        }
+            PackageManager pm = getPackageManager();
+            for (String pkg : exp.disabledPackages) {
+                try {
+                    ApplicationInfo info = pm.getApplicationInfo(pkg, 0);
+                    if (info.enabled) act.enabledPackages.add(pkg);
+                    else act.disabledPackages.add(pkg);
+                } catch (PackageManager.NameNotFoundException e) {
+                    act.disabledPackages.add(pkg);
+                }
+            }
 
-        healthIssues = Health.check(exp, act);
+            for (String key : exp.settings.keySet()) {
+                String val = readSetting(key);
+                if (val != null) act.settings.put(key, val);
+            }
+
+            List<String> issues = Health.check(exp, act);
+            updateHealthIssues(issues);
+        }, "health-refresh").start();
+    }
+
+    private void updateHealthIssues(List<String> issues) {
+        cachedHealthIssues = issues;
+        lastHealthCheck = SystemClock.uptimeMillis();
+        ui.post(() -> {
+            healthIssues = issues;
+            showHealth();
+        });
     }
 
     private String readSetting(String key) {
@@ -800,7 +844,7 @@ public final class Panel extends Activity {
     private void stepWarmth(int dir) {
         SharedPreferences p = Tint.prefs(this);
         int level = Math.max(0, Math.min(Tint.STEPS, p.getInt(Tint.WARMTH, 0) + dir));
-        p.edit().putInt(Tint.WARMTH, level).commit();
+        p.edit().putInt(Tint.WARMTH, level).apply();
         Tint.refresh(this);
         showWarmth();
     }
@@ -810,7 +854,7 @@ public final class Panel extends Activity {
         boolean auto = !p.getBoolean(Tint.AUTO, false);
         SharedPreferences.Editor e = p.edit().putBoolean(Tint.AUTO, auto);
         if (auto && p.getInt(Tint.WARMTH, 0) == 0) e.putInt(Tint.WARMTH, Tint.STEPS / 2);
-        e.commit();
+        e.apply();
         Tint.refresh(this);
         showWarmth();
     }

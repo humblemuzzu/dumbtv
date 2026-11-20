@@ -1,6 +1,7 @@
 package tv.dumbtv.home;
 
 import android.accessibilityservice.AccessibilityService;
+import android.app.Activity;
 import android.app.ActivityOptions;
 import android.app.AlarmManager;
 import android.app.PendingIntent;
@@ -55,6 +56,7 @@ public final class Guard extends AccessibilityService {
     static final String AMAZON = "com.amazon.tv.launcher";
     private static final String AMAZON_HOME = "com.amazon.tv.launcher.ui.HomeActivity_vNext";
     static final String AMAZON_QS = "com.amazon.tv.quicksettings.ui";
+    static final String ACTION_SETTINGS_KEY = "tv.dumbtv.home.KEY_SETTINGS";
     /** After BACK has closed Amazon's overlay, so that key cannot land on our panel instead. */
     private static final long QUICK_AFTER_BACK_MS = 250;
     /** One overlay sends several window events; one BACK only, or a second one leaves an input. */
@@ -74,6 +76,20 @@ public final class Guard extends AccessibilityService {
     private final Runnable openQuick = () -> {
         if (!(Home.inFront && Home.openQuick())) Quick.open(this, Config.get(this).accent());
     };
+    private final BroadcastReceiver settingsKeyReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context c, Intent intent) {
+            Config cfg = Config.get(Guard.this);
+            cfg.refresh();
+            if (!Quick.enabled(Guard.this, cfg)) return;
+            setResultCode(Activity.RESULT_OK);
+            settingsKeyAt = SystemClock.uptimeMillis();
+            if (intent.getBooleanExtra("close", false)) return;
+            handler.removeCallbacks(openQuick);
+            handler.post(openQuick);
+        }
+    };
+    private long settingsKeyAt = -QUICK_DEBOUNCE_MS;
     private long quickReplacedAt = -QUICK_DEBOUNCE_MS;
     private View cover;
     private boolean onAmazonHome;
@@ -147,6 +163,7 @@ public final class Guard extends AccessibilityService {
         ((WindowManager) getSystemService(WINDOW_SERVICE)).addView(view, lp);
         cover = view;
         registerReceiver(screenOn, new IntentFilter(Intent.ACTION_SCREEN_ON));
+        registerReceiver(settingsKeyReceiver, new IntentFilter(ACTION_SETTINGS_KEY));
         Filter.watch(this);
     }
 
@@ -158,6 +175,10 @@ public final class Guard extends AccessibilityService {
         handler.removeCallbacks(openQuick);
         try {
             unregisterReceiver(screenOn);
+        } catch (IllegalArgumentException ignored) {
+        }
+        try {
+            unregisterReceiver(settingsKeyReceiver);
         } catch (IllegalArgumentException ignored) {
         }
         if (cover != null) ((WindowManager) getSystemService(WINDOW_SERVICE)).removeView(cover);
@@ -196,13 +217,17 @@ public final class Guard extends AccessibilityService {
 
     /** Amazon's quick settings overlay opened: put ours in its place, where it is enabled. */
     private void replaceQuickSettings() {
-        if (!Quick.enabled(this, Config.get(this))) return;
+        Config cfg = Config.get(this);
+        cfg.refresh();
+        if (!Quick.enabled(this, cfg)) return;
         long now = SystemClock.uptimeMillis();
         if (now - quickReplacedAt < QUICK_DEBOUNCE_MS) return;
         quickReplacedAt = now;
         performGlobalAction(GLOBAL_ACTION_BACK);
-        handler.removeCallbacks(openQuick);
-        handler.postDelayed(openQuick, QUICK_AFTER_BACK_MS);
+        if (now - settingsKeyAt > 2000) {
+            handler.removeCallbacks(openQuick);
+            handler.postDelayed(openQuick, QUICK_AFTER_BACK_MS);
+        }
     }
 
     /** Retain a throttled HOME event: Fire OS may leave Amazon Home on top after a burst. */
