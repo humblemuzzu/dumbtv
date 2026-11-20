@@ -73,6 +73,7 @@ final class Backlight {
     }
 
     static void restoreLevel(Context c) {
+        if (Tint.isPictureOff()) return; // the picture-off overlay keeps the backlight at 0
         int t = target(c);
         if (t != get(c)) write(c, t);
     }
@@ -145,7 +146,7 @@ final class Backlight {
     }
 
     static void tick(Context c) {
-        if (isAuto(c)) {
+        if (isAuto(c) && !Tint.isPictureOff()) {
             int t = target(c);
             if (t != get(c)) write(c, t);
         }

@@ -23,7 +23,7 @@ the TV's settings as before. Holding HOME still opens Fire OS's own quick menu.
 | Auto-switch | after 4 min / paused until morning / off | (home only) pauses Chromecast idle auto-switch |
 | Warmth | cold to warm in 10 % steps | switches between always on and **after sunset only** |
 | Sleep timer | 15-minute steps, up to 4 hours | |
-| Noise level | | live ambient dB bar while panel is open |
+| Noise level | | live ambient dB bar while panel is open; only with `install.sh --mic` and a built-in mic (AFTHY7ABBA: its built-in mic route reads only zeros, so the row stays off there) |
 
 At the bottom: the time and date, memory in use, and the video format. Over an HDMI input that is
 the signal (`1080p60`, `SDR · HDMI`); over the home screen it is the panel's own mode (`4K60`).
@@ -51,7 +51,7 @@ each over adb:
 | Warmth & Picture off | `appops set tv.dumbtv.quick SYSTEM_ALERT_WINDOW allow` | tinted window and black overlay over every app and input |
 | Video format & AirPlay | `pm grant tv.dumbtv.quick android.permission.READ_LOGS` | reads `DispService` tag and events log buffer for AirPlay process lifecycle |
 | Sleep timer | `dpm set-active-admin tv.dumbtv.quick/.Admin` | `DevicePolicyManager.lockNow()`, the remote's standby; force-lock is its only policy |
-| Noise meter | `pm grant tv.dumbtv.quick android.permission.RECORD_AUDIO` | samples mic live only while panel is open; nothing recorded or saved |
+| Noise meter | `pm grant tv.dumbtv.quick android.permission.RECORD_AUDIO` (`install.sh --mic`) | samples the built-in mic only while the panel is open; nothing recorded or saved. Plain `MIC` routes to the remote's BLE mic, which sends nothing unless the voice button is held, so `Noise` asks for `TYPE_BUILTIN_MIC` |
 
 Normal permissions granted at install include `BLUETOOTH`, `BLUETOOTH_ADMIN` (connect/disconnect audio), `KILL_BACKGROUND_PROCESSES` (AirPlay make-room), `ACCESS_WIFI_STATE`, `ACCESS_NETWORK_STATE` (Wi-Fi glance), `RECEIVE_BOOT_COMPLETED` (restart filter broadcast). It has no `INTERNET` permission.
 
@@ -69,7 +69,8 @@ Normal permissions granted at install include `BLUETOOTH`, `BLUETOOTH_ADMIN` (co
   times from the US Naval Observatory sunrise equation. Warmth fades in over 30 minutes after
   sunset and out over the 30 minutes before sunrise.
 - **The video format and AirPlay** come from the log. DispService logs HDMI input modes. The events
-  buffer tracks the AirPlay player process (`com.apple.airplay.amazon.airplay`) and daemon.
+  buffer tracks the AirPlay player process (`com.apple.airplay.amazon.airplay`) and daemon
+  (`com.amazon.airplaydaemon`), matched on the process-name field only (`AirPlay.java`).
 - **The sleep timer** is an exact alarm. An active device admin cannot be uninstalled, and
   `dpm remove-active-admin` only removes test admins, so `install.sh --undo` first asks the app
   to give it up (`Undo`, a receiver only adb's shell can reach).
@@ -84,6 +85,7 @@ Normal permissions granted at install include `BLUETOOTH`, `BLUETOOTH_ADMIN` (co
 | `Network.java` | filter on/off and Wi-Fi band/RSSI check |
 | `Health.java` | TV health expected-state checker (tests: `tests/HealthTest.java`) |
 | `Noise.java` | live AudioRecord RMS dB meter |
+| `AirPlay.java` | AirPlay state from `am_proc_start`/`am_proc_died` (tests: `tests/AirPlayTest.java`) |
 | `Video.java` | DispService log parser (tests: `tests/VideoTest.java`) |
 | `Sun.java` | sunrise, sunset, and dim blend (tests: `tests/SunTest.java`) |
 | `Sleep.java`, `Admin.java` | sleep timer |

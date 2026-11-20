@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.net.ConnectivityManager;
 import android.net.NetworkCapabilities;
 import android.net.NetworkInfo;
+import android.net.wifi.SupplicantState;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.os.Build;
@@ -42,7 +43,10 @@ final class Network {
         WifiManager wm = (WifiManager) c.getApplicationContext().getSystemService(Context.WIFI_SERVICE);
         if (wm != null) {
             WifiInfo info = wm.getConnectionInfo();
-            if (info != null && info.getNetworkId() != -1 && info.getRssi() > -120) {
+            // Not getNetworkId(): API 29+ hides it (-1) without a location permission.
+            // RSSI and frequency stay readable.
+            if (info != null && info.getSupplicantState() == SupplicantState.COMPLETED
+                    && info.getRssi() > -127) {
                 String band = "";
                 if (Build.VERSION.SDK_INT >= 21) {
                     int freq = info.getFrequency();

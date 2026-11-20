@@ -2,7 +2,9 @@ package tv.dumbtv.quick;
 
 import android.content.Context;
 import android.content.pm.PackageManager;
+import android.media.AudioDeviceInfo;
 import android.media.AudioFormat;
+import android.media.AudioManager;
 import android.media.AudioRecord;
 import android.media.MediaRecorder;
 import android.os.Handler;
@@ -36,6 +38,15 @@ final class Noise {
         return c.checkCallingOrSelfPermission("android.permission.RECORD_AUDIO") == PackageManager.PERMISSION_GRANTED;
     }
 
+    static AudioDeviceInfo builtInMic(Context c) {
+        AudioManager am = (AudioManager) c.getSystemService(Context.AUDIO_SERVICE);
+        if (am == null) return null;
+        for (AudioDeviceInfo d : am.getDevices(AudioManager.GET_DEVICES_INPUTS)) {
+            if (d.getType() == AudioDeviceInfo.TYPE_BUILTIN_MIC) return d;
+        }
+        return null;
+    }
+
     synchronized void start(Context c, Listener listener) {
         if (running) return;
         if (!hasPermission(c)) {
@@ -49,6 +60,15 @@ final class Noise {
         try {
             recorder = new AudioRecord(MediaRecorder.AudioSource.MIC, SAMPLE_RATE, CHANNEL, ENCODING, bufferSize * 2);
             if (recorder.getState() != AudioRecord.STATE_INITIALIZED) {
+                recorder.release();
+                recorder = null;
+                return;
+            }
+            // MIC alone routes to the remote's BLE mic on a Fire TV, which streams only while the
+            // voice button is held (0 frames otherwise). Ask for the TV's own mic, or give up.
+            AudioDeviceInfo builtIn = builtInMic(c);
+            if (builtIn == null || !recorder.setPreferredDevice(builtIn)) {
+                Log.i(Tint.TAG, "noise: no built-in mic");
                 recorder.release();
                 recorder = null;
                 return;

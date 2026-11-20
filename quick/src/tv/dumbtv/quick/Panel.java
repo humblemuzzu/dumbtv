@@ -5,6 +5,7 @@ import android.app.Activity;
 import android.app.ActivityManager;
 import android.bluetooth.BluetoothA2dp;
 import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.BluetoothClass;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothProfile;
 import android.content.ActivityNotFoundException;
@@ -253,7 +254,7 @@ public final class Panel extends Activity {
         sleep.adjust = this::stepSleep;
 
         // 10. Noise meter
-        if (Noise.hasPermission(this)) {
+        if (Noise.hasPermission(this) && Noise.builtInMic(this) != null) {
             noise = row(R.drawable.ic_mic, R.string.noise, true);
             noise.bar.setGradient(0xFF4CAF50, 0xFFFFEB3B, 0xFFF44336);
         }
@@ -483,7 +484,15 @@ public final class Panel extends Activity {
         BluetoothAdapter a = BluetoothAdapter.getDefaultAdapter();
         if (a != null && a.isEnabled()) {
             Set<BluetoothDevice> bonded = a.getBondedDevices();
-            if (bonded != null) pairedDevices.addAll(bonded);
+            // Audio devices only: the remote and game controllers are bonded too.
+            if (bonded != null) {
+                for (BluetoothDevice d : bonded) {
+                    BluetoothClass k = d.getBluetoothClass();
+                    if (k != null && k.getMajorDeviceClass() == BluetoothClass.Device.Major.AUDIO_VIDEO) {
+                        pairedDevices.add(d);
+                    }
+                }
+            }
         }
         if (btTargetIndex > pairedDevices.size()) btTargetIndex = pairedDevices.size();
     }
@@ -575,10 +584,10 @@ public final class Panel extends Activity {
     // 3. AirPlay
     private void showAirPlay() {
         int state = Tint.getAirPlayState();
-        if (state == Tint.AIRPLAY_IN_USE) {
+        if (state == AirPlay.IN_USE) {
             airplay.value.setText(R.string.airplay_in_use);
             airplay.sub.setText("OK: Make room");
-        } else if (state == Tint.AIRPLAY_BROKEN) {
+        } else if (state == AirPlay.BROKEN) {
             airplay.value.setText(R.string.off);
             airplay.sub.setText(R.string.airplay_broken);
         } else {
@@ -703,7 +712,9 @@ public final class Panel extends Activity {
         } else {
             idlePauseMode = 0;
         }
-        updateIdlePauseResult();
+        // No result until the owner steps the row: home keeps what it has (a reopen at night
+        // must not move "until morning" a day further).
+        idlePauseResult = null;
     }
 
     private void stepIdlePause(int dir) {
@@ -716,12 +727,13 @@ public final class Panel extends Activity {
         if (idlePauseMode == 0) {
             idlePauseResult = "0";
         } else if (idlePauseMode == 1) {
+            // The next 06:00: today's if it is still before it.
             Calendar c = Calendar.getInstance();
-            c.add(Calendar.DAY_OF_YEAR, 1);
             c.set(Calendar.HOUR_OF_DAY, 6);
             c.set(Calendar.MINUTE, 0);
             c.set(Calendar.SECOND, 0);
             c.set(Calendar.MILLISECOND, 0);
+            if (c.getTimeInMillis() <= System.currentTimeMillis()) c.add(Calendar.DAY_OF_YEAR, 1);
             idlePauseResult = String.valueOf(c.getTimeInMillis());
         } else {
             idlePauseResult = "off";
@@ -734,7 +746,7 @@ public final class Panel extends Activity {
             idlePause.sub.setText("Switches to Chromecast when idle");
         } else if (idlePauseMode == 1) {
             idlePause.value.setText(R.string.idle_pause_morning);
-            idlePause.sub.setText("Paused until 06:00 tomorrow");
+            idlePause.sub.setText("Paused until 06:00");
         } else {
             idlePause.value.setText(R.string.idle_pause_off);
             idlePause.sub.setText("Chromecast auto-switch disabled");

@@ -5,7 +5,9 @@
 #   warmth       appops SYSTEM_ALERT_WINDOW allow
 #   video format pm grant READ_LOGS (it reads the display service's log tag only)
 #   sleep timer  dpm set-active-admin (force-lock only)
+#   noise meter  pm grant RECORD_AUDIO, only with --mic (or MIC=1)
 #   ./quick/install.sh          build, install, grant
+#   ./quick/install.sh --mic    the same, plus the microphone for the noise row
 #   ./quick/install.sh --undo   give up the device admin, then uninstall
 # Pick the device with ADB_SERIAL when more than one is connected.
 set -euo pipefail
@@ -31,7 +33,7 @@ if [[ ${1:-} == --undo ]]; then
   fi
   exit 0
 fi
-[[ -z ${1:-} ]] || { echo "usage: $0 [--undo]" >&2; exit 2; }
+[[ -z ${1:-} || ${1:-} == --mic ]] || { echo "usage: $0 [--mic | --undo]" >&2; exit 2; }
 
 ./build.sh
 out=$(adb_ install -r build/dumbtv-quick.apk 2>&1 | grep -m1 -E 'Success|Failure|failed' || true)

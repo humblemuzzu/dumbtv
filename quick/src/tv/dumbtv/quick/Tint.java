@@ -35,10 +35,6 @@ public final class Tint extends Service {
     /** Warmth steps, 0 (off) to {@link #STEPS}. */
     static final int STEPS = 10;
 
-    public static final int AIRPLAY_READY = 0;
-    public static final int AIRPLAY_IN_USE = 1;
-    public static final int AIRPLAY_BROKEN = 2;
-
     /** The overlay at full warmth: a candle-ish orange at this opacity, about 3400 K on white. */
     private static final int COLOR = 0xE66E0A;
     private static final float MAX_ALPHA = 0.32f;
@@ -48,7 +44,7 @@ public final class Tint extends Service {
 
     static final Video video = new Video();
     private static Tint running;
-    private static volatile int airplayState = AIRPLAY_READY;
+    private static volatile int airplayState = AirPlay.READY;
     private static volatile boolean pictureOffActive;
 
     private final Handler ui = new Handler(Looper.getMainLooper());
@@ -284,16 +280,8 @@ public final class Tint extends Service {
                             wasHdmi = nowHdmi;
                             ui.post(() -> backlight.source(nowHdmi));
                         }
-                    } else if (line.contains("am_proc_start")) {
-                        if (line.contains("com.apple.airplay.amazon.airplay")) {
-                            airplayState = AIRPLAY_IN_USE;
-                        }
-                    } else if (line.contains("am_proc_died")) {
-                        if (line.contains("com.apple.airplay.amazon.airplay")) {
-                            if (airplayState == AIRPLAY_IN_USE) airplayState = AIRPLAY_READY;
-                        } else if (line.contains("com.amazon.airplay")) {
-                            airplayState = AIRPLAY_BROKEN;
-                        }
+                    } else {
+                        airplayState = AirPlay.next(airplayState, line);
                     }
                 }
             } catch (IOException ignored) {
