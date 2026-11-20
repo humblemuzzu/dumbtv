@@ -4,6 +4,8 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ResolveInfo;
+import java.util.ArrayList;
+import java.util.List;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.media.AudioManager;
@@ -120,6 +122,29 @@ public final class Input extends Activity {
     /** Opens input {@code id} on this screen, whatever "Open inputs with" says. */
     static Intent open(Context c, String id, CharSequence name) {
         return new Intent(c, Input.class).putExtra(EXTRA_ID, id).putExtra(EXTRA_NAME, name);
+    }
+
+    /**
+     * Home screen, then every TV input. Used in Options as "Show on startup".
+     */
+    static Config.Choice choice(Config cfg, List<Item> inputs) {
+        List<String> values = new ArrayList<>();
+        List<String> names = new ArrayList<>();
+        values.add("home");
+        names.add("Home screen");
+        String current = cfg.get(Config.WAKE_INPUT, null);
+        boolean foundCurrent = current == null || "home".equals(current) || "off".equals(current);
+        for (Item in : inputs) {
+            values.add(in.id);
+            names.add(Catalog.label(cfg, in).toString());
+            if (in.id.equals(current)) foundCurrent = true;
+        }
+        if (!foundCurrent) {
+            values.add(current);
+            names.add(cfg.get("name." + current, current));
+        }
+        return new Config.Choice(Config.WAKE_INPUT, "Show on startup", "home",
+                values.toArray(new String[0]), names.toArray(new String[0]));
     }
 
     /**

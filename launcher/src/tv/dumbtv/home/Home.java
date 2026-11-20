@@ -376,7 +376,8 @@ public final class Home extends Activity {
         } catch (NumberFormatException e) {
             minutes = 0;
         }
-        if (minutes <= 0 || cfg.get("wake_input", null) == null || idlePaused()) return;
+        String id = cfg.get(Config.WAKE_INPUT, null);
+        if (minutes <= 0 || id == null || "home".equals(id) || "off".equals(id) || idlePaused()) return;
         ui.postDelayed(idle, minutes * 60_000L);
     }
 
@@ -397,13 +398,22 @@ public final class Home extends Activity {
     }
 
     private boolean openConfiguredInput(String why) {
-        String id = cfg.get("wake_input", null);
-        if (id == null) return false;
-        CharSequence name = id;
-        for (Item it : Catalog.inputs(this, tv)) if (it.id.equals(id)) name = Catalog.label(cfg, it);
+        String id = cfg.get(Config.WAKE_INPUT, null);
+        if (id == null || "home".equals(id) || "off".equals(id)) return false;
+        Item match = null;
+        for (Item it : Catalog.inputs(this, tv)) {
+            if (it.id.equals(id)) {
+                match = it;
+                break;
+            }
+        }
+        if (match == null) return false;
+        CharSequence name = Catalog.label(cfg, match);
         Log.i("dumbtv", why + ": opening " + id);
         try {
-            startActivity(Input.open(this, id, name));
+            Intent own = Input.intent(this, cfg, match, name);
+            if (own != null) startActivity(own);
+            else launch(new Intent(match.intent), null);
             return true;
         } catch (RuntimeException e) {
             Log.w("dumbtv", why + ": could not open " + id, e);

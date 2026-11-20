@@ -113,6 +113,8 @@
     <string name="choice_switch_auto">Automatique</string>
     <string name="choice_switch_tv">Appli TV</string>
     <string name="choice_switch_home">Accueil dumbtv</string>
+    <string name="choice_wake_input">Afficher au démarrage</string>
+    <string name="choice_wake_input_home">Écran d\'accueil</string>
     <string name="choice_background">Fond d\'écran</string>
     <string name="choice_background_black">Noir</string>
     <string name="choice_background_graphite">Graphite</string>

@@ -48,9 +48,14 @@ public final class Options extends Activity {
         title.setPadding(dp(16), 0, 0, dp(20));
         list.addView(title);
 
+        TvInputManager tv = (TvInputManager) getSystemService(Context.TV_INPUT_SERVICE);
+        List<Item> inputs = Catalog.inputs(this, tv);
+        Config.Choice startup = inputs.isEmpty() ? null : Input.choice(cfg, inputs);
+
         for (Config.Choice c : Config.CHOICES) {
             if (c == Config.QUICK && !Quick.installed(this)) continue;
             list.addView(choice(c));
+            if (c == Config.SWITCH && startup != null) list.addView(choice(startup));
         }
         LinearLayout packRow = new LinearLayout(this);
         packRow.setOrientation(LinearLayout.VERTICAL);
