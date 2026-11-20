@@ -1,8 +1,13 @@
 # dumbtv quick settings
 
-An optional panel that slides in from the right when you press dumbtv home's **Settings** chip
-(the cog), or **☰ Menu** while an HDMI input is on screen. Without it installed, the cog opens
-the TV's settings as before. Holding HOME still opens Fire OS's own quick menu.
+An optional panel that slides in from the right when you press the **settings (cog) button on the
+remote**, anywhere, or **☰ Menu** while an HDMI input is on screen. Press the cog again to close it.
+dumbtv home's on-screen Settings chip still opens the TV's settings.
+
+The remote's cog never reaches an app: Fire OS's key policy sends it as a global-button broadcast
+to Amazon's quick settings, which draws an overlay. dumbtv home's Guard sees that overlay appear,
+closes it with BACK and opens this panel, so Amazon's panel can flash for a moment first. Without
+this app installed, or with home locked, the cog shows Amazon's panel as before.
 
 <p align="center">
   <img src="../docs/assets/screens/quick.png" alt="The quick settings panel over the home screen" width="720">

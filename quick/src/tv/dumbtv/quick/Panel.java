@@ -133,6 +133,13 @@ public final class Panel extends Activity {
         slide(true);
     }
 
+    /** The remote's settings button again while the panel shows (singleTop): close it. */
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        close();
+    }
+
     @Override
     protected void onResume() {
         super.onResume();
@@ -386,6 +393,7 @@ public final class Panel extends Activity {
         switch (code) {
             case KeyEvent.KEYCODE_BACK:
             case KeyEvent.KEYCODE_MENU:
+            case KeyEvent.KEYCODE_SETTINGS:
                 if (down && e.getRepeatCount() == 0) close();
                 return true;
             case KeyEvent.KEYCODE_DPAD_LEFT:

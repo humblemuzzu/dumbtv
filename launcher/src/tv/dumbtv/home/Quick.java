@@ -3,14 +3,15 @@ package tv.dumbtv.home;
 import android.app.Activity;
 import android.app.ActivityOptions;
 import android.content.ActivityNotFoundException;
+import android.content.Context;
 import android.content.Intent;
 
 /**
  * dumbtv quick settings (quick/ in this repository), when it is installed: the panel that slides
  * in from the right with brightness, Bluetooth, warmth, a sleep timer and a status strip. It is a
  * separate app so that dumbtv home keeps its single permission; the permissions the panel needs
- * are granted to it alone by quick/install.sh. Without it, the Settings chip opens the TV's
- * settings as before.
+ * are granted to it alone by quick/install.sh. The remote's settings (cog) button opens it, through
+ * {@link Guard}; the Settings chip on the home screen opens the TV's own settings.
  */
 final class Quick {
     static final String PACKAGE = "tv.dumbtv.quick";
@@ -31,10 +32,32 @@ final class Quick {
         return open(a, accent, from, null, 0);
     }
 
-    static boolean open(Activity a, int accent, String from, String idlePause, int idleMinutes) {
-        Intent i = new Intent(ACTION).setPackage(PACKAGE)
+    static boolean installed(Context c) {
+        return intent(0, null).resolveActivity(c.getPackageManager()) != null;
+    }
+
+    private static Intent intent(int accent, String from) {
+        return new Intent(ACTION).setPackage(PACKAGE)
                 .putExtra(EXTRA_ACCENT, accent)
                 .putExtra(EXTRA_FROM, from);
+    }
+
+    /**
+     * From {@link Guard}, over whatever app is in front, in a task of its own. The panel is
+     * singleTop: a second press while it is showing reaches its onNewIntent, which closes it.
+     */
+    static boolean open(Context c, int accent) {
+        Intent i = intent(accent, "app").addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        try {
+            c.startActivity(i, ActivityOptions.makeCustomAnimation(c, 0, 0).toBundle());
+            return true;
+        } catch (ActivityNotFoundException | SecurityException e) {
+            return false;
+        }
+    }
+
+    static boolean open(Activity a, int accent, String from, String idlePause, int idleMinutes) {
+        Intent i = intent(accent, from);
         if (idlePause != null) i.putExtra(EXTRA_IDLE_PAUSE, idlePause);
         if (idleMinutes > 0) i.putExtra(EXTRA_IDLE_MINUTES, idleMinutes);
         if (i.resolveActivity(a.getPackageManager()) == null) return false;

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- dumbtv quick settings: the panel dumbtv home's Settings chip opens when this is installed.
+<!-- dumbtv quick settings: the panel the remote's settings button opens (through dumbtv home's Guard) when this is installed.
      A separate app so that dumbtv home keeps its single permission. No internet.
      See quick/README.md. -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
@@ -35,6 +35,7 @@
             android:name=".Panel"
             android:exported="true"
             android:excludeFromRecents="true"
+            android:launchMode="singleTop"
             android:noHistory="false"
             android:theme="@android:style/Theme.Translucent.NoTitleBar.Fullscreen"
             android:screenOrientation="landscape"

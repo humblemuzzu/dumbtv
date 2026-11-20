@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Builds and installs dumbtv quick settings, the panel dumbtv home's Settings chip opens, and
+# Builds and installs dumbtv quick settings, the panel the remote's settings button opens, and
 # grants what it needs over adb (none of it can be granted on the TV):
 #   brightness   appops WRITE_SETTINGS allow
 #   warmth       appops SYSTEM_ALERT_WINDOW allow
@@ -62,4 +62,4 @@ sh_ am broadcast -n "$PKG/.Boot" >/dev/null
 
 granted=$(sh_ dumpsys package $PKG | grep -c 'READ_LOGS: granted=true' || true)
 [[ $granted -ge 1 ]] || echo "warning: READ_LOGS was not granted; the video format will show the panel mode only" >&2
-echo "installed $PKG; dumbtv home's Settings chip opens it (and Menu on an HDMI input). Undo: $0 --undo"
+echo "installed $PKG; the remote's settings button opens it (and Menu on an HDMI input). Undo: $0 --undo"
