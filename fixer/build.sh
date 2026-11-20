@@ -5,8 +5,8 @@ set -euo pipefail
 cd "$(dirname "${BASH_SOURCE[0]}")"
 
 MIN_SDK=25
-VERSION_CODE=2
-VERSION_NAME=2.0
+VERSION_CODE=5
+VERSION_NAME=5.0
 
 SDK=${ANDROID_HOME:-${ANDROID_SDK_ROOT:-}}
 if [[ -z $SDK ]]; then
