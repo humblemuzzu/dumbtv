@@ -233,9 +233,9 @@ memory=off
 inputs=on
 # auto tv home
 switch=auto
-# black graphite midnight image adaptive adaptive-tint
+# black graphite midnight image adaptive adaptive-tint aurora video
 background=black
-# 0 20 40 60 80, image backgrounds only
+# 0 20 40 60 80, image, aurora and video backgrounds only
 dim=40
 # off visit hourly daily daytime (visit = every return to the home screen)
 rotate=off
@@ -355,6 +355,22 @@ in `morning-coast.jpg`.
 `background=adaptive` takes a dark colour from the focused app's artwork.
 `background=adaptive-tint` keeps the wallpaper and adds a light wash of that
 colour; without a wallpaper it shows graphite.
+
+| ![Aurora background](../docs/assets/screens/aurora.png) | ![Video background, input tiles in the chips' look](../docs/assets/screens/video.png) |
+|---|---|
+
+`background=aurora` draws slow-drifting light in colours taken from the focused app
+(a green-to-violet night sky for inputs and grey icons). No files; `dim` applies. It
+runs only while the home screen is in front and holds still when animations are off.
+
+`background=video` loops `background.mp4` from the settings folder, muted, behind the
+rows. It plays only while the home screen is in front (the decoder is free for whatever
+opens next) and resumes where it stopped. Use 1080p H.264 High@4.1: an x265 HEVC
+encode decoded no frames on a Fire OS 8 MediaTek TV (AFTHY7ABBA). `dim` applies.
+
+```sh
+adb push loop.mp4 /sdcard/Android/media/tv.dumbtv.home/background.mp4
+```
 
 ## How HOME works on Fire OS
 

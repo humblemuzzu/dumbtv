@@ -123,6 +123,8 @@
     <string name="choice_background_image">Image file</string>
     <string name="choice_background_adaptive">Adaptive solid</string>
     <string name="choice_background_adaptive_tint">Adaptive wallpaper tint</string>
+    <string name="choice_background_aurora">Aurora</string>
+    <string name="choice_background_video">Video file</string>
     <string name="choice_dim">Image dim</string>
     <string name="choice_rotate">Wallpaper rotation</string>
     <string name="choice_rotate_off">Off</string>

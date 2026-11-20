@@ -120,6 +120,8 @@
     <string name="choice_background_image">Imagen</string>
     <string name="choice_background_adaptive">Color adaptativo</string>
     <string name="choice_background_adaptive_tint">Tinte adaptativo del fondo</string>
+    <string name="choice_background_aurora">Aurora boreal</string>
+    <string name="choice_background_video">Vídeo</string>
     <string name="choice_dim">Oscurecer imagen</string>
     <string name="choice_rotate">Rotación de fondos</string>
     <string name="choice_rotate_off">Apagada</string>
