@@ -223,7 +223,7 @@ public final class Input extends Activity {
             case KeyEvent.KEYCODE_MENU:
                 if (e.getAction() != KeyEvent.ACTION_DOWN || e.getRepeatCount() > 0) return true;
                 Config cfg = Config.get(this);
-                if (!"on".equals(cfg.get(Config.LOCK)) && Quick.open(this, cfg.accent(), "input")) return true;
+                if (Quick.enabled(this, cfg) && Quick.open(this, cfg.accent(), "input")) return true;
                 showName();
                 return true;
             case KeyEvent.KEYCODE_INFO:

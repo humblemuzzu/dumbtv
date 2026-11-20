@@ -38,7 +38,10 @@ final class Config {
     static final String FILE = "home.conf";
     /** Options › Export settings writes this copy into the media folder, for adb pull. */
     static final String EXPORT = "home-export.conf";
-    /** Idle auto-switch pause state (timestamp in ms, "off", or unset/0). */
+    /**
+     * Stops {@code idle_input}: "off", or until an epoch time in ms. Unset or "0" lets it run.
+     * dumbtv quick settings sets it from its Auto-switch row (Home.onActivityResult).
+     */
     static final String IDLE_PAUSE = "idle_pause";
 
     static final class Choice {
@@ -125,7 +128,13 @@ final class Config {
     /** The banner of hand-picked titles from {@link Library}; hidden anyway while it has none. */
     static final Choice LIBRARY = new Choice("library", "Library banner", "on",
             new String[] {"on", "off"}, new String[] {"Shown", "Hidden"});
-    static final Choice[] CHOICES = {ACCENT, TILES, LAYOUT, POSITION, ORDER, ALL_APPS, LABELS, CLOCK, MEMORY, INPUTS, SWITCH, BACKGROUND, DIM, ROTATE, LOCK, TILE_STYLE, CHIPS, LIBRARY};
+    /**
+     * {@link Quick}: the remote's settings button (and Menu on an input) opens dumbtv quick
+     * settings where it is installed. Off leaves Fire OS's own panel. Listed only when installed.
+     */
+    static final Choice QUICK = new Choice("quick", "Quick settings panel", "on",
+            new String[] {"on", "off"}, new String[] {"On", "Off"});
+    static final Choice[] CHOICES = {ACCENT, TILES, LAYOUT, POSITION, ORDER, ALL_APPS, LABELS, CLOCK, MEMORY, INPUTS, SWITCH, BACKGROUND, DIM, ROTATE, LOCK, TILE_STYLE, CHIPS, LIBRARY, QUICK};
 
     /** Folder of wallpapers, next to home.conf, that Background › Image file rotates through. */
     static final String WALLPAPERS = "wallpapers";

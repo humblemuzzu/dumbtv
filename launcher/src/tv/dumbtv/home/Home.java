@@ -64,6 +64,8 @@ public final class Home extends Activity {
     private final ExecutorService colorIo = Executors.newSingleThreadExecutor();
     private final List<TextView> chips = new ArrayList<>();
     private Config cfg;
+    /** The resumed home screen, for {@link #openQuick}; null while another screen is in front. */
+    private static Home front;
     private TvInputManager tv;
     private int applied = -1, appsGeneration;
     /** Whether the home screen is the resumed activity; Guard reads it on the same main thread. */
@@ -324,6 +326,7 @@ public final class Home extends Activity {
         super.onResume();
         resumed = true;
         inFront = true;
+        front = this;
         Guard.arrived(this);
         Filter.wake(this);
         cfg.refresh();
@@ -373,18 +376,20 @@ public final class Home extends Activity {
         } catch (NumberFormatException e) {
             minutes = 0;
         }
-        if (minutes <= 0 || cfg.get("wake_input", null) == null) return;
-
-        String pause = cfg.get(Config.IDLE_PAUSE, null);
-        if ("off".equalsIgnoreCase(pause)) return;
-        if (pause != null && !pause.isEmpty() && !"0".equals(pause)) {
-            try {
-                long until = Long.parseLong(pause);
-                if (System.currentTimeMillis() < until) return;
-            } catch (NumberFormatException ignored) {}
-        }
-
+        if (minutes <= 0 || cfg.get("wake_input", null) == null || idlePaused()) return;
         ui.postDelayed(idle, minutes * 60_000L);
+    }
+
+    /** {@link Config#IDLE_PAUSE}: "off", or a time in the future. */
+    private boolean idlePaused() {
+        String pause = cfg.get(Config.IDLE_PAUSE, null);
+        if (pause == null || "0".equals(pause)) return false;
+        if ("off".equalsIgnoreCase(pause)) return true;
+        try {
+            return System.currentTimeMillis() < Long.parseLong(pause.trim());
+        } catch (NumberFormatException e) {
+            return false;
+        }
     }
 
     private void idleInput() {
@@ -424,6 +429,7 @@ public final class Home extends Activity {
         stopColorAnimation();
         targetColor = 0;
         unregisterReceiver(time);
+        if (front == this) front = null;
         if (moving != null) stopMoving();
     }
 
@@ -1350,17 +1356,27 @@ public final class Home extends Activity {
 
     /**
      * The remote's settings button, from {@link Guard} while this screen is in front: the quick
-     * settings panel, started for a result so its Auto-switch row can pause {@code idle_input}.
-     * Returns false when the panel is not installed or home is locked.
+     * settings panel, started for a result so its Auto-switch row can pause {@code idle_input}
+     * where home has it. Returns false when the panel is off, not installed, or home is locked.
      */
     static boolean openQuick() {
-        Home h = current;
-        if (h == null || h.locked()) return false;
+        Home h = front;
+        if (h == null || !Quick.enabled(h, h.cfg)) return false;
         int idleMin = 0;
         try {
             idleMin = Integer.parseInt(h.cfg.get("idle_input", "0").trim());
-        } catch (NumberFormatException ignored) {}
-        return Quick.open(h, h.cfg.accent(), "home", h.cfg.get(Config.IDLE_PAUSE, null), idleMin);
+        } catch (NumberFormatException ignored) {
+        }
+        return Quick.open(h, h.cfg.accent(), "home", h.cfg.get(Quick.CONF_IDLE_PAUSE, null), idleMin);
+    }
+
+    /** The panel's Auto-switch row changed: keep it; onResume, next, reschedules the idle switch. */
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode != Quick.REQUEST_CODE || resultCode != RESULT_OK || data == null) return;
+        String paused = data.getStringExtra(Quick.EXTRA_IDLE_PAUSE);
+        if (paused != null) cfg.set(Quick.CONF_IDLE_PAUSE, "0".equals(paused) ? null : paused);
     }
 
     /**
@@ -1377,18 +1393,6 @@ public final class Home extends Activity {
         }
         boolean found = tvSettings.resolveActivity(getPackageManager()) != null;
         launch(found ? tvSettings : new Intent(Settings.ACTION_SETTINGS), null);
-    }
-
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == Quick.REQUEST_CODE && resultCode == RESULT_OK && data != null) {
-            String paused = data.getStringExtra(Quick.EXTRA_IDLE_PAUSE);
-            if (paused != null) {
-                cfg.set(Config.IDLE_PAUSE, "0".equals(paused) ? null : paused);
-                scheduleIdle();
-            }
-        }
     }
 
     private void settingsList() {

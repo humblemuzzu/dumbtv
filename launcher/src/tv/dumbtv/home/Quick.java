@@ -32,6 +32,17 @@ final class Quick {
         return open(a, accent, from, null, 0);
     }
 
+    /**
+     * Whether the remote's settings button and Menu on an input should open the panel: it is
+     * installed, Options › Quick settings panel is on (the default), and home is not locked.
+     */
+    static boolean enabled(Context c, Config cfg) {
+        return "on".equals(cfg.get(Config.QUICK)) && !"on".equals(cfg.get(Config.LOCK)) && installed(c);
+    }
+
+    /** Config key the panel's Auto-switch row writes; read by idle_input where home has it. */
+    static final String CONF_IDLE_PAUSE = "idle_pause";
+
     static boolean installed(Context c) {
         return intent(0, null).resolveActivity(c.getPackageManager()) != null;
     }

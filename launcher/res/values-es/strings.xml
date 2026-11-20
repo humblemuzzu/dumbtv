@@ -147,4 +147,7 @@
     <string name="choice_library">Banner de biblioteca</string>
     <string name="choice_library_on">Visible</string>
     <string name="choice_library_off">Oculto</string>
+    <string name="choice_quick">Panel de ajustes rápidos</string>
+    <string name="choice_quick_on">Encendido</string>
+    <string name="choice_quick_off">Apagado</string>
 </resources>

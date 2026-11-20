@@ -29,18 +29,6 @@ jobs:
         run: ./launcher/build.sh
       - name: build dumbtv fixer (signed with the key launcher/build.sh just made)
         run: ./fixer/build.sh
-      - name: build dumbtv quick settings (signed with the same key)
-        run: ./quick/build.sh
-      - name: host-side quick settings tests
-        run: |
-          javac --release 8 -Xlint:all -Werror -d /tmp/quick quick/src/tv/dumbtv/quick/Sun.java \
-            quick/src/tv/dumbtv/quick/Video.java quick/src/tv/dumbtv/quick/Health.java \
-            quick/src/tv/dumbtv/quick/AirPlay.java quick/tests/AirPlayTest.java \
-            quick/tests/SunTest.java quick/tests/VideoTest.java quick/tests/HealthTest.java
-          java -cp /tmp/quick tv.dumbtv.quick.SunTest
-          java -cp /tmp/quick tv.dumbtv.quick.VideoTest
-          java -cp /tmp/quick tv.dumbtv.quick.HealthTest
-          java -cp /tmp/quick tv.dumbtv.quick.AirPlayTest
       - name: host-side launcher tests
         run: |
           jar="$ANDROID_HOME/platforms/android-25/android.jar"
@@ -93,13 +81,27 @@ jobs:
           [ -z "$extra" ] || { echo "the launcher may only request RECEIVE_BOOT_COMPLETED on sdk 28+, found: $extra"; exit 1; }
           n=$(echo "$dump" | grep -c uses-permission || true)
           [ "$n" -le 3 ] || { echo "expected at most the 3 Fire OS 6 permissions, found $n"; exit 1; }
+      - name: build dumbtv quick settings (signed with the key launcher/build.sh just made)
+        run: |
+          for f in quick/*.sh; do bash -n "$f" || exit 1; done
+          ./quick/build.sh
+      - name: host-side quick settings tests
+        run: |
+          javac --release 8 -Xlint:all -Werror -d /tmp/quick quick/src/tv/dumbtv/quick/Sun.java \
+            quick/src/tv/dumbtv/quick/Video.java quick/src/tv/dumbtv/quick/Health.java \
+            quick/src/tv/dumbtv/quick/AirPlay.java quick/tests/SunTest.java quick/tests/VideoTest.java \
+            quick/tests/HealthTest.java quick/tests/AirPlayTest.java
+          java -cp /tmp/quick tv.dumbtv.quick.SunTest
+          java -cp /tmp/quick tv.dumbtv.quick.VideoTest
+          java -cp /tmp/quick tv.dumbtv.quick.HealthTest
+          java -cp /tmp/quick tv.dumbtv.quick.AirPlayTest
 
   scripts:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - name: syntax
-        run: for f in scripts/*.sh launcher/*.sh quick/*.sh; do bash -n "$f" || exit 1; done
+        run: for f in scripts/*.sh launcher/*.sh fixer/*.sh airplay/*.sh; do bash -n "$f" || exit 1; done
       - name: offline script tests (no device)
         run: python3 -m unittest discover -s tests -v
       - name: launcher version manifest

@@ -50,7 +50,7 @@ if ! sh_ dumpsys device_policy | grep -q "$PKG/"; then
     echo "warning: could not make it a device admin; the sleep timer will not turn the TV off" >&2
 fi
 
-# Push expected-state file for the TV health check
+# The TV health row's expected state, where the owner wrote one (see expected.example.conf)
 if [[ -f expected.conf ]]; then
   sh_ mkdir -p /sdcard/Android/media/$PKG
   adb_ push expected.conf /sdcard/Android/media/$PKG/expected.conf >/dev/null || true

@@ -48,7 +48,7 @@ Undo: `./launcher/install.sh --undo` gives HOME back to Amazon's launcher.
 | Up from the top row | Options and Settings |
 | Back on the home screen | jump to the first tile |
 | On an input: Back | back to the home screen |
-| Settings (the cog) | the TV's settings. The cog button on the remote opens [dumbtv quick settings](../quick/README.md) when it is installed |
+| Settings (the cog) | the TV's settings. The settings button on the remote opens [dumbtv quick settings](../quick/README.md) where it is installed (Options › Quick settings panel, on by default) |
 | On an input: ☰ Menu | the quick settings panel when it is installed (and Child lock is off), otherwise the input's name again |
 | Hold HOME | Fire OS quick menu (Amazon's, unchanged) |
 
@@ -131,6 +131,24 @@ On a Fire TV Edition television with a tuner, the row ends with a **Live TV** ti
 opens Amazon's Live TV on the last channel watched, with its guide and channel up and
 down, or its channel scan when no channels are set up yet. It is not affected by
 **Open inputs with**, and hides, renames and moves like any other input.
+
+### Open an input on wake or when idle
+
+Two keys in [the settings file](#the-settings-file), for a TV that mostly shows one
+source (a Chromecast, a cable box):
+
+```sh
+wake_input=<input id>   # right after the TV wakes, open this input instead of home
+idle_input=4            # and after 4 minutes on home with no key pressed
+```
+
+The input id is the one Diagnostics lists (for example
+`com.mediatek.tis/.HdmiInputService/HW2`). Set `idle_input` below the screensaver
+delay (Settings, 5 minutes by default) and the input's own picture, such as a
+Chromecast's ambient photos, takes the screensaver's place. HOME still returns to the
+home screen. `idle_pause=off` stops the idle switch, and `idle_pause=<epoch ms>` stops
+it until then; [dumbtv quick settings](../quick/README.md) sets this from its
+Auto-switch row where it is installed.
 
 ## Child lock
 
@@ -242,6 +260,8 @@ dim=40
 rotate=off
 # off on
 lock=off
+# on off: the remote's settings button opens dumbtv quick settings, where it is installed
+quick=on
 # off, or an installed icon pack's package
 icon_pack=off
 icon.com.stremio.one=com.example.iconpack/stremio
@@ -357,6 +377,9 @@ in `morning-coast.jpg`.
 `background=adaptive-tint` keeps the wallpaper and adds a light wash of that
 colour; without a wallpaper it shows graphite.
 
+| ![Aurora background](../docs/assets/screens/aurora.png) | ![Video background, input tiles in the chips' look](../docs/assets/screens/video.png) |
+|---|---|
+
 `background=aurora` draws slow-drifting light in colours taken from the focused app
 (a green-to-violet night sky for inputs and grey icons). No files; `dim` applies. It
 runs only while the home screen is in front and holds still when animations are off.
@@ -364,7 +387,7 @@ runs only while the home screen is in front and holds still when animations are 
 `background=video` loops `background.mp4` from the settings folder, muted, behind the
 rows. It plays only while the home screen is in front (the decoder is free for whatever
 opens next) and resumes where it stopped. Use 1080p H.264 High@4.1: an x265 HEVC
-encode decoded no frames on a Fire OS 7 MediaTek TV. `dim` applies.
+encode decoded no frames on a Fire OS 8 MediaTek TV (AFTHY7ABBA). `dim` applies.
 
 ```sh
 adb push loop.mp4 /sdcard/Android/media/tv.dumbtv.home/background.mp4

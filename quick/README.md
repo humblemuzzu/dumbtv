@@ -7,7 +7,8 @@ dumbtv home's on-screen Settings chip still opens the TV's settings.
 The remote's cog never reaches an app: Fire OS's key policy sends it as a global-button broadcast
 to Amazon's quick settings, which draws an overlay. dumbtv home's Guard sees that overlay appear,
 closes it with BACK and opens this panel, so Amazon's panel can flash for a moment first. Without
-this app installed, or with home locked, the cog shows Amazon's panel as before.
+this app installed, with **Options › Quick settings panel** off (it is on by default), or with
+home locked, the cog shows Amazon's panel as before.
 
 <p align="center">
   <img src="../docs/assets/screens/quick.png" alt="The quick settings panel over the home screen" width="720">
@@ -21,11 +22,11 @@ this app installed, or with home locked, the cog shows Amazon's panel as before.
 |---|---|---|
 | Brightness | backlight in 5 % steps (day or night level) | switches **dim after sunset** on/off |
 | Bluetooth | cycles paired audio devices, then Settings… | connects or disconnects device; on Settings… opens Bluetooth screen |
-| AirPlay | | glance: Ready / In use / Restart TV; OK makes room (`killBackgroundProcesses`) |
+| AirPlay | | glance: Ready / In use / "Macs can't see the TV, restart it"; OK makes room (`killBackgroundProcesses`, never AirPlay) |
 | Picture off | | turns screen black + min backlight (sound continues); any key restores |
 | Network | | glance: Filter on/off + Wi-Fi signal/band; OK restarts DNS filter |
-| TV health | | glance: All as set or warning; OK cycles through detail items |
-| Auto-switch | after 4 min / paused until morning / off | (home only) pauses Chromecast idle auto-switch |
+| TV health | | only with an expected state ([expected.example.conf](expected.example.conf)): All as set, or the first problem; OK cycles through them |
+| Auto-switch | on / paused until 06:00 / off | only from home, and only where home opens an input when idle (`idle_input`): pauses that switch |
 | Warmth | cold to warm in 10 % steps | switches between always on and **after sunset only** |
 | Sleep timer | 15-minute steps, up to 4 hours | |
 | Noise level | | live ambient dB bar while panel is open; only with `install.sh --mic` and a built-in mic (AFTHY7ABBA: its built-in mic route reads only zeros, so the row stays off there) |

@@ -124,7 +124,7 @@ public final class Panel extends Activity {
         accent = getIntent().getIntExtra(ACCENT, p.getInt(ACCENT, DEFAULT_ACCENT)) | 0xFF000000;
         p.edit().putInt(ACCENT, accent).apply();
         fromHome = "home".equals(getIntent().getStringExtra("from"));
-        idleMinutes = getIntent().getIntExtra("idle_minutes", 4);
+        idleMinutes = getIntent().getIntExtra("idle_minutes", 0);
         initIdlePauseMode();
 
         Tint.refresh(this);
@@ -241,11 +241,15 @@ public final class Panel extends Activity {
         network.press = this::restartFilter;
 
         // 6. TV Health check
-        health = row(R.drawable.ic_health, R.string.health, false);
-        health.press = this::cycleHealthDetails;
+        // Only where the owner pushed an expected state (install.sh, from quick/expected.conf).
+        if (new File(Health.CONF_FILE).exists()) {
+            health = row(R.drawable.ic_health, R.string.health, false);
+            health.press = this::cycleHealthDetails;
+        }
 
         // 7. Pause Chromecast switch (home only)
-        if (fromHome) {
+        // Home passes idle_minutes only where it has idle_input (open an input when idle) set.
+        if (fromHome && idleMinutes > 0) {
             idlePause = row(R.drawable.ic_pause, R.string.idle_pause, false);
             idlePause.adjust = this::stepIdlePause;
         }
@@ -636,6 +640,7 @@ public final class Panel extends Activity {
 
     // 6. TV Health
     private void refreshHealth() {
+        if (health == null) return;
         File conf = new File(Health.CONF_FILE);
         if (!conf.exists()) {
             healthIssues.clear();
@@ -688,6 +693,7 @@ public final class Panel extends Activity {
     }
 
     private void showHealth() {
+        if (health == null) return;
         if (healthIssues.isEmpty()) {
             health.value.setText("OK");
             health.sub.setText(R.string.health_ok);

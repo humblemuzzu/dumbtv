@@ -44,6 +44,12 @@ import android.view.accessibility.AccessibilityEvent;
  * Waking resumes whatever was on screen without a new window event. If the last window was
  * Amazon's home screen, ours is brought up at once. Amazon's other launcher screens, such as
  * its settings grid, are left alone, as is a wake before any window was seen.
+ *
+ * The remote's settings (cog) button never reaches an app or an accessibility key filter: Fire
+ * OS's key policy sends it as a GLOBAL_BUTTON broadcast to Amazon's quick settings, which draws an
+ * overlay window from {@link #AMAZON_QS}. Where dumbtv quick settings is installed and enabled
+ * ({@link Quick#enabled}), that window's appearance is the signal: BACK closes it, and our panel
+ * opens in its place, through {@link Home} when the home screen is in front.
  */
 public final class Guard extends AccessibilityService {
     static final String AMAZON = "com.amazon.tv.launcher";
@@ -74,9 +80,9 @@ public final class Guard extends AccessibilityService {
     private final Runnable openQuick = () -> {
         if (!(Home.inFront && Home.openQuick())) Quick.open(this, Config.get(this).accent());
     };
+    private long quickReplacedAt = -QUICK_DEBOUNCE_MS;
     private View cover;
     private boolean onAmazonHome;
-    private long quickReplacedAt = -QUICK_DEBOUNCE_MS;
     private final BroadcastReceiver screenOn = new BroadcastReceiver() {
         @Override
         public void onReceive(Context c, Intent i) {
@@ -196,9 +202,9 @@ public final class Guard extends AccessibilityService {
         retryHome();
     }
 
-    /** Amazon's quick settings overlay opened: put ours in its place, unless home is locked. */
+    /** Amazon's quick settings overlay opened: put ours in its place, where it is enabled. */
     private void replaceQuickSettings() {
-        if ("on".equals(Config.get(this).get(Config.LOCK)) || !Quick.installed(this)) return;
+        if (!Quick.enabled(this, Config.get(this))) return;
         long now = SystemClock.uptimeMillis();
         if (now - quickReplacedAt < QUICK_DEBOUNCE_MS) return;
         quickReplacedAt = now;
