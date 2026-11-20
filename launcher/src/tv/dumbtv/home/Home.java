@@ -373,7 +373,18 @@ public final class Home extends Activity {
         } catch (NumberFormatException e) {
             minutes = 0;
         }
-        if (minutes > 0 && cfg.get("wake_input", null) != null) ui.postDelayed(idle, minutes * 60_000L);
+        if (minutes <= 0 || cfg.get("wake_input", null) == null) return;
+
+        String pause = cfg.get(Config.IDLE_PAUSE, null);
+        if ("off".equalsIgnoreCase(pause)) return;
+        if (pause != null && !pause.isEmpty() && !"0".equals(pause)) {
+            try {
+                long until = Long.parseLong(pause);
+                if (System.currentTimeMillis() < until) return;
+            } catch (NumberFormatException ignored) {}
+        }
+
+        ui.postDelayed(idle, minutes * 60_000L);
     }
 
     private void idleInput() {
@@ -1343,7 +1354,11 @@ public final class Home extends Activity {
      * except on Fire OS 6, where that page draws off the top of the screen: see FireSettings.
      */
     private void openSettings() {
-        if (Quick.open(this, cfg.accent(), "home")) return;
+        int idleMin = 0;
+        try {
+            idleMin = Integer.parseInt(cfg.get("idle_input", "0").trim());
+        } catch (NumberFormatException ignored) {}
+        if (Quick.open(this, cfg.accent(), "home", cfg.get(Config.IDLE_PAUSE, null), idleMin)) return;
         Intent tvSettings = new Intent(Intent.ACTION_MAIN)
                 .addCategory("android.intent.category.LEANBACK_SETTINGS");
         if (FireSettings.applies(getPackageManager(), tvSettings)) {
@@ -1352,6 +1367,18 @@ public final class Home extends Activity {
         }
         boolean found = tvSettings.resolveActivity(getPackageManager()) != null;
         launch(found ? tvSettings : new Intent(Settings.ACTION_SETTINGS), null);
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == Quick.REQUEST_CODE && resultCode == RESULT_OK && data != null) {
+            String paused = data.getStringExtra(Quick.EXTRA_IDLE_PAUSE);
+            if (paused != null) {
+                cfg.set(Config.IDLE_PAUSE, "0".equals(paused) ? null : paused);
+                scheduleIdle();
+            }
+        }
     }
 
     private void settingsList() {

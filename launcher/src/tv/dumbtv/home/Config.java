@@ -38,6 +38,8 @@ final class Config {
     static final String FILE = "home.conf";
     /** Options › Export settings writes this copy into the media folder, for adb pull. */
     static final String EXPORT = "home-export.conf";
+    /** Idle auto-switch pause state (timestamp in ms, "off", or unset/0). */
+    static final String IDLE_PAUSE = "idle_pause";
 
     static final class Choice {
         final String key, title;

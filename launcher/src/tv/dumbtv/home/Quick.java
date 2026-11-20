@@ -15,6 +15,11 @@ import android.content.Intent;
 final class Quick {
     static final String PACKAGE = "tv.dumbtv.quick";
     static final String ACTION = "tv.dumbtv.quick.PANEL";
+    static final int REQUEST_CODE = 42;
+    static final String EXTRA_ACCENT = "accent";
+    static final String EXTRA_FROM = "from";
+    static final String EXTRA_IDLE_PAUSE = "idle_pause";
+    static final String EXTRA_IDLE_MINUTES = "idle_minutes";
 
     private Quick() {}
 
@@ -23,12 +28,22 @@ final class Quick {
      * is "home" or "input"; the panel shows the HDMI signal's format only for an input.
      */
     static boolean open(Activity a, int accent, String from) {
+        return open(a, accent, from, null, 0);
+    }
+
+    static boolean open(Activity a, int accent, String from, String idlePause, int idleMinutes) {
         Intent i = new Intent(ACTION).setPackage(PACKAGE)
-                .putExtra("accent", accent).putExtra("from", from);
+                .putExtra(EXTRA_ACCENT, accent)
+                .putExtra(EXTRA_FROM, from);
+        if (idlePause != null) i.putExtra(EXTRA_IDLE_PAUSE, idlePause);
+        if (idleMinutes > 0) i.putExtra(EXTRA_IDLE_MINUTES, idleMinutes);
         if (i.resolveActivity(a.getPackageManager()) == null) return false;
         try {
-            // The panel animates itself in; a window transition on top of that looked doubled.
-            a.startActivity(i, ActivityOptions.makeCustomAnimation(a, 0, 0).toBundle());
+            if ("home".equals(from)) {
+                a.startActivityForResult(i, REQUEST_CODE, ActivityOptions.makeCustomAnimation(a, 0, 0).toBundle());
+            } else {
+                a.startActivity(i, ActivityOptions.makeCustomAnimation(a, 0, 0).toBundle());
+            }
             return true;
         } catch (ActivityNotFoundException | SecurityException e) {
             return false;

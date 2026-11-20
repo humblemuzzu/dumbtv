@@ -40,9 +40,18 @@ out=$(adb_ install -r build/dumbtv-quick.apk 2>&1 | grep -m1 -E 'Success|Failure
 sh_ appops set $PKG WRITE_SETTINGS allow
 sh_ appops set $PKG SYSTEM_ALERT_WINDOW allow
 sh_ pm grant $PKG android.permission.READ_LOGS
+if [[ ${MIC:-0} == 1 || ${1:-} == --mic ]]; then
+  sh_ pm grant $PKG android.permission.RECORD_AUDIO 2>/dev/null || true
+fi
 if ! sh_ dumpsys device_policy | grep -q "$PKG/"; then
   sh_ dpm set-active-admin "$PKG/.Admin" >/dev/null ||
     echo "warning: could not make it a device admin; the sleep timer will not turn the TV off" >&2
+fi
+
+# Push expected-state file for the TV health check
+if [[ -f expected.conf ]]; then
+  sh_ mkdir -p /sdcard/Android/media/$PKG
+  adb_ push expected.conf /sdcard/Android/media/$PKG/expected.conf >/dev/null || true
 fi
 # A grant reaches a running process only after a restart (READ_LOGS especially).
 sh_ am force-stop $PKG
