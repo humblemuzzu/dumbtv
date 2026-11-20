@@ -13,7 +13,7 @@ import android.text.TextPaint;
 import android.text.TextUtils;
 import android.view.View;
 
-/** A card drawn in one pass: banner, or icon plus name, or an input name; focus ring on top. */
+/** A card drawn in one pass: banner, or icon, or an input name; focus ring on top. */
 final class Tile extends View {
     private static final float FOCUS_SCALE = 1.08f;
 
@@ -126,11 +126,10 @@ final class Tile extends View {
             banner.setBounds(0, 0, cardW, cardH);
             banner.draw(canvas);
         } else if (icon != null) {
-            int size = cardH * 46 / 100;
-            int left = (cardW - size) / 2, top = cardH * 12 / 100;
+            int size = cardH * 54 / 100;
+            int left = (cardW - size) / 2, top = (cardH - size) / 2;
             icon.setBounds(left, top, left + size, top + size);
             icon.draw(canvas);
-            drawLine(canvas, inner, cardW / 2f, cardH - cardH * 13 / 100f);
         } else if (!Catalog.isApp(kind)) {
             drawLine(canvas, inner, cardW / 2f, cardH / 2f - (inner.ascent() + inner.descent()) / 2);
         }
@@ -149,7 +148,7 @@ final class Tile extends View {
             canvas.drawRoundRect(half, half, cardW - half, cardH - half, radius - half, radius - half, ring);
         }
         if (moving) drawArrows(canvas);
-        boolean label = banner != null && (labelAlways || labelOnFocus && isFocused());
+        boolean label = labelAlways || labelOnFocus && isFocused();
         if (labelH > 0 && label) {
             drawLine(canvas, under, cardW / 2f, cardH + labelH - Ui.dp(getContext(), 6));
         }

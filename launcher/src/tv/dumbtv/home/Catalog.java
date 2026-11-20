@@ -60,8 +60,8 @@ final class Catalog {
     /**
      * Loads a banner, plus an icon for Afterglow or when there is no banner. A {@code replacement}
      * (an icon picked for the app, or the icon pack's match) is used instead of the app's own
-     * art: a wide one fills the tile like a banner, any other is drawn as the icon above the
-     * name. Slow: off the UI thread.
+     * art: a wide one fills the tile like a banner, any other is drawn as a centered icon.
+     * Slow: off the UI thread.
      */
     static void art(PackageManager pm, Item it, boolean cornerIcon, Drawable replacement) {
         if (it.info == null) return;
