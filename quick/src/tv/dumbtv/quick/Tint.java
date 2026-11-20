@@ -1,8 +1,14 @@
 package tv.dumbtv.quick;
 
+import android.app.Activity;
 import android.app.ActivityManager;
+import android.app.ActivityOptions;
 import android.app.Notification;
 import android.app.Service;
+import android.bluetooth.BluetoothA2dp;
+import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.BluetoothProfile;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -12,6 +18,7 @@ import android.os.Build;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
+import android.os.SystemClock;
 import android.provider.Settings;
 import android.util.Log;
 import android.view.KeyEvent;
@@ -32,6 +39,7 @@ public final class Tint extends Service {
     static final String TAG = "dumbtv-quick";
     static final String PREFS = "quick";
     static final String WARMTH = "warmth", AUTO = "auto";
+    static final String ACTION_SETTINGS_KEY = "tv.dumbtv.home.KEY_SETTINGS";
     /** Warmth steps, 0 (off) to {@link #STEPS}. */
     static final int STEPS = 10;
 
@@ -53,6 +61,20 @@ public final class Tint extends Service {
     private Backlight backlight;
     private Process logcat;
     private Thread reader;
+    private BluetoothA2dp a2dp;
+    private long lastSettingsKeyAt;
+
+    private final BluetoothProfile.ServiceListener btListener = new BluetoothProfile.ServiceListener() {
+        @Override
+        public void onServiceConnected(int profile, BluetoothProfile proxy) {
+            if (profile == BluetoothProfile.A2DP) a2dp = (BluetoothA2dp) proxy;
+        }
+
+        @Override
+        public void onServiceDisconnected(int profile) {
+            if (profile == BluetoothProfile.A2DP) a2dp = null;
+        }
+    };
     private final Runnable tick = new Runnable() {
         @Override
         public void run() {
@@ -89,6 +111,10 @@ public final class Tint extends Service {
 
     static int getAirPlayState() {
         return airplayState;
+    }
+
+    static BluetoothA2dp getA2dp() {
+        return running != null ? running.a2dp : null;
     }
 
     static void makeRoom(Context c) {
@@ -179,6 +205,10 @@ public final class Tint extends Service {
         super.onCreate();
         running = this;
         foreground();
+        BluetoothAdapter a = BluetoothAdapter.getDefaultAdapter();
+        if (a != null && a.isEnabled()) {
+            a.getProfileProxy(this, btListener, BluetoothProfile.A2DP);
+        }
         backlight = new Backlight(this, ui);
         startReader();
         ui.post(tick);
@@ -200,6 +230,11 @@ public final class Tint extends Service {
                 ((WindowManager) getSystemService(WINDOW_SERVICE)).removeView(pictureOffView);
             } catch (RuntimeException ignored) {}
             pictureOffView = null;
+        }
+        if (a2dp != null) {
+            BluetoothAdapter a = BluetoothAdapter.getDefaultAdapter();
+            if (a != null) a.closeProfileProxy(BluetoothProfile.A2DP, a2dp);
+            a2dp = null;
         }
         stopReader();
         backlight.stop();
@@ -261,7 +296,7 @@ public final class Tint extends Service {
     private void startReader() {
         try {
             logcat = new ProcessBuilder("logcat", "-b", "default", "-b", "events", "-v", "brief", "-T", "1",
-                    "DispService:I", "am_proc_start:I", "am_proc_died:I", "*:S")
+                    "DispService:I", "FireTVKeyPolicyManager:I", "am_proc_start:I", "am_proc_died:I", "*:S")
                     .redirectErrorStream(true).start();
         } catch (IOException e) {
             Log.w(TAG, "logcat did not start", e);
@@ -280,6 +315,8 @@ public final class Tint extends Service {
                             wasHdmi = nowHdmi;
                             ui.post(() -> backlight.source(nowHdmi));
                         }
+                    } else if (line.contains("FireTVKeyPolicyManager") && line.contains("keycode 176")) {
+                        handleSettingsKey();
                     } else {
                         airplayState = AirPlay.next(airplayState, line);
                     }
@@ -290,6 +327,47 @@ public final class Tint extends Service {
         }, "log-reader");
         reader.setDaemon(true);
         reader.start();
+    }
+
+    private void handleSettingsKey() {
+        long now = SystemClock.uptimeMillis();
+        if (now - lastSettingsKeyAt < 350) return;
+        lastSettingsKeyAt = now;
+
+        if (Panel.isShowing()) {
+            ui.post(Panel::closeActive);
+            sendBroadcast(new Intent(ACTION_SETTINGS_KEY).setPackage("tv.dumbtv.home").putExtra("close", true));
+            return;
+        }
+
+        Intent i = new Intent(ACTION_SETTINGS_KEY).setPackage("tv.dumbtv.home");
+        sendOrderedBroadcast(i, null, new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                if (getResultCode() != Activity.RESULT_OK && !isHomeInstalled(context)) {
+                    openPanelDirectly();
+                }
+            }
+        }, null, Activity.RESULT_CANCELED, null, null);
+    }
+
+    private static boolean isHomeInstalled(Context c) {
+        Intent homeIntent = new Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME).setPackage("tv.dumbtv.home");
+        return c.getPackageManager().resolveActivity(homeIntent, 0) != null;
+    }
+
+    private void openPanelDirectly() {
+        SharedPreferences p = prefs(this);
+        int accent = p.getInt("accent", 0xFF3D8BFF);
+        Intent i = new Intent(this, Panel.class)
+                .putExtra("accent", accent)
+                .putExtra("from", video.current(true) != null ? "input" : "app")
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        try {
+            startActivity(i, ActivityOptions.makeCustomAnimation(this, 0, 0).toBundle());
+        } catch (Exception e) {
+            Log.w(TAG, "failed to open panel directly", e);
+        }
     }
 
     private void stopReader() {
