@@ -2,7 +2,6 @@ package tv.dumbtv.quick;
 
 import android.app.Activity;
 import android.app.ActivityManager;
-import android.app.ActivityOptions;
 import android.app.Notification;
 import android.app.Service;
 import android.bluetooth.BluetoothA2dp;
@@ -11,10 +10,12 @@ import android.bluetooth.BluetoothProfile;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.graphics.PixelFormat;
 import android.os.Build;
+import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
@@ -32,14 +33,18 @@ import java.util.TimeZone;
 
 /**
  * The long-running half of quick settings, a foreground service started at boot and whenever the
- * panel opens. It holds the warmth overlay, the picture-off overlay, the 60-second dim tick, and
- * follows DispService's and events' log for {@link Video} and AirPlay status.
+ * panel opens. It holds the warmth overlay, the picture-off overlay, the in-memory quick settings
+ * panel overlay, the 60-second dim tick, and follows DispService's and events' log for {@link Video}
+ * and AirPlay status.
  */
 public final class Tint extends Service {
     static final String TAG = "dumbtv-quick";
     static final String PREFS = "quick";
     static final String WARMTH = "warmth", AUTO = "auto";
     static final String ACTION_SETTINGS_KEY = "tv.dumbtv.home.KEY_SETTINGS";
+    static final String ACTION_SHOW = "tv.dumbtv.quick.SHOW";
+    static final String ACTION_CLOSE = "tv.dumbtv.quick.CLOSE";
+    static final String ACTION_IGNORE_BACK = "tv.dumbtv.quick.IGNORE_BACK";
     /** Warmth steps, 0 (off) to {@link #STEPS}. */
     static final int STEPS = 10;
 
@@ -56,6 +61,7 @@ public final class Tint extends Service {
     private static volatile boolean pictureOffActive;
 
     private final Handler ui = new Handler(Looper.getMainLooper());
+    private Panel panel;
     private View overlay;
     private View pictureOffView;
     private Backlight backlight;
@@ -63,6 +69,21 @@ public final class Tint extends Service {
     private Thread reader;
     private BluetoothA2dp a2dp;
     private long lastSettingsKeyAt;
+
+    private final BroadcastReceiver quickReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context c, Intent intent) {
+            if (intent == null) return;
+            String act = intent.getAction();
+            if (ACTION_IGNORE_BACK.equals(act)) {
+                if (panel != null) panel.ignoreNextBack();
+            } else if (ACTION_CLOSE.equals(act)) {
+                if (panel != null && panel.isShowing()) panel.close();
+            } else if (ACTION_SHOW.equals(act) || "tv.dumbtv.quick.PANEL".equals(act)) {
+                if (panel != null) panel.show(intent);
+            }
+        }
+    };
 
     private final BluetoothProfile.ServiceListener btListener = new BluetoothProfile.ServiceListener() {
         @Override
@@ -115,6 +136,18 @@ public final class Tint extends Service {
 
     static BluetoothA2dp getA2dp() {
         return running != null ? running.a2dp : null;
+    }
+
+    static void showFromIntent(Context c, Intent intent) {
+        Tint t = running;
+        if (t != null && t.panel != null) {
+            t.ui.post(() -> t.panel.show(intent));
+        } else {
+            Intent s = new Intent(c, Tint.class);
+            if (intent != null) s.putExtras(intent);
+            s.setAction(ACTION_SHOW);
+            Compat.startForeground(c, s);
+        }
     }
 
     static void makeRoom(Context c) {
@@ -210,6 +243,15 @@ public final class Tint extends Service {
             a.getProfileProxy(this, btListener, BluetoothProfile.A2DP);
         }
         backlight = new Backlight(this, ui);
+        panel = new Panel(this, ui, video);
+
+        IntentFilter filter = new IntentFilter();
+        filter.addAction(ACTION_IGNORE_BACK);
+        filter.addAction(ACTION_CLOSE);
+        filter.addAction(ACTION_SHOW);
+        filter.addAction("tv.dumbtv.quick.PANEL");
+        registerReceiver(quickReceiver, filter);
+
         startReader();
         ui.post(tick);
     }
@@ -218,12 +260,29 @@ public final class Tint extends Service {
     public int onStartCommand(Intent intent, int flags, int startId) {
         apply();
         Backlight.tick(this);
+        if (intent != null) {
+            String act = intent.getAction();
+            if ("tv.dumbtv.quick.PANEL".equals(act) || ACTION_SHOW.equals(act)) {
+                if (panel != null) panel.show(intent);
+            } else if (ACTION_CLOSE.equals(act)) {
+                if (panel != null && panel.isShowing()) panel.close();
+            } else if (ACTION_IGNORE_BACK.equals(act)) {
+                if (panel != null) panel.ignoreNextBack();
+            }
+        }
         return START_STICKY;
     }
 
     @Override
     public void onDestroy() {
         ui.removeCallbacksAndMessages(null);
+        try {
+            unregisterReceiver(quickReceiver);
+        } catch (IllegalArgumentException ignored) {}
+        if (panel != null && panel.isShowing()) {
+            panel.close();
+        }
+        panel = null;
         removeOverlay();
         if (pictureOffView != null) {
             try {
@@ -334,9 +393,8 @@ public final class Tint extends Service {
         if (now - lastSettingsKeyAt < 350) return;
         lastSettingsKeyAt = now;
 
-        if (Panel.isShowing()) {
-            ui.post(Panel::closeActive);
-            sendBroadcast(new Intent(ACTION_SETTINGS_KEY).setPackage("tv.dumbtv.home").putExtra("close", true));
+        if (panel != null && panel.isShowing()) {
+            panel.close();
             return;
         }
 
@@ -344,8 +402,19 @@ public final class Tint extends Service {
         sendOrderedBroadcast(i, null, new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
-                if (getResultCode() != Activity.RESULT_OK && !isHomeInstalled(context)) {
-                    openPanelDirectly();
+                if (getResultCode() == Activity.RESULT_OK) {
+                    Bundle res = getResultExtras(false);
+                    int accent = res != null ? res.getInt("accent", 0xFF3D8BFF) : 0xFF3D8BFF;
+                    String from = res != null ? res.getString("from") : null;
+                    String idlePause = res != null ? res.getString("idle_pause") : null;
+                    int idleMin = res != null ? res.getInt("idle_minutes", 0) : 0;
+                    ui.post(() -> {
+                        if (panel != null) panel.show(accent, from, idlePause, idleMin);
+                    });
+                } else if (!isHomeInstalled(context)) {
+                    ui.post(() -> {
+                        if (panel != null) panel.show(null);
+                    });
                 }
             }
         }, null, Activity.RESULT_CANCELED, null, null);
@@ -354,20 +423,6 @@ public final class Tint extends Service {
     private static boolean isHomeInstalled(Context c) {
         Intent homeIntent = new Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME).setPackage("tv.dumbtv.home");
         return c.getPackageManager().resolveActivity(homeIntent, 0) != null;
-    }
-
-    private void openPanelDirectly() {
-        SharedPreferences p = prefs(this);
-        int accent = p.getInt("accent", 0xFF3D8BFF);
-        Intent i = new Intent(this, Panel.class)
-                .putExtra("accent", accent)
-                .putExtra("from", video.current(true) != null ? "input" : "app")
-                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        try {
-            startActivity(i, ActivityOptions.makeCustomAnimation(this, 0, 0).toBundle());
-        } catch (Exception e) {
-            Log.w(TAG, "failed to open panel directly", e);
-        }
     }
 
     private void stopReader() {

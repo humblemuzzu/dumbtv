@@ -155,6 +155,10 @@ public final class Input extends Activity {
         return app.activityInfo != null && AMAZON_LIVE_TV.equals(app.activityInfo.packageName);
     }
 
+    static boolean isOpen() {
+        return instance != null;
+    }
+
     /**
      * Finishes this screen if it is still around (paused or stopped, not yet destroyed) and has
      * been showing for a while - never a screen that only just opened. Called on Keeper's worker
