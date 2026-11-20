@@ -204,7 +204,11 @@ public final class Input extends Activity {
         super.onDestroy();
     }
 
-    /** BACK leaves; Menu or Info shows the input's name again. Other keys go to the input. */
+    /**
+     * BACK leaves; Menu opens the quick settings panel where it is installed (and the home screen
+     * is not locked), otherwise it shows the input's name again, as Info does. Other keys go to the
+     * input.
+     */
     @Override
     public boolean dispatchKeyEvent(KeyEvent e) {
         switch (e.getKeyCode()) {
@@ -212,6 +216,11 @@ public final class Input extends Activity {
                 if (e.getAction() == KeyEvent.ACTION_UP) finish();
                 return true;
             case KeyEvent.KEYCODE_MENU:
+                if (e.getAction() != KeyEvent.ACTION_DOWN || e.getRepeatCount() > 0) return true;
+                Config cfg = Config.get(this);
+                if (!"on".equals(cfg.get(Config.LOCK)) && Quick.open(this, cfg.accent(), "input")) return true;
+                showName();
+                return true;
             case KeyEvent.KEYCODE_INFO:
                 if (e.getAction() == KeyEvent.ACTION_DOWN) showName();
                 return true;

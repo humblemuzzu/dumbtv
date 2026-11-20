@@ -48,7 +48,8 @@ Undo: `./launcher/install.sh --undo` gives HOME back to Amazon's launcher.
 | Up from the top row | Options and Settings |
 | Back on the home screen | jump to the first tile |
 | On an input: Back | back to the home screen |
-| On an input: ☰ Menu | show the input's name again |
+| Settings (the cog) | the quick settings panel when [dumbtv quick settings](../quick/README.md) is installed, otherwise the TV's settings |
+| On an input: ☰ Menu | the quick settings panel when it is installed (and Child lock is off), otherwise the input's name again |
 | Hold HOME | Fire OS quick menu (Amazon's, unchanged) |
 
 **Settings on Fire OS 6** opens a short list, because Amazon's own settings page draws its first row
@@ -440,6 +441,7 @@ Delete both to stop.
 | `src/.../Catalog.java` | which apps and inputs exist, and their order |
 | `src/.../Item.java` | one app or input |
 | `src/.../Input.java` | the built-in input screen (`TvView`) |
+| `src/.../Quick.java` | opens [dumbtv quick settings](../quick/README.md) when it is installed |
 | `src/.../Config.java` | reads and writes `home.conf` |
 | `src/.../Options.java` | the settings screen |
 | `src/.../IconPack.java` | finds installed icon packs and reads their pictures |

@@ -27,6 +27,14 @@ jobs:
         run: yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platforms;android-25" "build-tools;34.0.0" >/dev/null
       - name: build (sdk 25 for fire os 6-8; fails on any android.* API that Android 7.1 lacks)
         run: ./launcher/build.sh
+      - name: build dumbtv quick settings (signed with the key launcher/build.sh just made)
+        run: ./quick/build.sh
+      - name: host-side quick settings tests
+        run: |
+          javac --release 8 -Xlint:all -Werror -d /tmp/quick quick/src/tv/dumbtv/quick/Sun.java \
+            quick/src/tv/dumbtv/quick/Video.java quick/tests/SunTest.java quick/tests/VideoTest.java
+          java -cp /tmp/quick tv.dumbtv.quick.SunTest
+          java -cp /tmp/quick tv.dumbtv.quick.VideoTest
       - name: host-side launcher tests
         run: |
           jar="$ANDROID_HOME/platforms/android-25/android.jar"
@@ -82,7 +90,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: syntax
-        run: for f in scripts/*.sh launcher/*.sh; do bash -n "$f" || exit 1; done
+        run: for f in scripts/*.sh launcher/*.sh quick/*.sh; do bash -n "$f" || exit 1; done
       - name: offline script tests (no device)
         run: python3 -m unittest discover -s tests -v
       - name: launcher version manifest
