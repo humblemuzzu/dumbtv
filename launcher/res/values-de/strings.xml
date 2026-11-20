@@ -148,4 +148,7 @@
     <string name="choice_library">Bibliotheksbanner</string>
     <string name="choice_library_on">Angezeigt</string>
     <string name="choice_library_off">Ausgeblendet</string>
+    <string name="choice_quick">Schnelleinstellungen</string>
+    <string name="choice_quick_on">An</string>
+    <string name="choice_quick_off">Aus</string>
 </resources>

@@ -44,10 +44,21 @@ import android.view.accessibility.AccessibilityEvent;
  * Waking resumes whatever was on screen without a new window event. If the last window was
  * Amazon's home screen, ours is brought up at once. Amazon's other launcher screens, such as
  * its settings grid, are left alone, as is a wake before any window was seen.
+ *
+ * The remote's settings (cog) button never reaches an app or an accessibility key filter: Fire
+ * OS's key policy sends it as a GLOBAL_BUTTON broadcast to Amazon's quick settings, which draws an
+ * overlay window from {@link #AMAZON_QS}. Where dumbtv quick settings is installed and enabled
+ * ({@link Quick#enabled}), that window's appearance is the signal: BACK closes it, and our panel
+ * opens in its place, through {@link Home} when the home screen is in front.
  */
 public final class Guard extends AccessibilityService {
     static final String AMAZON = "com.amazon.tv.launcher";
     private static final String AMAZON_HOME = "com.amazon.tv.launcher.ui.HomeActivity_vNext";
+    static final String AMAZON_QS = "com.amazon.tv.quicksettings.ui";
+    /** After BACK has closed Amazon's overlay, so that key cannot land on our panel instead. */
+    private static final long QUICK_AFTER_BACK_MS = 250;
+    /** One overlay sends several window events; one BACK only, or a second one leaves an input. */
+    private static final long QUICK_DEBOUNCE_MS = 1500;
     private static final long COVER_MAX_MS = 1500;
     private static final long LAUNCH_FALLBACK_MS = 150;
     private static final long SHOWN_DELAY_MS = Build.VERSION.SDK_INT >= 34 ? 300 : 0;
@@ -66,6 +77,10 @@ public final class Guard extends AccessibilityService {
     private final Runnable launch = () -> home(this);
     private final HomeRetry homeRetry = new HomeRetry();
     private final Runnable retry = this::retryHome;
+    private final Runnable openQuick = () -> {
+        if (!(Home.inFront && Home.openQuick())) Quick.open(this, Config.get(this).accent());
+    };
+    private long quickReplacedAt = -QUICK_DEBOUNCE_MS;
     private View cover;
     private boolean onAmazonHome;
     private final BroadcastReceiver screenOn = new BroadcastReceiver() {
@@ -148,6 +163,7 @@ public final class Guard extends AccessibilityService {
         cancelRetry();
         handler.removeCallbacks(uncover);
         handler.removeCallbacks(launch);
+        handler.removeCallbacks(openQuick);
         try {
             unregisterReceiver(screenOn);
         } catch (IllegalArgumentException ignored) {
@@ -162,6 +178,10 @@ public final class Guard extends AccessibilityService {
         if (e.getEventType() != AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED) return;
         CharSequence pkg = e.getPackageName(), cls = e.getClassName();
         if (pkg == null) return;
+        if (AMAZON_QS.contentEquals(pkg)) {
+            replaceQuickSettings();
+            return;
+        }
         if (!AMAZON.contentEquals(pkg)) {
             if ("com.android.systemui".contentEquals(pkg) || "android".contentEquals(pkg)) return;
             boolean own = getPackageName().contentEquals(pkg);
@@ -180,6 +200,17 @@ public final class Guard extends AccessibilityService {
         }
         homeRetry.request();
         retryHome();
+    }
+
+    /** Amazon's quick settings overlay opened: put ours in its place, where it is enabled. */
+    private void replaceQuickSettings() {
+        if (!Quick.enabled(this, Config.get(this))) return;
+        long now = SystemClock.uptimeMillis();
+        if (now - quickReplacedAt < QUICK_DEBOUNCE_MS) return;
+        quickReplacedAt = now;
+        performGlobalAction(GLOBAL_ACTION_BACK);
+        handler.removeCallbacks(openQuick);
+        handler.postDelayed(openQuick, QUICK_AFTER_BACK_MS);
     }
 
     /** Retain a throttled HOME event: Fire OS may leave Amazon Home on top after a burst. */

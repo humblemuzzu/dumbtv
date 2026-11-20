@@ -150,4 +150,7 @@
     <string name="choice_library">Library banner</string>
     <string name="choice_library_on">Shown</string>
     <string name="choice_library_off">Hidden</string>
+    <string name="choice_quick">Quick settings panel</string>
+    <string name="choice_quick_on">On</string>
+    <string name="choice_quick_off">Off</string>
 </resources>

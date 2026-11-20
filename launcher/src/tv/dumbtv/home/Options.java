@@ -48,7 +48,10 @@ public final class Options extends Activity {
         title.setPadding(dp(16), 0, 0, dp(20));
         list.addView(title);
 
-        for (Config.Choice c : Config.CHOICES) list.addView(choice(c));
+        for (Config.Choice c : Config.CHOICES) {
+            if (c == Config.QUICK && !Quick.installed(this)) continue;
+            list.addView(choice(c));
+        }
         LinearLayout packRow = new LinearLayout(this);
         packRow.setOrientation(LinearLayout.VERTICAL);
         list.addView(packRow);

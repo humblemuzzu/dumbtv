@@ -112,6 +112,16 @@ else
     die "could not hand HOME back to Amazon's launcher; run ./launcher/install.sh --undo"
 fi
 note "always_on_vpn_app cleared, HOME handed back to Amazon's launcher (apps stay installed)"
+# dumbtv quick settings holds a device admin, which blocks uninstalling it until it lets go.
+if dev pm list packages tv.dumbtv.quick | tr -d '\r' | grep -q '^package:tv.dumbtv.quick$'; then
+  if [[ $DRY_RUN == 1 ]]; then
+    note "[dry-run] ADB=$ADB ADB_SERIAL=$SERIAL quick/install.sh --undo"
+  elif ADB=$ADB ADB_SERIAL=$SERIAL "$ROOT/quick/install.sh" --undo >/dev/null; then
+    note "dumbtv quick settings removed (device admin given up first)"
+  else
+    note "WARNING: could not remove dumbtv quick settings; run ./quick/install.sh --undo"
+  fi
+fi
 
 step "settings"
 while read -r ns key value; do

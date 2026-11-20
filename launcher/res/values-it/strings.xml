@@ -148,4 +148,7 @@
     <string name="choice_library">Banner libreria</string>
     <string name="choice_library_on">Visibile</string>
     <string name="choice_library_off">Nascosto</string>
+    <string name="choice_quick">Pannello impostazioni rapide</string>
+    <string name="choice_quick_on">Attivo</string>
+    <string name="choice_quick_off">Spento</string>
 </resources>

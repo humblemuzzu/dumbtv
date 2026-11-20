@@ -64,6 +64,8 @@ public final class Home extends Activity {
     private final ExecutorService colorIo = Executors.newSingleThreadExecutor();
     private final List<TextView> chips = new ArrayList<>();
     private Config cfg;
+    /** The resumed home screen, for {@link #openQuick}; null while another screen is in front. */
+    private static Home front;
     private TvInputManager tv;
     private int applied = -1, appsGeneration;
     /** Whether the home screen is the resumed activity; Guard reads it on the same main thread. */
@@ -324,6 +326,7 @@ public final class Home extends Activity {
         super.onResume();
         resumed = true;
         inFront = true;
+        front = this;
         Guard.arrived(this);
         Filter.wake(this);
         cfg.refresh();
@@ -426,6 +429,7 @@ public final class Home extends Activity {
         stopColorAnimation();
         targetColor = 0;
         unregisterReceiver(time);
+        if (front == this) front = null;
         if (moving != null) stopMoving();
     }
 
@@ -1348,6 +1352,31 @@ public final class Home extends Activity {
         }
         o.inJustDecodeBounds = false;
         return BitmapFactory.decodeFile(f.getPath(), o);
+    }
+
+    /**
+     * The remote's settings button, from {@link Guard} while this screen is in front: the quick
+     * settings panel, started for a result so its Auto-switch row can pause {@code idle_input}
+     * where home has it. Returns false when the panel is off, not installed, or home is locked.
+     */
+    static boolean openQuick() {
+        Home h = front;
+        if (h == null || !Quick.enabled(h, h.cfg)) return false;
+        int idleMin = 0;
+        try {
+            idleMin = Integer.parseInt(h.cfg.get("idle_input", "0").trim());
+        } catch (NumberFormatException ignored) {
+        }
+        return Quick.open(h, h.cfg.accent(), "home", h.cfg.get(Quick.CONF_IDLE_PAUSE, null), idleMin);
+    }
+
+    /** The panel's Auto-switch row changed: keep it; onResume, next, reschedules the idle switch. */
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode != Quick.REQUEST_CODE || resultCode != RESULT_OK || data == null) return;
+        String paused = data.getStringExtra(Quick.EXTRA_IDLE_PAUSE);
+        if (paused != null) cfg.set(Quick.CONF_IDLE_PAUSE, "0".equals(paused) ? null : paused);
     }
 
     /**
