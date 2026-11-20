@@ -77,6 +77,8 @@ public final class Tint extends Service {
             String act = intent.getAction();
             if (ACTION_IGNORE_BACK.equals(act)) {
                 if (panel != null) panel.ignoreNextBack();
+            } else if ("tv.dumbtv.quick.BRING_TO_TOP".equals(act)) {
+                if (panel != null) panel.bringToTop();
             } else if (ACTION_CLOSE.equals(act)) {
                 if (panel != null && panel.isShowing()) panel.close();
             } else if (ACTION_SHOW.equals(act) || "tv.dumbtv.quick.PANEL".equals(act)) {
@@ -247,6 +249,7 @@ public final class Tint extends Service {
 
         IntentFilter filter = new IntentFilter();
         filter.addAction(ACTION_IGNORE_BACK);
+        filter.addAction("tv.dumbtv.quick.BRING_TO_TOP");
         filter.addAction(ACTION_CLOSE);
         filter.addAction(ACTION_SHOW);
         filter.addAction("tv.dumbtv.quick.PANEL");
@@ -262,7 +265,9 @@ public final class Tint extends Service {
         Backlight.tick(this);
         if (intent != null) {
             String act = intent.getAction();
-            if ("tv.dumbtv.quick.PANEL".equals(act) || ACTION_SHOW.equals(act)) {
+            if ("tv.dumbtv.quick.BRING_TO_TOP".equals(act)) {
+                if (panel != null) panel.bringToTop();
+            } else if ("tv.dumbtv.quick.PANEL".equals(act) || ACTION_SHOW.equals(act)) {
                 if (panel != null) panel.show(intent);
             } else if (ACTION_CLOSE.equals(act)) {
                 if (panel != null && panel.isShowing()) panel.close();
@@ -282,6 +287,7 @@ public final class Tint extends Service {
         if (panel != null && panel.isShowing()) {
             panel.close();
         }
+        sendBroadcast(new Intent("tv.dumbtv.home.PANEL_CLOSED").setPackage("tv.dumbtv.home"));
         panel = null;
         removeOverlay();
         if (pictureOffView != null) {
@@ -427,13 +433,17 @@ public final class Tint extends Service {
         }, null, Activity.RESULT_CANCELED, null, null);
     }
 
-    private void suppressAmazonQuickSettings() {
-        ActivityManager am = (ActivityManager) getSystemService(ACTIVITY_SERVICE);
+    static void suppressAmazonQuickSettings(Context c) {
+        ActivityManager am = (ActivityManager) c.getSystemService(ACTIVITY_SERVICE);
         if (am == null) return;
         try {
             am.killBackgroundProcesses("com.amazon.tv.quicksettings.ui");
             am.killBackgroundProcesses("com.amazon.tv.quicksettings");
         } catch (SecurityException ignored) {}
+    }
+
+    private void suppressAmazonQuickSettings() {
+        suppressAmazonQuickSettings(this);
     }
 
     private static boolean isHomeInstalled(Context c) {

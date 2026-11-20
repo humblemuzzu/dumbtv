@@ -217,6 +217,7 @@ public final class Panel {
             try {
                 wm.addView(root, lp);
                 showing = true;
+                context.sendBroadcast(new Intent("tv.dumbtv.home.PANEL_OPEN").setPackage("tv.dumbtv.home"));
             } catch (RuntimeException e) {
                 Log.w(Tint.TAG, "quick settings: could not add overlay window", e);
                 showing = false;
@@ -249,6 +250,13 @@ public final class Panel {
         closing = true;
         ui.removeCallbacks(tick);
         noiseSampler.stop();
+        if (wm != null && root != null && root.isAttachedToWindow() && lp != null) {
+            lp.flags |= WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE;
+            try {
+                wm.updateViewLayout(root, lp);
+            } catch (RuntimeException ignored) {}
+        }
+        context.sendBroadcast(new Intent("tv.dumbtv.home.DISMISS_AMAZON_QS").setPackage("tv.dumbtv.home"));
         slide(false);
     }
 
@@ -530,6 +538,8 @@ public final class Panel {
                 wm.removeView(root);
             } catch (RuntimeException ignored) {}
         }
+        context.sendBroadcast(new Intent("tv.dumbtv.home.PANEL_CLOSED").setPackage("tv.dumbtv.home"));
+        Tint.suppressAmazonQuickSettings(context);
         if (fromHome && idlePauseResult != null) {
             Intent res = new Intent("tv.dumbtv.home.SET_IDLE_PAUSE").setPackage("tv.dumbtv.home");
             res.putExtra("idle_pause", idlePauseResult);

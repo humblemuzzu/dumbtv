@@ -57,6 +57,9 @@ public final class Guard extends AccessibilityService {
     private static final String AMAZON_HOME = "com.amazon.tv.launcher.ui.HomeActivity_vNext";
     static final String AMAZON_QS = "com.amazon.tv.quicksettings.ui";
     static final String ACTION_SETTINGS_KEY = "tv.dumbtv.home.KEY_SETTINGS";
+    static final String ACTION_DISMISS_AMAZON_QS = "tv.dumbtv.home.DISMISS_AMAZON_QS";
+    static final String ACTION_PANEL_OPEN = "tv.dumbtv.home.PANEL_OPEN";
+    static final String ACTION_PANEL_CLOSED = "tv.dumbtv.home.PANEL_CLOSED";
     /** After BACK has closed Amazon's overlay, so that key cannot land on our panel instead. */
     private static final long QUICK_AFTER_BACK_MS = 250;
     /** One overlay sends several window events; one BACK only, or a second one leaves an input. */
@@ -67,6 +70,9 @@ public final class Guard extends AccessibilityService {
 
     private static volatile boolean paused;
     private static Guard running;
+    private volatile boolean panelShowing;
+    private volatile boolean amazonQsActive;
+    private volatile long amazonQsOpenedAt;
     /**
      * elapsedRealtime of the last screen-on, 0 once {@link Home} has acted on it. Home reads it to
      * go on to the {@code wake_input} from home.conf; the resume and the broadcast arrive in either
@@ -119,6 +125,34 @@ public final class Guard extends AccessibilityService {
     private long quickReplacedAt = -QUICK_DEBOUNCE_MS;
     private View cover;
     private boolean onAmazonHome;
+
+    private final BroadcastReceiver panelReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context c, Intent intent) {
+            if (intent == null) return;
+            String act = intent.getAction();
+            if (ACTION_PANEL_OPEN.equals(act)) {
+                panelShowing = true;
+            } else if (ACTION_PANEL_CLOSED.equals(act)) {
+                panelShowing = false;
+                dismissAmazonQsIfNeeded(50);
+            } else if (ACTION_DISMISS_AMAZON_QS.equals(act)) {
+                dismissAmazonQsIfNeeded(30);
+            }
+        }
+    };
+
+    private void dismissAmazonQsIfNeeded(long delayMs) {
+        if (!amazonQsActive) return;
+        long now = SystemClock.uptimeMillis();
+        if (now - amazonQsOpenedAt > 45000) {
+            amazonQsActive = false;
+            return;
+        }
+        amazonQsActive = false;
+        handler.postDelayed(() -> performGlobalAction(GLOBAL_ACTION_BACK), delayMs);
+    }
+
     private final BroadcastReceiver screenOn = new BroadcastReceiver() {
         @Override
         public void onReceive(Context c, Intent i) {
@@ -193,6 +227,11 @@ public final class Guard extends AccessibilityService {
         cover = view;
         registerReceiver(screenOn, new IntentFilter(Intent.ACTION_SCREEN_ON));
         registerReceiver(settingsKeyReceiver, new IntentFilter(ACTION_SETTINGS_KEY));
+        IntentFilter panelFilter = new IntentFilter();
+        panelFilter.addAction(ACTION_PANEL_OPEN);
+        panelFilter.addAction(ACTION_PANEL_CLOSED);
+        panelFilter.addAction(ACTION_DISMISS_AMAZON_QS);
+        registerReceiver(panelReceiver, panelFilter);
         Filter.watch(this);
     }
 
@@ -210,6 +249,10 @@ public final class Guard extends AccessibilityService {
             unregisterReceiver(settingsKeyReceiver);
         } catch (IllegalArgumentException ignored) {
         }
+        try {
+            unregisterReceiver(panelReceiver);
+        } catch (IllegalArgumentException ignored) {
+        }
         if (cover != null) ((WindowManager) getSystemService(WINDOW_SERVICE)).removeView(cover);
         if (running == this) running = null;
         super.onDestroy();
@@ -221,17 +264,20 @@ public final class Guard extends AccessibilityService {
         CharSequence pkg = e.getPackageName(), cls = e.getClassName();
         if (pkg == null) return;
         if (AMAZON_QS.contentEquals(pkg)) {
+            amazonQsActive = true;
+            amazonQsOpenedAt = SystemClock.uptimeMillis();
             replaceQuickSettings();
             return;
         }
         if (!AMAZON.contentEquals(pkg)) {
-            if ("com.android.systemui".contentEquals(pkg) || "android".contentEquals(pkg)) return;
+            if ("tv.dumbtv.quick".contentEquals(pkg) || "com.android.systemui".contentEquals(pkg) || "android".contentEquals(pkg)) return;
             boolean own = getPackageName().contentEquals(pkg);
             if (own && !OwnWindow.showsWhatIsInFront(cls, View.class.getName(),
                     Home.class.getName(), Home.inFront)) return;
             cancelRetry();
             onAmazonHome = false;
             paused = false;
+            amazonQsActive = false;
             if (!own) arrived(this);
             return;
         }
@@ -252,6 +298,13 @@ public final class Guard extends AccessibilityService {
         long now = SystemClock.uptimeMillis();
         if (now - quickReplacedAt < QUICK_DEBOUNCE_MS) return;
         quickReplacedAt = now;
+        if (panelShowing) {
+            // In-memory bespoke panel is already showing: re-assert its top Z-order to occlude Amazon QS.
+            // Do not inject synthetic BACK now (it would hit our panel).
+            // Amazon QS will be dismissed cleanly on panel collapse.
+            sendBroadcast(new Intent("tv.dumbtv.quick.BRING_TO_TOP").setPackage("tv.dumbtv.quick"));
+            return;
+        }
         sendBroadcast(new Intent("tv.dumbtv.quick.IGNORE_BACK").setPackage("tv.dumbtv.quick"));
         performGlobalAction(GLOBAL_ACTION_BACK);
         if (now - settingsKeyAt > 2000) {
