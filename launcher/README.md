@@ -356,6 +356,9 @@ in `morning-coast.jpg`.
 `background=adaptive-tint` keeps the wallpaper and adds a light wash of that
 colour; without a wallpaper it shows graphite.
 
+| ![Aurora background](../docs/assets/screens/aurora.png) | ![Video background, input tiles in the chips' look](../docs/assets/screens/video.png) |
+|---|---|
+
 `background=aurora` draws slow-drifting light in colours taken from the focused app
 (a green-to-violet night sky for inputs and grey icons). No files; `dim` applies. It
 runs only while the home screen is in front and holds still when animations are off.
