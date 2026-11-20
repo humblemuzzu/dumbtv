@@ -84,7 +84,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: syntax
-        run: for f in scripts/*.sh launcher/*.sh; do bash -n "$f" || exit 1; done
+        run: for f in scripts/*.sh launcher/*.sh fixer/*.sh airplay/*.sh; do bash -n "$f" || exit 1; done
       - name: offline script tests (no device)
         run: python3 -m unittest discover -s tests -v
       - name: launcher version manifest
