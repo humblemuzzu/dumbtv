@@ -114,6 +114,8 @@
     <string name="choice_switch_auto">Automatisch</string>
     <string name="choice_switch_tv">Die TV-App</string>
     <string name="choice_switch_home">dumbtv-Startbildschirm</string>
+    <string name="choice_wake_input">Beim Start anzeigen</string>
+    <string name="choice_wake_input_home">Startbildschirm</string>
     <string name="choice_background">Hintergrund</string>
     <string name="choice_background_black">Schwarz</string>
     <string name="choice_background_graphite">Graphit</string>

@@ -16,6 +16,9 @@ final class Text {
     }
 
     static String name(Context c, Config.Choice choice, String value) {
+        if (Config.WAKE_INPUT.equals(choice.key) && !"home".equals(value)) {
+            return choice.name(value);
+        }
         return find(c, "choice_" + choice.key + "_" + value.replace('-', '_'), choice.name(value));
     }
 

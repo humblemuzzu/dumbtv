@@ -19,11 +19,13 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.os.SystemClock;
 import android.provider.Settings;
 import android.text.SpannableString;
 import android.text.Spanned;
 import android.text.format.DateFormat;
 import android.text.style.RelativeSizeSpan;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.View;
@@ -66,6 +68,11 @@ public final class Home extends Activity {
     private int applied = -1, appsGeneration;
     /** Whether the home screen is the resumed activity; Guard reads it on the same main thread. */
     static boolean inFront;
+    /** The resumed home screen, for {@link #woke}; null while another screen is in front. */
+    private static Home current;
+    /** A wake older than this is not acted on: Home was resumed for another reason. */
+    private static final long WAKE_WINDOW_MS = 10_000;
+    private final Runnable idle = this::idleInput;
     private boolean resumed, landed, unlockOpened;
     private String lastFocusedKind;
     private final Map<String, String> lastIds = new HashMap<>();
@@ -329,6 +336,84 @@ public final class Home extends Activity {
         f.addAction(Intent.ACTION_TIMEZONE_CHANGED);
         registerReceiver(time, f);
         tick();
+        current = this;
+        if (!wakeInput()) scheduleIdle();
+    }
+
+    /** Guard saw the screen come on while this screen was already resumed. */
+    static void woke() {
+        if (current != null) current.wakeInput();
+    }
+
+    /**
+     * {@code wake_input=<input id>} in home.conf: right after the TV wakes, open that input
+     * instead of staying on the home screen. Returns whether it did.
+     */
+    private boolean wakeInput() {
+        long at = Guard.wokeAt;
+        if (at == 0 || SystemClock.elapsedRealtime() - at > WAKE_WINDOW_MS) return false;
+        Guard.wokeAt = 0;
+        if (!openConfiguredInput("wake")) return false;
+        Guard.shown(); // the input goes on top at once; do not keep the cover up over it
+        return true;
+    }
+
+    /**
+     * {@code idle_input=<minutes>}: after that long on the home screen with no key pressed, open
+     * the {@code wake_input}. Set it below the screensaver delay (Settings, 5 minutes by default)
+     * and the input's own picture takes the screensaver's place.
+     */
+    private void scheduleIdle() {
+        ui.removeCallbacks(idle);
+        int minutes;
+        try {
+            minutes = Integer.parseInt(cfg.get("idle_input", "0").trim());
+        } catch (NumberFormatException e) {
+            minutes = 0;
+        }
+        String id = cfg.get(Config.WAKE_INPUT, null);
+        if (minutes <= 0 || id == null || "home".equals(id) || "off".equals(id) || idlePaused()) return;
+        ui.postDelayed(idle, minutes * 60_000L);
+    }
+
+    /** {@link Config#IDLE_PAUSE}: "off", or a time in the future. */
+    private boolean idlePaused() {
+        String pause = cfg.get(Config.IDLE_PAUSE, null);
+        if (pause == null || "0".equals(pause)) return false;
+        if ("off".equalsIgnoreCase(pause)) return true;
+        try {
+            return System.currentTimeMillis() < Long.parseLong(pause.trim());
+        } catch (NumberFormatException e) {
+            return false;
+        }
+    }
+
+    private void idleInput() {
+        if (resumed) openConfiguredInput("idle");
+    }
+
+    private boolean openConfiguredInput(String why) {
+        String id = cfg.get(Config.WAKE_INPUT, null);
+        if (id == null || "home".equals(id) || "off".equals(id)) return false;
+        Item match = null;
+        for (Item it : Catalog.inputs(this, tv)) {
+            if (it.id.equals(id)) {
+                match = it;
+                break;
+            }
+        }
+        if (match == null) return false;
+        CharSequence name = Catalog.label(cfg, match);
+        Log.i("dumbtv", why + ": opening " + id);
+        try {
+            Intent own = Input.intent(this, cfg, match, name);
+            if (own != null) startActivity(own);
+            else launch(new Intent(match.intent), null);
+            return true;
+        } catch (RuntimeException e) {
+            Log.w("dumbtv", why + ": could not open " + id, e);
+            return false;
+        }
     }
 
     @Override
@@ -341,6 +426,8 @@ public final class Home extends Activity {
         super.onPause();
         resumed = false;
         inFront = false;
+        if (current == this) current = null;
+        ui.removeCallbacks(idle);
         hero.stop();
         stopColorAnimation();
         targetColor = 0;
@@ -388,6 +475,7 @@ public final class Home extends Activity {
 
     @Override
     public boolean dispatchKeyEvent(KeyEvent e) {
+        if (resumed) scheduleIdle();
         if (moving == null) return super.dispatchKeyEvent(e);
         if (e.getAction() == KeyEvent.ACTION_DOWN) {
             switch (e.getKeyCode()) {
