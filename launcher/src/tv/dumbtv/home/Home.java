@@ -371,7 +371,20 @@ public final class Home extends Activity {
         } catch (NumberFormatException e) {
             minutes = 0;
         }
-        if (minutes > 0 && cfg.get("wake_input", null) != null) ui.postDelayed(idle, minutes * 60_000L);
+        if (minutes <= 0 || cfg.get("wake_input", null) == null || idlePaused()) return;
+        ui.postDelayed(idle, minutes * 60_000L);
+    }
+
+    /** {@link Config#IDLE_PAUSE}: "off", or a time in the future. */
+    private boolean idlePaused() {
+        String pause = cfg.get(Config.IDLE_PAUSE, null);
+        if (pause == null || "0".equals(pause)) return false;
+        if ("off".equalsIgnoreCase(pause)) return true;
+        try {
+            return System.currentTimeMillis() < Long.parseLong(pause.trim());
+        } catch (NumberFormatException e) {
+            return false;
+        }
     }
 
     private void idleInput() {
