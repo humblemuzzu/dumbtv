@@ -367,13 +367,6 @@ public final class Panel {
         cleanShield();
         ui.removeCallbacks(tick);
         noiseSampler.stop();
-        if (wm != null && root != null && root.isAttachedToWindow() && lp != null) {
-            lp.flags |= WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE;
-            try {
-                wm.updateViewLayout(root, lp);
-            } catch (RuntimeException ignored) {}
-        }
-        context.sendBroadcast(new Intent("tv.dumbtv.home.DISMISS_AMAZON_QS").setPackage("tv.dumbtv.home"));
         slide(false);
     }
 

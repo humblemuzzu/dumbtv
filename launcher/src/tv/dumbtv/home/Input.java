@@ -68,6 +68,7 @@ public final class Input extends Activity {
     private TvView view;
     private TextView name, status;
     private String id;
+    private boolean backDown;
     private final Runnable hideName = () -> name.animate().alpha(0f).setDuration(250)
             .withEndAction(() -> name.setVisibility(View.GONE)).start();
     private final Runnable noSignal = () -> status(getString(NO_SIGNAL));
@@ -223,6 +224,7 @@ public final class Input extends Activity {
     @Override
     @SuppressWarnings("deprecation")
     protected void onStop() {
+        backDown = false;
         ui.removeCallbacksAndMessages(null);
         getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         if (view != null) {
@@ -247,7 +249,16 @@ public final class Input extends Activity {
     public boolean dispatchKeyEvent(KeyEvent e) {
         switch (e.getKeyCode()) {
             case KeyEvent.KEYCODE_BACK:
-                if (e.getAction() == KeyEvent.ACTION_UP) finish();
+                if (e.getAction() == KeyEvent.ACTION_DOWN) {
+                    backDown = true;
+                    return true;
+                } else if (e.getAction() == KeyEvent.ACTION_UP) {
+                    if (backDown) {
+                        backDown = false;
+                        finish();
+                    }
+                    return true;
+                }
                 return true;
             case KeyEvent.KEYCODE_MENU:
                 if (e.getAction() != KeyEvent.ACTION_DOWN || e.getRepeatCount() > 0) return true;

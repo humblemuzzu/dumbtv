@@ -57,7 +57,6 @@ public final class Guard extends AccessibilityService {
     private static final String AMAZON_HOME = "com.amazon.tv.launcher.ui.HomeActivity_vNext";
     static final String AMAZON_QS = "com.amazon.tv.quicksettings.ui";
     static final String ACTION_SETTINGS_KEY = "tv.dumbtv.home.KEY_SETTINGS";
-    static final String ACTION_DISMISS_AMAZON_QS = "tv.dumbtv.home.DISMISS_AMAZON_QS";
     static final String ACTION_PANEL_OPEN = "tv.dumbtv.home.PANEL_OPEN";
     static final String ACTION_PANEL_CLOSED = "tv.dumbtv.home.PANEL_CLOSED";
     /** After BACK has closed Amazon's overlay, so that key cannot land on our panel instead. */
@@ -140,8 +139,6 @@ public final class Guard extends AccessibilityService {
                 panelShowing = true;
             } else if (ACTION_PANEL_CLOSED.equals(act)) {
                 panelShowing = false;
-                dismissAmazonQsIfNeeded(50);
-            } else if (ACTION_DISMISS_AMAZON_QS.equals(act)) {
                 dismissAmazonQsIfNeeded(50);
             }
         }
@@ -239,7 +236,6 @@ public final class Guard extends AccessibilityService {
         IntentFilter panelFilter = new IntentFilter();
         panelFilter.addAction(ACTION_PANEL_OPEN);
         panelFilter.addAction(ACTION_PANEL_CLOSED);
-        panelFilter.addAction(ACTION_DISMISS_AMAZON_QS);
         registerReceiver(panelReceiver, panelFilter);
         Filter.watch(this);
     }
@@ -273,10 +269,18 @@ public final class Guard extends AccessibilityService {
         CharSequence pkg = e.getPackageName(), cls = e.getClassName();
         if (pkg == null) return;
         if (AMAZON_QS.contentEquals(pkg)) {
+            long now = SystemClock.uptimeMillis();
+            boolean fromSettingsKey = panelShowing || (now - settingsKeyAt < 1500);
+            if (!fromSettingsKey) {
+                // Vanilla quick settings opened intentionally (e.g. via long-holding HOME).
+                // Do not intercept, dismiss, or overtake with custom panel.
+                return;
+            }
             amazonQsActive = true;
-            amazonQsOpenedAt = SystemClock.uptimeMillis();
+            amazonQsOpenedAt = now;
             if (panelShowing) {
                 sendBroadcast(new Intent("tv.dumbtv.quick.BRING_TO_TOP").setPackage("tv.dumbtv.quick"));
+                return;
             }
             replaceQuickSettings();
             return;
@@ -312,10 +316,6 @@ public final class Guard extends AccessibilityService {
         quickReplacedAt = now;
         sendBroadcast(new Intent("tv.dumbtv.quick.IGNORE_BACK").setPackage("tv.dumbtv.quick"));
         handler.postDelayed(() -> performGlobalAction(GLOBAL_ACTION_BACK), 50);
-        if (now - settingsKeyAt > 2000) {
-            handler.removeCallbacks(openQuick);
-            handler.postDelayed(openQuick, QUICK_AFTER_BACK_MS);
-        }
     }
 
     /** Retain a throttled HOME event: Fire OS may leave Amazon Home on top after a burst. */
