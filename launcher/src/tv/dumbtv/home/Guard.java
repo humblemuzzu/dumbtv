@@ -114,6 +114,11 @@ public final class Guard extends AccessibilityService {
                 setResultExtras(res);
             }
             settingsKeyAt = SystemClock.uptimeMillis();
+            if (!intent.getBooleanExtra("close", false)) {
+                amazonQsActive = true;
+                amazonQsOpenedAt = settingsKeyAt;
+                panelShowing = true;
+            }
             if (intent.getBooleanExtra("close", false)) return;
             if (!isOrderedBroadcast()) {
                 handler.removeCallbacks(openQuick);
@@ -137,7 +142,7 @@ public final class Guard extends AccessibilityService {
                 panelShowing = false;
                 dismissAmazonQsIfNeeded(50);
             } else if (ACTION_DISMISS_AMAZON_QS.equals(act)) {
-                dismissAmazonQsIfNeeded(30);
+                dismissAmazonQsIfNeeded(50);
             }
         }
     };
@@ -149,8 +154,12 @@ public final class Guard extends AccessibilityService {
             amazonQsActive = false;
             return;
         }
-        amazonQsActive = false;
-        handler.postDelayed(() -> performGlobalAction(GLOBAL_ACTION_BACK), delayMs);
+        handler.postDelayed(() -> {
+            if (amazonQsActive) {
+                amazonQsActive = false;
+                performGlobalAction(GLOBAL_ACTION_BACK);
+            }
+        }, delayMs);
     }
 
     private final BroadcastReceiver screenOn = new BroadcastReceiver() {
@@ -280,7 +289,7 @@ public final class Guard extends AccessibilityService {
             cancelRetry();
             onAmazonHome = false;
             paused = false;
-            amazonQsActive = false;
+            if (!panelShowing) amazonQsActive = false;
             if (!own) arrived(this);
             return;
         }
