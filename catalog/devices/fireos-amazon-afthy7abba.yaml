@@ -34,6 +34,7 @@ quirks:
   - "debloat.sh: 47 disabled, protected 0, suspect 0; absent: shoptv.firetv.client, tv.fw.metrics, tigris, android.nfc, vizzini.ftvcds, wha.mediabrowserservice, whad, whasettings. lockdown.sh: rdmapplication absent, the other six protected packages restricted"
   - "With dumbtv home active, Appstore deep links (amzn://apps/android?p=... and ?s=...) and launching com.amazon.venezia land back on dumbtv home: on Fire OS 8 the Appstore's screens run inside Amazon's launcher. Options > Open Amazon's home screen is the way to install an app"
   - "A cleanyourtv debloat had disabled 14 overlapping Amazon packages before this pass (ads, ACR, telemetry); verify.sh counted 49 disabled. dumbtv home was built from source with launcher/install.sh --build"
+  - "MediaTek MT5896 / MT5873 (merak platform) hardware rendering pipeline teardown, PQU RISC-V coprocessor analysis, and PQ register mapping: docs/devices/mediatek-mt5896.md"
 notes: "Fire OS 8 television on the ginza platform, same as AFTOLCBC82. Full pass by hand in the documented order (debloat, lockdown, dnsfilter with the manual list step, launcher), verify.sh exit 0, and again exit 0 after a reboot"
 verify:
   blocked: data/blocklists/verify-blocked.txt

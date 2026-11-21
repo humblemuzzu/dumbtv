@@ -118,3 +118,5 @@ On MediaTek Fire TV platforms (merak/mt5896/mt5873 architecture), picture settin
 1. **Vendor Preset Databases (`/vendor/tvconfig/.../presetdb/*.json`):** World-readable factory baseline files defining 120 parameters per mode across 25 picture modes (`Standard`, `PC`, `Custom`, `Game`, `Movie`, `DolbyVision...`) and all HDR formats.
 2. **Persistent User Database (`/data/user/0/com.mediatek.customerpq/databases/pq.db`):** SQLite database tracking user-customized overrides per input.
 3. **Hardware Coprocessor HAL (`pqu_mt5896_2048.elf` & `CustomerPqService`):** Managed via `com.mediatek.customerpq` and `com.amazon.tv.settings.mediatek/.OEMService`, dispatches live parameter loads to the hardware Picture Quality Unit (PQU).
+
+For a complete hardware pipeline teardown, PQU RISC-V coprocessor firmware disassembly, and low-level register maps, see **[MediaTek MT5896 Video Rendering & PQ Pipeline](devices/mediatek-mt5896.md)**.
