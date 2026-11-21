@@ -53,7 +53,10 @@ When an HDMI or streaming video frame enters the television, it traverses a 14-s
   └── Dynamic Luminance (DLC) ───────── (Dynamic contrast adjustment)
          │
          ▼
-[ Color Management (CFD Domain) ] ───── (6-axis HSY Color Tuner, Flesh Tone, 3D-LUT Gamut Mapping)
+[ Color Management (CFD Domain) ] ───── (White Balance Matrix, 6-axis HSY, Flesh Tone, 3D-LUT)
+  ├── Color Temperature ────────────── (Calibrated D65 Standard, Warm ~5000K, Cool ~9300K)
+  ├── WB RGB Gain Offsets ───────────── (Digital R/G/B multipliers [-15, +15] in linear 10-bit)
+  └── Low Blue Light (LBL) ──────────── (Hardware spectral blue attenuation: Off/Low/Mid/High)
          │
          ▼
 [ Tone Mapping Operator (TMO) ] ─────── (HDR10 / HLG / SDR EOTF/OETF Curves, Degamma & Gamma 2.2)
@@ -91,7 +94,42 @@ Because Sharpness operates downstream of Super Resolution:
 
 ---
 
-## 3. UI Settings to MediaTek Hardware Registers
+## 3. Color Management (CFD Domain) & Hardware White Balance Architecture
+
+The Color Flow Domain (CFD) processes pixel chrominance and luminance in the linear 10-bit / 12-bit domain before the Tone Mapping Operator (TMO) and long before Graphics Output Processing (GOP) UI composition.
+
+### Hardware Registers: Presets vs. Digital Gain Offsets
+The PQU white balance stage exposes two layers of control:
+1. **Discrete Base Modes (`Color_Temperature`):** Factory-calibrated analog/matrix presets.
+   * `Standard`: Factory D65 target (~6500 K neutral daytime reference).
+   * `Warm`: Factory D50 target (~5000 K warm tungsten reference).
+   * `Cool`: Factory D93 target (~9300 K high-blue retail display reference).
+2. **Continuous Gain Trims (`Color_Temperature_Blue_Gain`, `Color_Temperature_Red_Gain`):**
+   * Range: `[-15, +15]` integer trim values applied multiplicatively to the linear channel multipliers.
+   * Combined with the base mode, this enables continuous f.lux-style transitions without discrete mode jumps.
+3. **Spectral Attenuation (`Low_Blue_Light`):**
+   * Modes: `Off`, `Low`, `Middle`, `High`.
+   * Directly modulates the spectral blue notch filter in the hardware color matrix.
+
+### Hardware CFD White Balance vs. Software Window Overlays
+
+Traditional Android f.lux or night mode implementations inject an alpha-blended overlay window (`TYPE_APPLICATION_OVERLAY`) into SurfaceFlinger:
+
+$$\text{SurfaceFlinger Composition (GOP Stage):} \quad C_{\text{out}} = (1 - \alpha) C_{\text{video}} + \alpha C_{\text{overlay}}$$
+
+$$\text{Hardware CFD White Balance:} \quad C_{\text{out}} = C_{\text{video}} \times \mathbf{M}_{\text{WB}}(\text{Mode}, \Delta R, \Delta B)$$
+
+| Metric / Dimension | Software Window Overlay (`TYPE_APPLICATION_OVERLAY`) | Hardware CFD White Balance (`CustomerPqService`) |
+|---|---|---|
+| **Pipeline Stage** | **GOP (Graphics Output Processor)** at end of pipeline | **CFD (Color Flow Domain)** inside PQU coprocessor |
+| **Black Floor Preservation** | ❌ **Elevated black floor:** Black pixels ($RGB = 0,0,0$) become muddy glowing orange (e.g. `#492303`), ruining panel contrast | ✅ **True pitch black preserved:** $0 \times \text{Gain} = 0$, guaranteeing zero light leakage on OLED/VA panels |
+| **Color Precision & Depth** | ❌ Quantized to **8-bit RGB** with spatial dithering noise and banding in dark scenes | ✅ Native **10-bit / 12-bit linear CFD pipeline** with zero quantization banding |
+| **Video Playback Performance** | ❌ Incurs constant GPU composition overhead and potential frame drops on 4K60 streams | ✅ Zero GPU overhead (executed entirely in dedicated PQU coprocessor hardware) |
+| **Permission Requirements** | Requires `android.permission.SYSTEM_ALERT_WINDOW` (needs ADB granting on Android TV) | **Zero permissions required** (MediaTek `CustomerPqService` is unconstrained) |
+
+---
+
+## 4. UI Settings to MediaTek Hardware Registers
 
 Reverse engineering of `/system_ext/priv-app/MtkTvSettings/MtkTvSettings.apk`, `CustomerPqService_ginza-hb.apk`, and the PQU firmware uncovered the exact mapping between user-facing menu items and low-level MediaTek registers:
 
@@ -107,12 +145,15 @@ Reverse engineering of `/system_ext/priv-app/MtkTvSettings/MtkTvSettings.apk`, `
 | **Local Contrast Enhancement** | `pq_local_contrast_enh_id` | `Local_Contrast` | `lce` / `ucd` (Ultra Clear Detail) | **Post-Scale** |
 | **Motion Smoothing** | `pq_action_smoothing_smoothness_id` | `MJC_Effect` | `MEMC` (Frame Rate Conversion) | **Pre-Render** |
 | **Color Temperature** | `pq_color_temperature_id` | `Color_Temperature` | `CFD / white balance gain & offset` | Color Domain |
+| **White Balance Blue Gain** | *(hidden in Fire OS)* | `Color_Temperature_Blue_Gain` | `CFD / white balance blue multiplier` (`[-15, 15]`) | Color Domain |
+| **White Balance Red Gain** | *(hidden in Fire OS)* | `Color_Temperature_Red_Gain` | `CFD / white balance red multiplier` (`[-15, 15]`) | Color Domain |
+| **Low Blue Light** | *(hidden in Fire OS)* | `Low_Blue_Light` | `CFD / spectral blue notch filter` | Color Domain |
 | **Color Space** | `pq_color_space_id` | `Gamut_Mapping` | `3D-LUT / gamut_mapping` | Color Domain |
 | **PC Mode** | `pq_pc_mode_id` | `PC_Mode` | Sets `Peaking: OFF`, `SR_Strength: 0`, NR: Off | **Bypass** (4:4:4) |
 
 ---
 
-## 4. Reverse-Engineering Methodology
+## 5. Reverse-Engineering Methodology
 
 ### 1. Platform Identification via ADB
 ```bash
@@ -149,9 +190,20 @@ Inspection of call-sites with custom RISC-V disassemblers verified the internal 
    * `pqu_sr_process` (`Cus_PQ_SR_Process` $\rightarrow$ `MApi_PQ_SR_Process` $\rightarrow$ VIP Peaking)
    * `pqu_gce_process` / `pqu_lce_process` / `pqu_ucd_process`
 
+### 4. Zero-Permission CustomerPqService IPC Architecture
+Decompiling `CustomerPqService_ginza-hb.apk` revealed that the TV's hardware picture quality pipeline is directly accessible without root or signature permissions:
+* **Service:** `com.mediatek.customerpq/.CustomerPqService` (action `CustomerPqService:remote`).
+* **Security Context:** `android:exported="true"` with **no permission checks** (`android:permission` is omitted).
+* **AIDL Interface:** `com.mediatek.extservice.pqutils.ICustomerPqService`
+  * Transaction 1: `getFromPqCache(String key)` $\rightarrow$ reads active value from SQLite `pq.db` and in-memory cache.
+  * Transaction 2: `setToPqCache(String key, String val)` $\rightarrow$ writes to `pq.db` and dispatches immediately to hardware.
+* **Hardware Dispatch Chain:**
+  $$\text{setToPqCache()} \longrightarrow \text{mHALHandler} \longrightarrow \text{PqServiceCallback.onSetPqParamsByGlobalNative()} \longrightarrow \text{PqService.setPqParamsByGlobal\_native()}$$
+  This reaches the RISC-V PQU coprocessor registers in real time (within ~1–2 ms), allowing smooth runtime adjustments (such as 30-second sunset ramps) without video stutter, service reloads, or screen flickering.
+
 ---
 
-## 5. Recommended Presets by Use Case
+## 6. Recommended Presets by Use Case
 
 ### A. PC Gaming (HDMI 2)
 Optimized for lowest input latency, uncompromised 4:4:4 text legibility, and zero motion judder:
