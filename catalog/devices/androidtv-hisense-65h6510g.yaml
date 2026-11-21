@@ -1,0 +1,35 @@
+id: androidtv-hisense-65h6510g
+title: "Hisense 65H6510G"
+contributors:
+  - roman8422
+platform: androidtv
+status: partial
+tested_on: "PTT1.181214.002"
+models:
+  - "65A6101EU"
+adb:
+  port: 5555
+  transport: wifi
+developer_mode: >-
+  Settings > Device Preferences > About > Build, press OK seven times. Then Settings > Device Preferences > Developer options > USB debugging: ON.
+ip_location: "Settings > Network & Internet > the connected Wi-Fi network"
+prompts:
+  - name: "Allow USB debugging?"
+    blocks_automation: true
+    fix: "Shown on the first adb connect from a new computer; adb reports unauthorized until it is accepted with the remote. USB debugging alone opens TCP 5555, no wireless-debugging pairing code needed."
+data:
+  packages: data/androidtv/packages.txt
+  protected: data/androidtv/protected.txt
+  never_disable: data/androidtv/never-disable.txt
+  user_apps: data/androidtv/user-apps.txt
+quirks:
+  - "65H6510G is the model on the sticker. The software reports ro.product.model 'HiSmart 4K ATV4' and ro.hisense.product.model 65A6101EU."
+  - "Android 9 platform xinhaoshan, older than the songshan (Android 11) and wutaishan (Android 14) Hisense reports. Package names are com.hisense.*, and lists from those reports do not carry over."
+  - "Hisense ACR is com.hisense.evservice. pm disable-user stops it, and it stayed disabled across two reboots."
+  - "The home screen is com.google.android.tvlauncher. The recommendation rows go with com.google.android.tvrecommendations and com.google.android.leanbacklauncher.recommendations."
+  - "Private DNS works with no app: settings put global private_dns_specifier dns.adguard-dns.com, then private_dns_mode hostname. Blocked hosts resolve to 127.0.0.1 on the TV, while the resolver's plain DNS answers 0.0.0.0. The router resolved the same hosts normally, so the block comes from Private DNS."
+  - "SmartTube's universal APK (32.56, checksum matching scripts/youtube.sh) installs on this 32-bit armeabi-v7a TV, and updated itself in the app to 32.80."
+notes: "Tested on a real TV on 2026-11-20 with manual ADB. Disabled for user 0, all re-enableable, no PROTECTED or failed disables: com.hisense.evservice, com.hisense.service.message, com.hisense.storemode, fusion.android.tv.demo, com.hisense.hitv.hicloud.account, com.mstar.netflixobserver, com.google.android.tvrecommendations, com.google.android.leanbacklauncher.recommendations, com.google.android.feedback, com.google.android.tv.bugreportsender, com.google.android.partnersetup, com.google.android.katniss (voice search goes with it), com.google.android.youtube.tvkids, com.google.android.youtube.tvmusic, com.google.android.youtube.tvunplugged, com.pandora.android.atv, com.seraphic.browser. The first 15 survived two reboots and the last two one reboot, with inputs, remote, apps and casting working. Firmware updates (com.hisense.tv.ota, com.hisense.remoteupgrade), Chromecast built-in and the stock launcher were left enabled."
+verify:
+  blocked: data/blocklists/verify-blocked.txt
+  allowed: data/blocklists/verify-allowed.txt
