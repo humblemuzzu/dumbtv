@@ -1017,9 +1017,7 @@ public final class Panel {
         warmth.value.setText(level == 0 ? context.getString(R.string.off) : context.getString(R.string.percent, level * 100 / Tint.STEPS));
         warmth.bar.setValue(level / (float) Tint.STEPS);
         String sub;
-        if (!Settings.canDrawOverlays(context)) {
-            sub = context.getString(R.string.needs_install);
-        } else if (auto) {
+        if (auto) {
             long now = System.currentTimeMillis();
             TimeZone tz = TimeZone.getDefault();
             double[] at = Sun.place(tz);
@@ -1040,20 +1038,12 @@ public final class Panel {
     }
 
     private void stepWarmth(int dir) {
-        SharedPreferences p = Tint.prefs(context);
-        int level = Math.max(0, Math.min(Tint.STEPS, p.getInt(Tint.WARMTH, 0) + dir));
-        p.edit().putInt(Tint.WARMTH, level).apply();
-        Tint.refresh(context);
+        Warmth.step(context, dir);
         showWarmth();
     }
 
     private void toggleWarmthAuto() {
-        SharedPreferences p = Tint.prefs(context);
-        boolean auto = !p.getBoolean(Tint.AUTO, false);
-        SharedPreferences.Editor e = p.edit().putBoolean(Tint.AUTO, auto);
-        if (auto && p.getInt(Tint.WARMTH, 0) == 0) e.putInt(Tint.WARMTH, Tint.STEPS / 2);
-        e.apply();
-        Tint.refresh(context);
+        Warmth.toggleAuto(context);
         showWarmth();
     }
 

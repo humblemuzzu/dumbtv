@@ -17,6 +17,7 @@ public final class Undo extends BroadcastReceiver {
     @Override
     public void onReceive(Context c, Intent intent) {
         Sleep.set(c, 0);
+        Warmth.restore(c);
         Tint.prefs(c).edit().clear().apply();
         c.stopService(new Intent(c, Tint.class));
         ((DevicePolicyManager) c.getSystemService(Context.DEVICE_POLICY_SERVICE))

@@ -70,6 +70,7 @@ final class Backlight {
 
     private void restore() {
         restoreLevel(c);
+        Warmth.sourceChanged(c);
     }
 
     static void restoreLevel(Context c) {

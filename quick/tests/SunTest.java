@@ -42,15 +42,16 @@ public final class SunTest {
         double[] fallback = Sun.place(TimeZone.getTimeZone("Etc/GMT-3"));
         check(fallback[0] == 40.0 && Math.abs(fallback[1] - 45) < 0.01, "UTC+3 falls back to 45 E");
 
-        // The night factor: 0 by day, ramping after sunset, 1 deep in the night, ramping out before sunrise.
+        // The night factor: 0 by day, ramping after sunset (30s), 1 deep in the night, ramping out before sunrise (30s).
         TimeZone tz = TimeZone.getTimeZone("America/Chicago");
         check(Sun.night(at(tz, 2026, 11, 19, 13, 0), tz, 41.9, -87.6) == 0f, "day is 0");
-        float dusk = Sun.night(at(tz, 2026, 11, 19, 16, 39), tz, 41.9, -87.6);
-        check(dusk > 0.3f && dusk < 0.7f, "15 min after sunset is about half: " + dusk);
+        double[] rs = Sun.times(at(tz, 2026, 11, 19, 12, 0), tz, 41.9, -87.6);
+        float dusk = Sun.night((long) rs[1] + 15000, tz, 41.9, -87.6);
+        check(dusk > 0.45f && dusk < 0.55f, "15s after sunset is about half: " + dusk);
         check(Sun.night(at(tz, 2026, 11, 19, 22, 0), tz, 41.9, -87.6) == 1f, "22:00 is 1");
         check(Sun.night(at(tz, 2026, 11, 19, 3, 0), tz, 41.9, -87.6) == 1f, "03:00 is 1");
-        float dawn = Sun.night(at(tz, 2026, 11, 19, 6, 31), tz, 41.9, -87.6);
-        check(dawn > 0.3f && dawn < 0.7f, "15 min before sunrise is about half: " + dawn);
+        float dawn = Sun.night((long) rs[0] - 15000, tz, 41.9, -87.6);
+        check(dawn > 0.45f && dawn < 0.55f, "15s before sunrise is about half: " + dawn);
 
         // Polar: Tromsø has no sunrise in December and no sunset in June.
         TimeZone oslo = TimeZone.getTimeZone("Europe/Oslo");

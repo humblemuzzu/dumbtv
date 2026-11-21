@@ -47,12 +47,8 @@ public final class Tint extends Service {
     static final String ACTION_IGNORE_BACK = "tv.dumbtv.quick.IGNORE_BACK";
     static final String ACTION_BRING_TO_TOP = "tv.dumbtv.quick.BRING_TO_TOP";
     /** Warmth steps, 0 (off) to {@link #STEPS}. */
-    static final int STEPS = 10;
+    static final int STEPS = Warmth.STEPS;
 
-    /** The overlay at full warmth: a candle-ish orange at this opacity, about 3400 K on white. */
-    private static final int COLOR = 0xE66E0A;
-    private static final float MAX_ALPHA = 0.32f;
-    private static final long TICK_MS = 60 * 1000L;
     private static final int TYPE_APPLICATION_OVERLAY = 2038;
     private static final int NOTIFICATION = 1;
 
@@ -63,7 +59,6 @@ public final class Tint extends Service {
 
     private final Handler ui = new Handler(Looper.getMainLooper());
     private Panel panel;
-    private View overlay;
     private View pictureOffView;
     private Backlight backlight;
     private Process logcat;
@@ -102,17 +97,17 @@ public final class Tint extends Service {
     private final Runnable tick = new Runnable() {
         @Override
         public void run() {
-            apply();
+            Warmth.tick(Tint.this);
             Backlight.tick(Tint.this);
-            ui.postDelayed(this, TICK_MS);
+            ui.postDelayed(this, Warmth.nextTickDelay(Tint.this));
         }
     };
 
     /** Starts the service, or re-applies the saved warmth and brightness if it is already running. */
     static void refresh(Context c) {
+        Warmth.applyImmediate(c);
         Tint t = running;
         if (t != null) {
-            t.apply();
             Backlight.tick(c);
             return;
         }
@@ -121,16 +116,6 @@ public final class Tint extends Service {
 
     static SharedPreferences prefs(Context c) {
         return c.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
-    }
-
-    /** The warmth in effect now, 0 to 1: the saved level, scaled by night when auto is on. */
-    static float effective(Context c, long now) {
-        SharedPreferences p = prefs(c);
-        float level = p.getInt(WARMTH, 0) / (float) STEPS;
-        if (level <= 0 || !p.getBoolean(AUTO, false)) return level;
-        TimeZone tz = TimeZone.getDefault();
-        double[] at = Sun.place(tz);
-        return level * Sun.night(now, tz, at[0], at[1]);
     }
 
     static int getAirPlayState() {
@@ -256,6 +241,8 @@ public final class Tint extends Service {
         filter.addAction("tv.dumbtv.quick.PANEL");
         registerReceiver(quickReceiver, filter);
 
+        PqBridge.setConnectionListener(() -> ui.post(() -> Warmth.applyImmediate(Tint.this)));
+        PqBridge.bind(this);
         startReader();
         ui.post(tick);
     }
@@ -290,7 +277,7 @@ public final class Tint extends Service {
         }
         sendBroadcast(new Intent("tv.dumbtv.home.PANEL_CLOSED").setPackage("tv.dumbtv.home"));
         panel = null;
-        removeOverlay();
+        Warmth.restore(this);
         if (pictureOffView != null) {
             try {
                 ((WindowManager) getSystemService(WINDOW_SERVICE)).removeView(pictureOffView);
@@ -304,6 +291,7 @@ public final class Tint extends Service {
         }
         stopReader();
         backlight.stop();
+        PqBridge.unbind(this);
         if (running == this) running = null;
         super.onDestroy();
     }
@@ -313,47 +301,9 @@ public final class Tint extends Service {
         return null;
     }
 
-    /** Shows, updates or removes the overlay for the warmth in effect now. */
+    /** Applies hardware warmth for the active level. */
     void apply() {
-        float w = effective(this, System.currentTimeMillis());
-        if (w <= 0.001f) {
-            removeOverlay();
-            return;
-        }
-        if (Build.VERSION.SDK_INT >= 23 && !Settings.canDrawOverlays(this)) {
-            Log.w(TAG, "warmth: no SYSTEM_ALERT_WINDOW; run quick/install.sh");
-            return;
-        }
-        int argb = Color.argb(Math.round(255 * MAX_ALPHA * w), Color.red(COLOR), Color.green(COLOR), Color.blue(COLOR));
-        if (overlay == null) {
-            overlay = new View(this);
-            WindowManager.LayoutParams lp = new WindowManager.LayoutParams(
-                    WindowManager.LayoutParams.MATCH_PARENT, WindowManager.LayoutParams.MATCH_PARENT,
-                    Build.VERSION.SDK_INT >= 26 ? TYPE_APPLICATION_OVERLAY : WindowManager.LayoutParams.TYPE_PHONE,
-                    WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE | WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE
-                            | WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN
-                            | WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
-                    PixelFormat.TRANSLUCENT);
-            lp.setTitle("dumbtv warmth");
-            try {
-                ((WindowManager) getSystemService(WINDOW_SERVICE)).addView(overlay, lp);
-            } catch (RuntimeException e) {
-                Log.w(TAG, "warmth: could not add the overlay", e);
-                overlay = null;
-                return;
-            }
-        }
-        overlay.setBackgroundColor(argb);
-    }
-
-    private void removeOverlay() {
-        if (overlay == null) return;
-        try {
-            ((WindowManager) getSystemService(WINDOW_SERVICE)).removeView(overlay);
-        } catch (RuntimeException ignored) {
-            // already gone with the window manager
-        }
-        overlay = null;
+        Warmth.apply(this, false);
     }
 
     /**

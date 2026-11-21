@@ -10,8 +10,8 @@ import java.util.TimeZone;
  * Pure Java, so quick/tests/SunTest.java runs it on a computer.
  */
 final class Sun {
-    /** How long the warmth takes to fade in after sunset, and out before sunrise. */
-    static final long RAMP_MS = 30 * 60 * 1000L;
+    /** How long the warmth takes to fade in after sunset, and out before sunrise (30 seconds). */
+    static final long RAMP_MS = 30 * 1000L;
 
     private Sun() {}
 

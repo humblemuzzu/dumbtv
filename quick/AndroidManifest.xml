@@ -26,6 +26,10 @@
     <uses-permission android:name="android.permission.READ_LOGS" />
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
 
+    <queries>
+        <package android:name="com.mediatek.customerpq" />
+    </queries>
+
     <application
         android:label="@string/app_name"
         android:icon="@drawable/ic_warmth"
