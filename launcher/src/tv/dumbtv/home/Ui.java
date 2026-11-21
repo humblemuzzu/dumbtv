@@ -16,6 +16,9 @@ final class Ui {
     static final int MUTED = 0x99FFFFFF;
     static final int FAINT = 0x66FFFFFF;
     static final int SURFACE = 0xFF1C1D21;
+    /** The corner chips' unfocused fill and text; input tiles share them. */
+    static final int CHIP_IDLE = 0x14FFFFFF;
+    static final int CHIP_TEXT = 0xD9FFFFFF;
     static final int DIALOG = android.R.style.Theme_DeviceDefault_Dialog_Alert;
     static final Typeface LIGHT = Typeface.create("sans-serif-light", Typeface.NORMAL);
     static final Typeface MEDIUM = Typeface.create("sans-serif-medium", Typeface.NORMAL);
@@ -53,7 +56,7 @@ final class Ui {
         bg.addState(new int[] {android.R.attr.state_focused}, round(accent, radius));
         bg.addState(new int[0], round(idle, radius));
         v.setBackground(bg);
-        v.setTextColor(focused(ink(accent), 0xD9FFFFFF));
+        v.setTextColor(focused(ink(accent), CHIP_TEXT));
     }
 
     /**
@@ -61,7 +64,7 @@ final class Ui {
      * {@code mark} in the accent, both turning the ink colour on the accent fill when focused.
      */
     static Drawable chipIcon(Drawable shape, Drawable mark, int accent, int size) {
-        shape.mutate().setTintList(focused(ink(accent), 0xD9FFFFFF));
+        shape.mutate().setTintList(focused(ink(accent), CHIP_TEXT));
         mark.mutate().setTintList(focused(ink(accent), accent));
         LayerDrawable d = new LayerDrawable(new Drawable[] {shape, mark});
         d.setBounds(0, 0, size, size);

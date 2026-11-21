@@ -48,7 +48,8 @@ Undo: `./launcher/install.sh --undo` gives HOME back to Amazon's launcher.
 | Up from the top row | Options and Settings |
 | Back on the home screen | jump to the first tile |
 | On an input: Back | back to the home screen |
-| On an input: ☰ Menu | show the input's name again |
+| Settings (the cog) | the TV's settings. The settings button on the remote opens [dumbtv quick settings](../quick/README.md) where it is installed (Options › Quick settings panel, on by default) |
+| On an input: ☰ Menu | the quick settings panel when it is installed (and Child lock is off), otherwise the input's name again |
 | Hold HOME | Fire OS quick menu (Amazon's, unchanged) |
 
 **Settings on Fire OS 6** opens a short list, because Amazon's own settings page draws its first row
@@ -130,6 +131,21 @@ On a Fire TV Edition television with a tuner, the row ends with a **Live TV** ti
 opens Amazon's Live TV on the last channel watched, with its guide and channel up and
 down, or its channel scan when no channels are set up yet. It is not affected by
 **Open inputs with**, and hides, renames and moves like any other input.
+
+### Open an input on wake or when idle
+
+For a TV that mostly shows one source (a Chromecast, a cable box):
+
+- **Options › Show on startup**: pick whether the TV wakes to the Home screen or
+  directly to an input (HDMI 1, Chromecast, Live TV, etc.). Saved as `wake_input`
+  in [the settings file](#the-settings-file).
+- `idle_input=<minutes>` in the settings file: after that long on home with no key
+  pressed, switch to the startup input. Set `idle_input` below the screensaver delay
+  (Settings, 5 minutes by default) and the input's own picture, such as a Chromecast's
+  ambient photos, takes the screensaver's place. HOME still returns to the home screen.
+  `idle_pause=off` stops the idle switch, and `idle_pause=<epoch ms>` stops it until then;
+  [dumbtv quick settings](../quick/README.md) sets this from its Auto-switch row where it
+  is installed.
 
 ## Child lock
 
@@ -233,14 +249,16 @@ memory=off
 inputs=on
 # auto tv home
 switch=auto
-# black graphite midnight image adaptive adaptive-tint
+# black graphite midnight image adaptive adaptive-tint aurora video
 background=black
-# 0 20 40 60 80, image backgrounds only
+# 0 20 40 60 80, image, aurora and video backgrounds only
 dim=40
 # off visit hourly daily daytime (visit = every return to the home screen)
 rotate=off
 # off on
 lock=off
+# on off: the remote's settings button opens dumbtv quick settings, where it is installed
+quick=on
 # off, or an installed icon pack's package
 icon_pack=off
 icon.com.stremio.one=com.example.iconpack/stremio
@@ -356,6 +374,22 @@ in `morning-coast.jpg`.
 `background=adaptive-tint` keeps the wallpaper and adds a light wash of that
 colour; without a wallpaper it shows graphite.
 
+| ![Aurora background](../docs/assets/screens/aurora.png) | ![Video background, input tiles in the chips' look](../docs/assets/screens/video.png) |
+|---|---|
+
+`background=aurora` draws slow-drifting light in colours taken from the focused app
+(a green-to-violet night sky for inputs and grey icons). No files; `dim` applies. It
+runs only while the home screen is in front and holds still when animations are off.
+
+`background=video` loops `background.mp4` from the settings folder, muted, behind the
+rows. It plays only while the home screen is in front (the decoder is free for whatever
+opens next) and resumes where it stopped. Use 1080p H.264 High@4.1: an x265 HEVC
+encode decoded no frames on a Fire OS 8 MediaTek TV (AFTHY7ABBA). `dim` applies.
+
+```sh
+adb push loop.mp4 /sdcard/Android/media/tv.dumbtv.home/background.mp4
+```
+
 ## How HOME works on Fire OS
 
 Fire OS has no working "default launcher" setting, and Amazon's launcher is a
@@ -440,6 +474,7 @@ Delete both to stop.
 | `src/.../Catalog.java` | which apps and inputs exist, and their order |
 | `src/.../Item.java` | one app or input |
 | `src/.../Input.java` | the built-in input screen (`TvView`) |
+| `src/.../Quick.java` | opens [dumbtv quick settings](../quick/README.md) when it is installed |
 | `src/.../Config.java` | reads and writes `home.conf` |
 | `src/.../Options.java` | the settings screen |
 | `src/.../IconPack.java` | finds installed icon packs and reads their pictures |

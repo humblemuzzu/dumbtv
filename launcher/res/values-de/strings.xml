@@ -114,6 +114,8 @@
     <string name="choice_switch_auto">Automatisch</string>
     <string name="choice_switch_tv">Die TV-App</string>
     <string name="choice_switch_home">dumbtv-Startbildschirm</string>
+    <string name="choice_wake_input">Beim Start anzeigen</string>
+    <string name="choice_wake_input_home">Startbildschirm</string>
     <string name="choice_background">Hintergrund</string>
     <string name="choice_background_black">Schwarz</string>
     <string name="choice_background_graphite">Graphit</string>
@@ -121,6 +123,8 @@
     <string name="choice_background_image">Bilddatei</string>
     <string name="choice_background_adaptive">Adaptiv einfarbig</string>
     <string name="choice_background_adaptive_tint">Adaptiver Farbton des Hintergrundbildes</string>
+    <string name="choice_background_aurora">Polarlicht</string>
+    <string name="choice_background_video">Videodatei</string>
     <string name="choice_dim">Bild abdunkeln</string>
     <string name="choice_rotate">Wechsel des Hintergrundbildes</string>
     <string name="choice_rotate_off">Aus</string>
@@ -146,4 +150,7 @@
     <string name="choice_library">Bibliotheksbanner</string>
     <string name="choice_library_on">Angezeigt</string>
     <string name="choice_library_off">Ausgeblendet</string>
+    <string name="choice_quick">Schnelleinstellungen</string>
+    <string name="choice_quick_on">An</string>
+    <string name="choice_quick_off">Aus</string>
 </resources>

@@ -19,11 +19,13 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.os.SystemClock;
 import android.provider.Settings;
 import android.text.SpannableString;
 import android.text.Spanned;
 import android.text.format.DateFormat;
 import android.text.style.RelativeSizeSpan;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.View;
@@ -62,16 +64,25 @@ public final class Home extends Activity {
     private final ExecutorService colorIo = Executors.newSingleThreadExecutor();
     private final List<TextView> chips = new ArrayList<>();
     private Config cfg;
+    /** The resumed home screen, for {@link #openQuick}; null while another screen is in front. */
+    private static Home front;
     private TvInputManager tv;
     private int applied = -1, appsGeneration;
     /** Whether the home screen is the resumed activity; Guard reads it on the same main thread. */
     static boolean inFront;
+    /** The resumed home screen, for {@link #woke}; null while another screen is in front. */
+    private static Home current;
+    /** A wake older than this is not acted on: Home was resumed for another reason. */
+    private static final long WAKE_WINDOW_MS = 10_000;
+    private final Runnable idle = this::idleInput;
     private boolean resumed, landed, unlockOpened;
     private String lastFocusedKind;
     private final Map<String, String> lastIds = new HashMap<>();
     private FrameLayout root;
     private LinearLayout column;
     private ImageView wall;
+    private Aurora aurora;
+    private Backdrop backdrop;
     private View shade;
     private View tint;
     private LinearLayout head;
@@ -199,6 +210,14 @@ public final class Home extends Activity {
         }
     }
 
+    private final BroadcastReceiver idlePauseReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            String paused = intent.getStringExtra("idle_pause");
+            if (paused != null) cfg.set(Quick.CONF_IDLE_PAUSE, "0".equals(paused) ? null : paused);
+        }
+    };
+
     @Override
     protected void onCreate(Bundle state) {
         super.onCreate(state);
@@ -215,6 +234,7 @@ public final class Home extends Activity {
         f.addAction(Intent.ACTION_PACKAGE_CHANGED);
         f.addDataScheme("package");
         registerReceiver(packages, f);
+        registerReceiver(idlePauseReceiver, new IntentFilter("tv.dumbtv.home.SET_IDLE_PAUSE"));
         Keeper.start(this);
         if (tv != null) tv.registerCallback(inputWatch, ui);
         firstApps(catalog, times);
@@ -315,6 +335,7 @@ public final class Home extends Activity {
         super.onResume();
         resumed = true;
         inFront = true;
+        front = this;
         Guard.arrived(this);
         Filter.wake(this);
         cfg.refresh();
@@ -329,6 +350,84 @@ public final class Home extends Activity {
         f.addAction(Intent.ACTION_TIMEZONE_CHANGED);
         registerReceiver(time, f);
         tick();
+        current = this;
+        if (!wakeInput()) scheduleIdle();
+    }
+
+    /** Guard saw the screen come on while this screen was already resumed. */
+    static void woke() {
+        if (current != null) current.wakeInput();
+    }
+
+    /**
+     * {@code wake_input=<input id>} in home.conf: right after the TV wakes, open that input
+     * instead of staying on the home screen. Returns whether it did.
+     */
+    private boolean wakeInput() {
+        long at = Guard.wokeAt;
+        if (at == 0 || SystemClock.elapsedRealtime() - at > WAKE_WINDOW_MS) return false;
+        Guard.wokeAt = 0;
+        if (!openConfiguredInput("wake")) return false;
+        Guard.shown(); // the input goes on top at once; do not keep the cover up over it
+        return true;
+    }
+
+    /**
+     * {@code idle_input=<minutes>}: after that long on the home screen with no key pressed, open
+     * the {@code wake_input}. Set it below the screensaver delay (Settings, 5 minutes by default)
+     * and the input's own picture takes the screensaver's place.
+     */
+    private void scheduleIdle() {
+        ui.removeCallbacks(idle);
+        int minutes;
+        try {
+            minutes = Integer.parseInt(cfg.get("idle_input", "0").trim());
+        } catch (NumberFormatException e) {
+            minutes = 0;
+        }
+        String id = cfg.get(Config.WAKE_INPUT, null);
+        if (minutes <= 0 || id == null || "home".equals(id) || "off".equals(id) || idlePaused()) return;
+        ui.postDelayed(idle, minutes * 60_000L);
+    }
+
+    /** {@link Config#IDLE_PAUSE}: "off", or a time in the future. */
+    private boolean idlePaused() {
+        String pause = cfg.get(Config.IDLE_PAUSE, null);
+        if (pause == null || "0".equals(pause)) return false;
+        if ("off".equalsIgnoreCase(pause)) return true;
+        try {
+            return System.currentTimeMillis() < Long.parseLong(pause.trim());
+        } catch (NumberFormatException e) {
+            return false;
+        }
+    }
+
+    private void idleInput() {
+        if (resumed) openConfiguredInput("idle");
+    }
+
+    private boolean openConfiguredInput(String why) {
+        String id = cfg.get(Config.WAKE_INPUT, null);
+        if (id == null || "home".equals(id) || "off".equals(id)) return false;
+        Item match = null;
+        for (Item it : Catalog.inputs(this, tv)) {
+            if (it.id.equals(id)) {
+                match = it;
+                break;
+            }
+        }
+        if (match == null) return false;
+        CharSequence name = Catalog.label(cfg, match);
+        Log.i("dumbtv", why + ": opening " + id);
+        try {
+            Intent own = Input.intent(this, cfg, match, name);
+            if (own != null) startActivity(own);
+            else launch(new Intent(match.intent), null);
+            return true;
+        } catch (RuntimeException e) {
+            Log.w("dumbtv", why + ": could not open " + id, e);
+            return false;
+        }
     }
 
     @Override
@@ -341,16 +440,24 @@ public final class Home extends Activity {
         super.onPause();
         resumed = false;
         inFront = false;
+        if (current == this) current = null;
+        ui.removeCallbacks(idle);
         hero.stop();
+        aurora.stop();
+        backdrop.pause();
         stopColorAnimation();
         targetColor = 0;
         unregisterReceiver(time);
+        if (front == this) front = null;
         if (moving != null) stopMoving();
     }
 
     @Override
     protected void onDestroy() {
         unregisterReceiver(packages);
+        try {
+            unregisterReceiver(idlePauseReceiver);
+        } catch (IllegalArgumentException ignored) {}
         if (tv != null) tv.unregisterCallback(inputWatch);
         io.shutdownNow();
         colorIo.shutdownNow();
@@ -388,6 +495,7 @@ public final class Home extends Activity {
 
     @Override
     public boolean dispatchKeyEvent(KeyEvent e) {
+        if (resumed) scheduleIdle();
         if (moving == null) return super.dispatchKeyEvent(e);
         if (e.getAction() == KeyEvent.ACTION_DOWN) {
             switch (e.getKeyCode()) {
@@ -518,6 +626,12 @@ public final class Home extends Activity {
         wall = new ImageView(this);
         wall.setScaleType(ImageView.ScaleType.CENTER_CROP);
         root.addView(wall, new FrameLayout.LayoutParams(MATCH, MATCH));
+        aurora = new Aurora(this);
+        aurora.setVisibility(View.GONE);
+        root.addView(aurora, new FrameLayout.LayoutParams(MATCH, MATCH));
+        backdrop = new Backdrop(this);
+        backdrop.setVisibility(View.GONE);
+        root.addView(backdrop, new FrameLayout.LayoutParams(MATCH, MATCH));
         shade = new View(this);
         root.addView(shade, new FrameLayout.LayoutParams(MATCH, MATCH));
         tint = new View(this);
@@ -809,7 +923,7 @@ public final class Home extends Activity {
         int accent = cfg.accent();
         boolean icons = iconChips();
         for (TextView c : chips) {
-            Ui.focusStyle(c, accent, 0x14FFFFFF, dp(icons ? 21 : 18));
+            Ui.focusStyle(c, accent, Ui.CHIP_IDLE, dp(icons ? 21 : 18));
             int[] art = (int[]) c.getTag();
             c.setCompoundDrawablesRelative(icons ? Ui.chipIcon(getDrawable(art[0]), getDrawable(art[1]),
                     accent, dp(22)) : null, null, null, null);
@@ -1033,7 +1147,8 @@ public final class Home extends Activity {
 
     private void focusBackground(Item it) {
         String mode = cfg.get(Config.BACKGROUND);
-        if (!resumed || !"adaptive".equals(mode) && !"adaptive-tint".equals(mode)) return;
+        boolean glow = "aurora".equals(mode);
+        if (!resumed || !"adaptive".equals(mode) && !"adaptive-tint".equals(mode) && !glow) return;
         if ("adaptive-tint".equals(mode) && !tintWallpaper) return;
         if (it != null && it.info != null && it.backgroundColor == 0 && !it.colorRequested
                 && (it.banner != null || it.icon != null)) {
@@ -1045,6 +1160,11 @@ public final class Home extends Activity {
                     if (focusedItem() == it) focusBackground(it);
                 });
             });
+        }
+        if (glow) {
+            // FALLBACK is a neutral grey: the night palette, same as no colour yet
+            aurora.seed(it == null || it.backgroundColor == FocusColor.FALLBACK ? 0 : it.backgroundColor);
+            return;
         }
         int color = it == null || it.backgroundColor == 0 ? FocusColor.FALLBACK : it.backgroundColor;
         if ("adaptive-tint".equals(mode)) color = FocusColor.tint(color);
@@ -1208,8 +1328,26 @@ public final class Home extends Activity {
             tint.setBackgroundColor(Color.TRANSPARENT);
             root.setBackgroundColor(cfg.background());
         }
+        boolean glow = "aurora".equals(mode);
+        if (glow) {
+            aurora.setVisibility(View.VISIBLE);
+            if (resumed) aurora.start();
+            focusBackground(focusedItem());
+        } else if (aurora.getVisibility() != View.GONE) {
+            aurora.release();
+            aurora.setVisibility(View.GONE);
+        }
+        File video = "video".equals(mode) ? cfg.video() : null;
+        if (video != null) {
+            backdrop.setVisibility(View.VISIBLE);
+            if (resumed) backdrop.play(video);
+        } else if (backdrop.getVisibility() != View.GONE) {
+            backdrop.play(null);
+            backdrop.setVisibility(View.GONE);
+        }
         int dim = Integer.parseInt(cfg.get(Config.DIM));
-        shade.setBackgroundColor(file == null ? Color.TRANSPARENT : Color.argb(dim * 255 / 100, 0, 0, 0));
+        boolean shaded = file != null || glow || video != null;
+        shade.setBackgroundColor(shaded ? Color.argb(dim * 255 / 100, 0, 0, 0) : Color.TRANSPARENT);
         String key = file == null ? null : file.getPath() + ":" + file.lastModified();
         if (key == null ? wallKey == null : key.equals(wallKey)) return;
         wallKey = key;
@@ -1236,6 +1374,31 @@ public final class Home extends Activity {
         }
         o.inJustDecodeBounds = false;
         return BitmapFactory.decodeFile(f.getPath(), o);
+    }
+
+    /**
+     * The remote's settings button, from {@link Guard} while this screen is in front: the quick
+     * settings panel, started for a result so its Auto-switch row can pause {@code idle_input}
+     * where home has it. Returns false when the panel is off, not installed, or home is locked.
+     */
+    static boolean openQuick() {
+        Home h = front;
+        if (h == null || !Quick.enabled(h, h.cfg)) return false;
+        int idleMin = 0;
+        try {
+            idleMin = Integer.parseInt(h.cfg.get("idle_input", "0").trim());
+        } catch (NumberFormatException ignored) {
+        }
+        return Quick.open(h, h.cfg.accent(), "home", h.cfg.get(Quick.CONF_IDLE_PAUSE, null), idleMin);
+    }
+
+    /** The panel's Auto-switch row changed: keep it; onResume, next, reschedules the idle switch. */
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode != Quick.REQUEST_CODE || resultCode != RESULT_OK || data == null) return;
+        String paused = data.getStringExtra(Quick.EXTRA_IDLE_PAUSE);
+        if (paused != null) cfg.set(Quick.CONF_IDLE_PAUSE, "0".equals(paused) ? null : paused);
     }
 
     /**

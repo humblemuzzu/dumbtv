@@ -38,6 +38,15 @@ final class Config {
     static final String FILE = "home.conf";
     /** Options › Export settings writes this copy into the media folder, for adb pull. */
     static final String EXPORT = "home-export.conf";
+    /**
+     * Input to open right after the TV wakes: an input id, or "home" / unset to stay on Home.
+     */
+    static final String WAKE_INPUT = "wake_input";
+    /**
+     * Stops {@code idle_input}: "off", or until an epoch time in ms. Unset or "0" lets it run.
+     * dumbtv quick settings sets it from its Auto-switch row (Home.onActivityResult).
+     */
+    static final String IDLE_PAUSE = "idle_pause";
 
     static final class Choice {
         final String key, title;
@@ -97,8 +106,8 @@ final class Config {
             new String[] {"auto", "tv", "home"},
             new String[] {"Automatic", "The TV's app", "dumbtv home"});
     static final Choice BACKGROUND = new Choice("background", "Background", "black",
-            new String[] {"black", "graphite", "midnight", "image", "adaptive", "adaptive-tint"},
-            new String[] {"Black", "Graphite", "Midnight", "Image file", "Adaptive solid", "Adaptive wallpaper tint"});
+            new String[] {"black", "graphite", "midnight", "image", "adaptive", "adaptive-tint", "aurora", "video"},
+            new String[] {"Black", "Graphite", "Midnight", "Image file", "Adaptive solid", "Adaptive wallpaper tint", "Aurora", "Video file"});
     static final Choice DIM = new Choice("dim", "Image dim", "40",
             new String[] {"0", "20", "40", "60", "80"},
             new String[] {"0%", "20%", "40%", "60%", "80%"});
@@ -123,7 +132,13 @@ final class Config {
     /** The banner of hand-picked titles from {@link Library}; hidden anyway while it has none. */
     static final Choice LIBRARY = new Choice("library", "Library banner", "on",
             new String[] {"on", "off"}, new String[] {"Shown", "Hidden"});
-    static final Choice[] CHOICES = {ACCENT, TILES, LAYOUT, POSITION, ORDER, ALL_APPS, LABELS, CLOCK, MEMORY, INPUTS, SWITCH, BACKGROUND, DIM, ROTATE, LOCK, TILE_STYLE, CHIPS, LIBRARY};
+    /**
+     * {@link Quick}: the remote's settings button (and Menu on an input) opens dumbtv quick
+     * settings where it is installed. Off leaves Fire OS's own panel. Listed only when installed.
+     */
+    static final Choice QUICK = new Choice("quick", "Quick settings panel", "on",
+            new String[] {"on", "off"}, new String[] {"On", "Off"});
+    static final Choice[] CHOICES = {ACCENT, TILES, LAYOUT, POSITION, ORDER, ALL_APPS, LABELS, CLOCK, MEMORY, INPUTS, SWITCH, BACKGROUND, DIM, ROTATE, LOCK, TILE_STYLE, CHIPS, LIBRARY, QUICK};
 
     /** Folder of wallpapers, next to home.conf, that Background › Image file rotates through. */
     static final String WALLPAPERS = "wallpapers";
@@ -134,7 +149,7 @@ final class Config {
     private static final int[] ACCENTS = {
         0xFFFFFFFF, 0xFF3D8BFF, 0xFF2BC4E8, 0xFF34C759, 0xFFFFB340, 0xFFFF5147, 0xFFFF5C9D, 0xFFA07CFF,
     };
-    private static final int[] BACKGROUNDS = {0xFF000000, 0xFF141518, 0xFF0B1220, 0xFF000000, 0xFF141518, 0xFF141518};
+    private static final int[] BACKGROUNDS = {0xFF000000, 0xFF141518, 0xFF0B1220, 0xFF000000, 0xFF141518, 0xFF141518, 0xFF000000, 0xFF000000};
 
     private static Config instance;
 
@@ -404,6 +419,16 @@ final class Config {
             }
         }
         return tagged ? fit : null;
+    }
+
+    /** Background › Video file: background.mp4 next to home.conf, the app's folder first. */
+    static final String VIDEO = "background.mp4";
+
+    File video() {
+        File own = new File(dir, VIDEO);
+        if (own.isFile()) return own;
+        File media = shared == null ? null : new File(shared, VIDEO);
+        return media != null && media.isFile() ? media : null;
     }
 
     List<File> wallpapers() {

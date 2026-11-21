@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- dumbtv fixer: switches ADB debugging off and on once per boot, because on some Fire TVs
+     network adb stays dead after a reboot until that is done by hand. No internet, no UI.
+     See fixer/README.md. -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="tv.dumbtv.fixer">
+
+    <uses-feature android:name="android.software.leanback" android:required="false" />
+    <uses-feature android:name="android.hardware.touchscreen" android:required="false" />
+
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <!-- Not grantable at install: install.sh grants it over adb with pm grant. -->
+    <uses-permission android:name="android.permission.WRITE_SECURE_SETTINGS" />
+
+    <application
+        android:label="dumbtv fixer"
+        android:allowBackup="false">
+
+        <!-- BOOT_COMPLETED is a protected broadcast: only the system can send it. -->
+        <receiver
+            android:name=".BootReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+            </intent-filter>
+        </receiver>
+
+        <!-- Re-checks after boot, fired by this app's own alarms. -->
+        <receiver
+            android:name=".CheckReceiver"
+            android:exported="false" />
+
+        <!-- Test hook (NowReceiver.java). android.permission.DUMP: adb's shell holds it,
+             installed apps cannot, so no app can switch ADB through this. -->
+        <receiver
+            android:name=".NowReceiver"
+            android:exported="true"
+            android:permission="android.permission.DUMP" />
+    </application>
+</manifest>

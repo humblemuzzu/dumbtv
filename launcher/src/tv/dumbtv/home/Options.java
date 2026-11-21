@@ -48,7 +48,15 @@ public final class Options extends Activity {
         title.setPadding(dp(16), 0, 0, dp(20));
         list.addView(title);
 
-        for (Config.Choice c : Config.CHOICES) list.addView(choice(c));
+        TvInputManager tv = (TvInputManager) getSystemService(Context.TV_INPUT_SERVICE);
+        List<Item> inputs = Catalog.inputs(this, tv);
+        Config.Choice startup = inputs.isEmpty() ? null : Input.choice(cfg, inputs);
+
+        for (Config.Choice c : Config.CHOICES) {
+            if (c == Config.QUICK && !Quick.installed(this)) continue;
+            list.addView(choice(c));
+            if (c == Config.SWITCH && startup != null) list.addView(choice(startup));
+        }
         LinearLayout packRow = new LinearLayout(this);
         packRow.setOrientation(LinearLayout.VERTICAL);
         list.addView(packRow);
@@ -126,6 +134,8 @@ public final class Options extends Activity {
             boolean off = (c == Config.DIM || c == Config.ROTATE)
                     && !"image".equals(cfg.get(Config.BACKGROUND))
                     && !"adaptive-tint".equals(cfg.get(Config.BACKGROUND))
+                    && !(c == Config.DIM && "aurora".equals(cfg.get(Config.BACKGROUND)))
+                    && !(c == Config.DIM && "video".equals(cfg.get(Config.BACKGROUND)))
                     || c == Config.SWITCH && "off".equals(cfg.get(Config.INPUTS))
                     || c == Config.ALL_APPS && "on".equals(cfg.get(Config.LOCK));
             row.setAlpha(off ? 0.4f : 1f);

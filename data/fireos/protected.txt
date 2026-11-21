@@ -11,3 +11,4 @@ com.amazon.ftvads.deeplinking
 com.amazon.tv.csapp
 com.amazon.device.software.ota
 com.amazon.device.software.ota.override
+com.amazon.diode                       # diagnostics: periodic analysis + upload, update checks (protected on Fire OS 8.1.8.5)

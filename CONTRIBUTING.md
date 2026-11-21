@@ -86,7 +86,7 @@ CI runs these on every pull request. Run them before you push:
 ```sh
 python3 catalog/validate.py                 # catalog files
 python3 -m unittest discover -s tests -v    # scripts, against a pretend TV
-for f in scripts/*.sh launcher/*.sh; do bash -n "$f"; done
+for f in scripts/*.sh launcher/*.sh quick/*.sh; do bash -n "$f"; done
 ./launcher/release-check.sh --manifest
 ```
 

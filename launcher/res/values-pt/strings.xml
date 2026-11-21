@@ -112,6 +112,8 @@
     <string name="choice_switch_auto">Automático</string>
     <string name="choice_switch_tv">App da TV</string>
     <string name="choice_switch_home">dumbtv home</string>
+    <string name="choice_wake_input">Mostrar ao iniciar</string>
+    <string name="choice_wake_input_home">Tela inicial</string>
     <string name="choice_background">Fundo</string>
     <string name="choice_background_black">Preto</string>
     <string name="choice_background_graphite">Grafite</string>
@@ -119,6 +121,8 @@
     <string name="choice_background_image">Arquivo de imagem</string>
     <string name="choice_background_adaptive">Cor adaptativa</string>
     <string name="choice_background_adaptive_tint">Tom adaptativo do papel de parede</string>
+    <string name="choice_background_aurora">Aurora boreal</string>
+    <string name="choice_background_video">Arquivo de vídeo</string>
     <string name="choice_dim">Escurecer imagem</string>
     <string name="choice_rotate">Rotação do papel de parede</string>
     <string name="choice_rotate_off">Desligada</string>
@@ -144,4 +148,7 @@
     <string name="choice_library">Banner da biblioteca</string>
     <string name="choice_library_on">Visível</string>
     <string name="choice_library_off">Oculto</string>
+    <string name="choice_quick">Painel de configurações rápidas</string>
+    <string name="choice_quick_on">Ligado</string>
+    <string name="choice_quick_off">Desligado</string>
 </resources>
