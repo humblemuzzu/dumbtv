@@ -1,0 +1,225 @@
+# MediaTek MT5896 Video Rendering & Picture Quality (PQ) Pipeline
+
+Hardware architecture teardown, coprocessor firmware analysis, and video processing pipeline documentation for televisions powered by the **MediaTek MT5896 / MT5873** SoC (MediaTek "merak" platform).
+
+Reference hardware:
+* **Target Device:** Amazon Fire TV AFTHY7ABBA ("ginza") / Insignia NS-55F501NA26
+* **OS:** Fire OS 8.1.8.5 (Android 11, SDK 30)
+* **SoC:** MediaTek MT5896 / MT5873 (quad-core ARM Cortex, Mali GPU)
+* **PQU Coprocessor:** 32-bit RISC-V Picture Quality Unit (`pqu_mt5896_2048.elf`)
+* **Display Panel:** 55" Native 4K UHD (3840×2160 @ 60Hz 10-bit)
+* **Catalog Entry:** [`catalog/devices/fireos-amazon-afthy7abba.yaml`](../../catalog/devices/fireos-amazon-afthy7abba.yaml)
+* **Inspection Tool:** [`scripts/picture.sh`](../../scripts/picture.sh) (documentation: [`docs/PICTURE.md`](../PICTURE.md))
+
+---
+
+## 1. Hardware Pipeline Architecture
+
+When an HDMI or streaming video frame enters the television, it traverses a 14-stage hardware pipeline orchestrated by the dedicated **Picture Quality Unit (PQU)** coprocessor before hitting the panel timing controller (TCON).
+
+### End-to-End Video Dataflow Diagram
+
+```text
+[ HDMI RX / Streaming Input ] (e.g. 1080p SDR from Chromecast or PC)
+         │
+         ▼
+[ IPDMA & Chroma Up-Conversion (CUP) ] ── (4:2:0 / 4:2:2 upsampled to internal 4:4:4)
+         │
+         ▼
+[ De-Interlacer (MADI/DI) & Film Mode ] ── (Motion-adaptive de-interlacing + 3:2 inverse telecine)
+         │
+         ▼
+[ Pre-Scaling Noise Reduction (NR Domain) ]
+  ├── DBK (De-Blocking Filter) ──────── (Targets 8x8 DCT compression macroblocks)
+  ├── DMS (De-Mosquito Filter) ──────── (Cleans high-frequency edge ringing)
+  ├── MCNR (Motion-Compensated NR) ──── (Temporal noise reduction across frames)
+  ├── SNR / DNR (Spatial/Dynamic NR) ── (Surface grain / luma-chroma noise smoothing)
+  └── ABF (Adaptive Bilateral Filter) ── (Debanding filter for color gradient steps)
+         │
+         ▼
+[ AI Super Resolution (AISR / SRS) ] ── (Pre-Scale high-frequency detail reconstruction)
+         │
+         ▼
+[ HVSP Main Scaler ] ────────────────── (Polyphase scaling up to native 3840x2160 4K)
+         │
+         ▼
+[ VIP1 Processing Domain ] ───────────── (Pre-peaking: hprepk/vprepk + CTI color transient improvement)
+         │
+         ▼
+[ VIP2 Processing Domain: SHARPNESS ] ── (Post-peaking: 2D high-pass peaking on 4K frame)
+  ├── Sharpness Gain (SR_Strength) ──── (Slider in UI: directional edge boost & coring)
+  ├── Edge Enhancer (EDGE_ENHANCER) ─── (Overshoot/undershoot steepening)
+  ├── Local Contrast (LCE / UCD) ────── (Ultra Clear Detail micro-contrast tone curves)
+  └── Dynamic Luminance (DLC) ───────── (Dynamic contrast adjustment)
+         │
+         ▼
+[ Color Management (CFD Domain) ] ───── (White Balance Matrix, 6-axis HSY, Flesh Tone, 3D-LUT)
+  ├── Color Temperature ────────────── (Calibrated D65 Standard, Warm ~5000K, Cool ~9300K)
+  ├── WB RGB Gain Offsets ───────────── (Digital R/G/B multipliers [-15, +15] in linear 10-bit)
+  └── Low Blue Light (LBL) ──────────── (Hardware spectral blue attenuation: Off/Low/Mid/High)
+         │
+         ▼
+[ Tone Mapping Operator (TMO) ] ─────── (HDR10 / HLG / SDR EOTF/OETF Curves, Degamma & Gamma 2.2)
+         │
+         ▼
+[ MEMC / MJC Engine ] ───────────────── (Motion estimation & motion compensation / 60Hz cadencing)
+         │
+         ▼
+[ GOP (Graphics Output Processor) ] ─── (OSD plane: Fire OS / Android UI blended over video)
+         │
+         ▼
+[ Local Dimming (LDM) & DBC ] ───────── (Directs LED backlight zone arrays & Dynamic Backlight Control)
+         │
+         ▼
+[ Display Panel (TCON) ] ────────────── (Native 3840x2160 @ 60Hz 10-bit Panel Output)
+```
+
+---
+
+## 2. Core Architectural Finding: Super Resolution vs. Sharpness
+
+> **AI Super Resolution executes BEFORE Sharpness in the rendering pipeline.**
+
+* **AI Super Resolution (`AISR` / `srs_ip`):** Executes in the **Pre-Scaling stage** directly on the incoming native source resolution (e.g. 1080p). It utilizes trained neural edge models and directional texture synthesis to reconstruct missing high-frequency details before passing the frame to the polyphase scaler (**HVSP**).
+* **Sharpness (`SR_Strength` / VIP Peaking):** Executes in the **Post-Scaling stage (VIP2 domain)** on the *already-upscaled 4K frame*. It applies a 2D high-pass spatial filter, directional edge boosting, and coring.
+
+### Mathematical Order of Operations
+$$\text{Noise Reduction (DBK/DNR)} \longrightarrow \text{AI Super Resolution (AISR)} \longrightarrow \text{HVSP Scaler (Polyphase)} \longrightarrow \text{Sharpness Peaking (VIP2)}$$
+
+### Tuning Implications
+Because Sharpness operates downstream of Super Resolution:
+1. Setting the **Sharpness** slider high (factory defaults are often 12–15) amplifies the artificial edge halos, ringing, and synthetic artifacts generated by the AI upscaler.
+2. For compressed web photos (e.g. Google Photos ambient highlights over 1080p HDMI): 8×8 DCT block seams in blue skies and sunsets are misinterpreted by AISR as true image edges and actively outlined. The HVSP polyphase sinc filter then adds Gibbs ringing along these edges, and VIP2 Peaking amplifies them into prominent checkerboard artifacts.
+3. Enabling **MPEG Noise Reduction (`MPEG_NR` / DBK)** cleans 8×8 DCT compression block boundaries *before* the AI scaler processes the frame, preventing the neural net from outlining macroblocks.
+
+---
+
+## 3. Color Management (CFD Domain) & Hardware White Balance Architecture
+
+The Color Flow Domain (CFD) processes pixel chrominance and luminance in the linear 10-bit / 12-bit domain before the Tone Mapping Operator (TMO) and long before Graphics Output Processing (GOP) UI composition.
+
+### Hardware Registers: Presets vs. Digital Gain Offsets
+The PQU white balance stage exposes two layers of control:
+1. **Discrete Base Modes (`Color_Temperature`):** Factory-calibrated analog/matrix presets.
+   * `Standard`: Factory D65 target (~6500 K neutral daytime reference).
+   * `Warm`: Factory D50 target (~5000 K warm tungsten reference).
+   * `Cool`: Factory D93 target (~9300 K high-blue retail display reference).
+2. **Continuous Gain Trims (`Color_Temperature_Blue_Gain`, `Color_Temperature_Red_Gain`):**
+   * Range: `[-15, +15]` integer trim values applied multiplicatively to the linear channel multipliers.
+   * Combined with the base mode, this enables continuous f.lux-style transitions without discrete mode jumps.
+3. **Spectral Attenuation (`Low_Blue_Light`):**
+   * Modes: `Off`, `Low`, `Middle`, `High`.
+   * Directly modulates the spectral blue notch filter in the hardware color matrix.
+
+### Hardware CFD White Balance vs. Software Window Overlays
+
+Traditional Android f.lux or night mode implementations inject an alpha-blended overlay window (`TYPE_APPLICATION_OVERLAY`) into SurfaceFlinger:
+
+$$\text{SurfaceFlinger Composition (GOP Stage):} \quad C_{\text{out}} = (1 - \alpha) C_{\text{video}} + \alpha C_{\text{overlay}}$$
+
+$$\text{Hardware CFD White Balance:} \quad C_{\text{out}} = C_{\text{video}} \times \mathbf{M}_{\text{WB}}(\text{Mode}, \Delta R, \Delta B)$$
+
+| Metric / Dimension | Software Window Overlay (`TYPE_APPLICATION_OVERLAY`) | Hardware CFD White Balance (`CustomerPqService`) |
+|---|---|---|
+| **Pipeline Stage** | **GOP (Graphics Output Processor)** at end of pipeline | **CFD (Color Flow Domain)** inside PQU coprocessor |
+| **Black Floor Preservation** | ❌ **Elevated black floor:** Black pixels ($RGB = 0,0,0$) become muddy glowing orange (e.g. `#492303`), ruining panel contrast | ✅ **True pitch black preserved:** $0 \times \text{Gain} = 0$, guaranteeing zero light leakage on OLED/VA panels |
+| **Color Precision & Depth** | ❌ Quantized to **8-bit RGB** with spatial dithering noise and banding in dark scenes | ✅ Native **10-bit / 12-bit linear CFD pipeline** with zero quantization banding |
+| **Video Playback Performance** | ❌ Incurs constant GPU composition overhead and potential frame drops on 4K60 streams | ✅ Zero GPU overhead (executed entirely in dedicated PQU coprocessor hardware) |
+| **Permission Requirements** | Requires `android.permission.SYSTEM_ALERT_WINDOW` (needs ADB granting on Android TV) | **Zero permissions required** (MediaTek `CustomerPqService` is unconstrained) |
+
+---
+
+## 4. UI Settings to MediaTek Hardware Registers
+
+Reverse engineering of `/system_ext/priv-app/MtkTvSettings/MtkTvSettings.apk`, `CustomerPqService_ginza-hb.apk`, and the PQU firmware uncovered the exact mapping between user-facing menu items and low-level MediaTek registers:
+
+| User Interface Label | Fire OS Setting ID | MediaTek Hardware API | Hardware Subsystem / Stage | Execution Stage |
+|---|---|---|---|---|
+| **Sharpness** | `pq_sharpness_id` | `SR_Strength` | `VIP2 / peaking` (2D Peaking Filter) | **Post-Scale** (4K) |
+| **Super Resolution** | `pq_super_resolution_id` | `AISR` | `AISR_Core` / `srs_ip` (Neural Upscaler) | **Pre-Scale** (Native) |
+| **Edge Enhancer** | `pq_edge_enhancer_enum_id` | `EDGE_ENHANCER` | `VIP2 / EDGE_ENHANCER` | **Post-Scale** (4K) |
+| **Noise Reduction** | `pq_noise_reduction_id` | `NR` | `dnr` / `snr` / `mcnr` (Spatial/Temporal) | **Pre-Scale** |
+| **MPEG Noise Reduction** | `pq_mpeg_noise_reduction_id` | `MPEG_NR` | `dbk` (Deblock) & `dms` (Demosquito) | **Pre-Scale** |
+| **Debanding Filter** | `pq_debanding_filter_id` | `ABF` | `abf` (Adaptive Bilateral Filter) | **Pre-Scale** |
+| **Dynamic Contrast** | `pq_dynamic_contrast_enum_id` | `DLC_STRENGTH` | `dlc` (Dynamic Luminance Control) | **Post-Scale** |
+| **Local Contrast Enhancement** | `pq_local_contrast_enh_id` | `Local_Contrast` | `lce` / `ucd` (Ultra Clear Detail) | **Post-Scale** |
+| **Motion Smoothing** | `pq_action_smoothing_smoothness_id` | `MJC_Effect` | `MEMC` (Frame Rate Conversion) | **Pre-Render** |
+| **Color Temperature** | `pq_color_temperature_id` | `Color_Temperature` | `CFD / white balance gain & offset` | Color Domain |
+| **White Balance Blue Gain** | *(hidden in Fire OS)* | `Color_Temperature_Blue_Gain` | `CFD / white balance blue multiplier` (`[-15, 15]`) | Color Domain |
+| **White Balance Red Gain** | *(hidden in Fire OS)* | `Color_Temperature_Red_Gain` | `CFD / white balance red multiplier` (`[-15, 15]`) | Color Domain |
+| **Low Blue Light** | *(hidden in Fire OS)* | `Low_Blue_Light` | `CFD / spectral blue notch filter` | Color Domain |
+| **Color Space** | `pq_color_space_id` | `Gamut_Mapping` | `3D-LUT / gamut_mapping` | Color Domain |
+| **PC Mode** | `pq_pc_mode_id` | `PC_Mode` | Sets `Peaking: OFF`, `SR_Strength: 0`, NR: Off | **Bypass** (4:4:4) |
+
+---
+
+## 5. Reverse-Engineering Methodology
+
+### 1. Platform Identification via ADB
+```bash
+adb shell getprop | grep -E "platform|hardware|model"
+```
+Key system properties on the MediaTek MT5896:
+* `ro.boot.hardware=mt5896`
+* `ro.board.platform=merak`
+* `ro.boot.vendor.cf.hardware=mt5873`
+* `vendor.display-size=3840x2160`
+* `vendor.mtk.pq.setdvaposrlevel=3`
+* `vendor.mtk.pq.setdvaponrlevel=2`
+
+### 2. Decompiling the Picture Settings IPC Stack
+Pulling `/product/app/CustomerPqService_ginza-hb/CustomerPqService_ginza-hb.apk` and `/system_ext/priv-app/MtkTvSettings/MtkTvSettings.apk`:
+* Decompilation with `jadx` revealed `res/raw/dynamic_config.json`, which bridges Fire OS settings keys to MediaTek OEM service strings (`defaultGetCall` / `defaultSetCall`).
+* Tracing `CustomerPqCache.java` identified `pq.db` SQLite schema: `TripletAssociationTable` (`Source`, `HdrType`, `Picture_Mode`) and `<Source>_Settings` (120 hardware parameters per port).
+
+### 3. Disassembling the PQU Coprocessor Firmware
+In `/vendor/firmware/`, the coprocessor binary was discovered:
+* Path: `/vendor/firmware/pqu_mt5896_2048.elf` (9.7 MB)
+* Binary Format: **Unstripped 32-bit RISC-V ELF executable** containing **82,219 raw debug symbols** and function call-sites.
+
+Inspection of call-sites with custom RISC-V disassemblers verified the internal execution sequence:
+1. `_handle_pre_video_calc`:
+   * `pqu_srs_calc_result`
+   * `pqu_aisr_calc_result` (`AISR` calculation at source resolution)
+   * `pqu_hvsp_calc_result` (Main polyphase scaler)
+2. `pqu_pq_enhance_post_pq_calc` / `_op1_process`:
+   * `pqu_mcnr_process` (Motion-Compensated NR)
+   * `pqu_dbk_process` (Deblocking)
+   * `pqu_snr_process` (Spatial NR)
+   * `pqu_abf_process` (Debanding)
+   * `pqu_sr_process` (`Cus_PQ_SR_Process` $\rightarrow$ `MApi_PQ_SR_Process` $\rightarrow$ VIP Peaking)
+   * `pqu_gce_process` / `pqu_lce_process` / `pqu_ucd_process`
+
+### 4. Zero-Permission CustomerPqService IPC Architecture
+Decompiling `CustomerPqService_ginza-hb.apk` revealed that the TV's hardware picture quality pipeline is directly accessible without root or signature permissions:
+* **Service:** `com.mediatek.customerpq/.CustomerPqService` (action `CustomerPqService:remote`).
+* **Security Context:** `android:exported="true"` with **no permission checks** (`android:permission` is omitted).
+* **AIDL Interface:** `com.mediatek.extservice.pqutils.ICustomerPqService`
+  * Transaction 1: `getFromPqCache(String key)` $\rightarrow$ reads active value from SQLite `pq.db` and in-memory cache.
+  * Transaction 2: `setToPqCache(String key, String val)` $\rightarrow$ writes to `pq.db` and dispatches immediately to hardware.
+* **Hardware Dispatch Chain:**
+  $$\text{setToPqCache()} \longrightarrow \text{mHALHandler} \longrightarrow \text{PqServiceCallback.onSetPqParamsByGlobalNative()} \longrightarrow \text{PqService.setPqParamsByGlobal\_native()}$$
+  This reaches the RISC-V PQU coprocessor registers in real time (within ~1–2 ms), allowing smooth runtime adjustments (such as 30-second sunset ramps) without video stutter, service reloads, or screen flickering.
+
+---
+
+## 6. Recommended Presets by Use Case
+
+### A. PC Gaming (HDMI 2)
+Optimized for lowest input latency, uncompromised 4:4:4 text legibility, and zero motion judder:
+* **Picture Mode:** `PC` (or `Game` with ALLM enabled)
+* **Auto Low Latency Mode (ALLM):** `On` (bypasses frame buffers)
+* **Sharpness (`SR_Strength`):** `0` (or `2`–`5` max)
+* **Super Resolution (`AISR`):** `Off` (bypasses neural inference latency)
+* **Motion Smoothing (`MEMC` / `MJC_Effect`):** `Off` (zero interpolated lag)
+* **Noise Reduction (`NR` & `MPEG_NR`):** `Off`
+* **Local Dimming:** `Low` or `Medium`
+
+### B. Ambient Photo Slideshows & 1080p Passthrough (HDMI 1)
+Optimized to eliminate 8×8 DCT compression artifacts, sky gradient banding, and ringing:
+* **Picture Mode:** `PC` (acts as clean 2×2 integer scaling for 1080p sources)
+* **Sharpness:** `0` (eliminates high-pass edge halos)
+* **Super Resolution (`AISR`):** `Off` (prevents outlining JPEG block seams)
+* **MPEG Noise Reduction (`DBK`):** `High` (activates hardware 8×8 DCT deblocking)
+* **Debanding Filter (`ABF`):** `High` (smooths sky gradients)
+* **Noise Reduction (`DNR`):** `Off` (preserves natural photographic film grain)
