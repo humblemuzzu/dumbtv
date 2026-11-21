@@ -45,6 +45,7 @@ public final class Tint extends Service {
     static final String ACTION_SHOW = "tv.dumbtv.quick.SHOW";
     static final String ACTION_CLOSE = "tv.dumbtv.quick.CLOSE";
     static final String ACTION_IGNORE_BACK = "tv.dumbtv.quick.IGNORE_BACK";
+    static final String ACTION_BRING_TO_TOP = "tv.dumbtv.quick.BRING_TO_TOP";
     /** Warmth steps, 0 (off) to {@link #STEPS}. */
     static final int STEPS = 10;
 
@@ -79,6 +80,8 @@ public final class Tint extends Service {
                 if (panel != null) panel.ignoreNextBack();
             } else if (ACTION_CLOSE.equals(act)) {
                 if (panel != null && panel.isShowing()) panel.close();
+            } else if (ACTION_BRING_TO_TOP.equals(act)) {
+                if (panel != null && panel.isShowing()) panel.bringToTop();
             } else if (ACTION_SHOW.equals(act) || "tv.dumbtv.quick.PANEL".equals(act)) {
                 if (panel != null) panel.show(intent);
             }
@@ -249,6 +252,7 @@ public final class Tint extends Service {
         filter.addAction(ACTION_IGNORE_BACK);
         filter.addAction(ACTION_CLOSE);
         filter.addAction(ACTION_SHOW);
+        filter.addAction(ACTION_BRING_TO_TOP);
         filter.addAction("tv.dumbtv.quick.PANEL");
         registerReceiver(quickReceiver, filter);
 
@@ -268,6 +272,8 @@ public final class Tint extends Service {
                 if (panel != null && panel.isShowing()) panel.close();
             } else if (ACTION_IGNORE_BACK.equals(act)) {
                 if (panel != null) panel.ignoreNextBack();
+            } else if (ACTION_BRING_TO_TOP.equals(act)) {
+                if (panel != null && panel.isShowing()) panel.bringToTop();
             }
         }
         return START_STICKY;
@@ -356,7 +362,8 @@ public final class Tint extends Service {
     private void startReader() {
         try {
             logcat = new ProcessBuilder("logcat", "-b", "default", "-b", "events", "-v", "brief", "-T", "1",
-                    "DispService:I", "FireTVKeyPolicyManager:I", "am_proc_start:I", "am_proc_died:I", "*:S")
+                    "DispService:I", "FireTVKeyPolicyManager:I", "am_proc_start:I", "am_proc_died:I",
+                    "QSUI-OverlaySettingsService:I", "QSUI-OverlayMenuAdapter:I", "*:S")
                     .redirectErrorStream(true).start();
         } catch (IOException e) {
             Log.w(TAG, "logcat did not start", e);
@@ -379,7 +386,11 @@ public final class Tint extends Service {
                         handleSettingsKey();
                     } else if (line.contains("am_proc_start") && line.contains("com.amazon.tv.quicksettings.ui")) {
                         if (panel != null && panel.isShowing()) {
-                            suppressAmazonQuickSettings();
+                            ui.post(panel::bringToTop);
+                        }
+                    } else if (line.contains("QSUI-OverlaySettingsService") || line.contains("QSUI-OverlayMenuAdapter")) {
+                        if (panel != null && panel.isShowing()) {
+                            ui.post(panel::bringToTop);
                         }
                     } else {
                         airplayState = AirPlay.next(airplayState, line);

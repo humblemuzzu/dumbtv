@@ -266,6 +266,9 @@ public final class Guard extends AccessibilityService {
         if (AMAZON_QS.contentEquals(pkg)) {
             amazonQsActive = true;
             amazonQsOpenedAt = SystemClock.uptimeMillis();
+            if (panelShowing) {
+                sendBroadcast(new Intent("tv.dumbtv.quick.BRING_TO_TOP").setPackage("tv.dumbtv.quick"));
+            }
             replaceQuickSettings();
             return;
         }

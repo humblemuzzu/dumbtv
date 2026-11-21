@@ -14,6 +14,8 @@ import android.content.SharedPreferences;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.content.res.ColorStateList;
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.PixelFormat;
 import android.graphics.Typeface;
@@ -30,6 +32,7 @@ import android.view.Display;
 import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.View;
+import android.view.ViewTreeObserver;
 import android.view.WindowManager;
 import android.view.animation.AccelerateInterpolator;
 import android.view.animation.DecelerateInterpolator;
@@ -105,6 +108,9 @@ public final class Panel {
     private int accent = DEFAULT_ACCENT;
     private boolean fromHome, showing, closing;
     private long ignoreBackUntil;
+    private long lastBroughtToTopAt;
+    private View activeShield;
+    private Bitmap activeShieldBmp;
 
     // Bluetooth
     private BluetoothA2dp a2dp;
@@ -231,9 +237,134 @@ public final class Panel {
         slide(true);
     }
 
+    public void bringToTop() {
+        if (!showing || closing || root == null || !root.isAttachedToWindow() || wm == null) return;
+        long now = SystemClock.uptimeMillis();
+        if (now - lastBroughtToTopAt < 1000) return;
+        lastBroughtToTopAt = now;
+
+        cleanShield();
+
+        Row focused = focusedRow();
+        final int focusedIndex = focused != null ? rows.indexOf(focused) : -1;
+
+        Bitmap snapshot = null;
+        int w = root.getWidth(), h = root.getHeight();
+        if (w > 0 && h > 0) {
+            try {
+                snapshot = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888);
+                Canvas canvas = new Canvas(snapshot);
+                root.draw(canvas);
+            } catch (Throwable t) {
+                if (snapshot != null) {
+                    snapshot.recycle();
+                    snapshot = null;
+                }
+            }
+        }
+
+        final View shield;
+        if (snapshot != null) {
+            ImageView iv = new ImageView(context);
+            iv.setImageBitmap(snapshot);
+            iv.setScaleType(ImageView.ScaleType.FIT_XY);
+            shield = iv;
+            activeShieldBmp = snapshot;
+        } else {
+            View v = new View(context);
+            v.setBackgroundColor(0x8C000000);
+            shield = v;
+        }
+        activeShield = shield;
+
+        WindowManager.LayoutParams shieldLp = new WindowManager.LayoutParams(
+                WindowManager.LayoutParams.MATCH_PARENT, WindowManager.LayoutParams.MATCH_PARENT,
+                Build.VERSION.SDK_INT >= 26 ? TYPE_APPLICATION_OVERLAY : WindowManager.LayoutParams.TYPE_PHONE,
+                WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
+                        | WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE
+                        | WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN
+                        | WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
+                PixelFormat.TRANSLUCENT);
+        shieldLp.setTitle("dumbtv quick shield");
+
+        try {
+            wm.addView(shield, shieldLp);
+        } catch (RuntimeException e) {
+            Log.w(Tint.TAG, "quick settings: could not add shield window", e);
+            cleanShield();
+            return;
+        }
+
+        final boolean[] executed = new boolean[1];
+        final Runnable swap = () -> {
+            if (executed[0]) return;
+            executed[0] = true;
+            if (!showing || closing || root == null || wm == null) {
+                cleanShield();
+                return;
+            }
+            try {
+                if (root.isAttachedToWindow()) {
+                    wm.removeViewImmediate(root);
+                }
+                wm.addView(root, lp);
+            } catch (RuntimeException e) {
+                Log.w(Tint.TAG, "quick settings: could not re-add root", e);
+                cleanShield();
+                return;
+            }
+
+            if (focusedIndex >= 0 && focusedIndex < rows.size()) {
+                rows.get(focusedIndex).requestFocus();
+            } else if (brightness != null) {
+                brightness.requestFocus();
+            }
+
+            final ViewTreeObserver rootObserver = root.getViewTreeObserver();
+            rootObserver.addOnPreDrawListener(new ViewTreeObserver.OnPreDrawListener() {
+                @Override
+                public boolean onPreDraw() {
+                    root.getViewTreeObserver().removeOnPreDrawListener(this);
+                    root.post(Panel.this::cleanShield);
+                    return true;
+                }
+            });
+            root.postDelayed(Panel.this::cleanShield, 150);
+        };
+
+        final ViewTreeObserver shieldObserver = shield.getViewTreeObserver();
+        shieldObserver.addOnPreDrawListener(new ViewTreeObserver.OnPreDrawListener() {
+            @Override
+            public boolean onPreDraw() {
+                shield.getViewTreeObserver().removeOnPreDrawListener(this);
+                shield.post(swap);
+                return true;
+            }
+        });
+        ui.postDelayed(swap, 200);
+    }
+
+    private void cleanShield() {
+        if (activeShield != null && wm != null) {
+            try {
+                if (activeShield.isAttachedToWindow()) {
+                    wm.removeViewImmediate(activeShield);
+                }
+            } catch (RuntimeException ignored) {}
+            activeShield = null;
+        }
+        if (activeShieldBmp != null) {
+            if (!activeShieldBmp.isRecycled()) {
+                activeShieldBmp.recycle();
+            }
+            activeShieldBmp = null;
+        }
+    }
+
     public void close() {
         if (!showing || closing) return;
         closing = true;
+        cleanShield();
         ui.removeCallbacks(tick);
         noiseSampler.stop();
         if (wm != null && root != null && root.isAttachedToWindow() && lp != null) {
@@ -511,13 +642,14 @@ public final class Panel {
         scrim.animate().alpha(in ? 1f : 0f).setDuration(in ? 140 : 110).setInterpolator(ease).start();
         sheet.animate().translationX(in ? 0 : w).setDuration(in ? 140 : 110).setInterpolator(ease)
                 .withEndAction(in ? () -> {
-                    if (brightness != null) brightness.requestFocus();
+                    if (focusedRow() == null && brightness != null) brightness.requestFocus();
                 } : this::onClosed).start();
     }
 
     private void onClosed() {
         showing = false;
         closing = false;
+        cleanShield();
         if (activeInstance == this) activeInstance = null;
         if (wm != null && root != null && root.isAttachedToWindow()) {
             try {
