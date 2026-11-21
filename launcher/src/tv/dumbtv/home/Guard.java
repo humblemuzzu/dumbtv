@@ -298,15 +298,8 @@ public final class Guard extends AccessibilityService {
         long now = SystemClock.uptimeMillis();
         if (now - quickReplacedAt < QUICK_DEBOUNCE_MS) return;
         quickReplacedAt = now;
-        if (panelShowing) {
-            // In-memory bespoke panel is already showing: re-assert its top Z-order to occlude Amazon QS.
-            // Do not inject synthetic BACK now (it would hit our panel).
-            // Amazon QS will be dismissed cleanly on panel collapse.
-            sendBroadcast(new Intent("tv.dumbtv.quick.BRING_TO_TOP").setPackage("tv.dumbtv.quick"));
-            return;
-        }
         sendBroadcast(new Intent("tv.dumbtv.quick.IGNORE_BACK").setPackage("tv.dumbtv.quick"));
-        performGlobalAction(GLOBAL_ACTION_BACK);
+        handler.postDelayed(() -> performGlobalAction(GLOBAL_ACTION_BACK), 50);
         if (now - settingsKeyAt > 2000) {
             handler.removeCallbacks(openQuick);
             handler.postDelayed(openQuick, QUICK_AFTER_BACK_MS);

@@ -161,20 +161,6 @@ public final class Panel {
 
     public void ignoreNextBack() {
         ignoreBackUntil = SystemClock.uptimeMillis() + 600;
-        bringToTop();
-    }
-
-    public void bringToTop() {
-        ui.post(() -> {
-            if (wm != null && root != null && root.isAttachedToWindow() && showing && !closing) {
-                try {
-                    wm.removeView(root);
-                    wm.addView(root, lp);
-                    if (brightness != null) brightness.requestFocus();
-                    else root.requestFocus();
-                } catch (RuntimeException ignored) {}
-            }
-        });
     }
 
     public void show(Intent intent) {
