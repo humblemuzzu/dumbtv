@@ -135,6 +135,18 @@ id>'`: "No activities found" on a set like this means `tv` and `auto` cannot
 work here. Set `switch=home` to stop asking and use the built-in screen on
 purpose; `catalog/devices/` is the place to confirm a specific model.
 
+### The remote's settings button does nothing
+
+dumbtv quick settings turns on Amazon's own `quick_settings_lock` so that the
+button opens only its panel, and takes it off when it stops. If the app was
+force-stopped, or uninstalled with plain `adb uninstall`, the lock can stay on
+with nothing left to open a panel. Check `adb shell settings get secure
+quick_settings_lock`: `1` with no panel means the lock was left behind. Start
+the panel again with `adb shell am broadcast -n tv.dumbtv.quick/.Boot`, or give
+the button back to Amazon with `adb shell settings delete secure
+quick_settings_lock`. `./quick/install.sh --undo` and `scripts/restore.sh` both
+delete it.
+
 ## Inputs
 
 ### The TV sleeps while something is playing on HDMI

@@ -199,6 +199,14 @@ public final class Home extends Activity {
         }
     }
 
+    private final BroadcastReceiver idlePauseReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            String paused = intent.getStringExtra("idle_pause");
+            if (paused != null) cfg.set(Quick.CONF_IDLE_PAUSE, "0".equals(paused) ? null : paused);
+        }
+    };
+
     @Override
     protected void onCreate(Bundle state) {
         super.onCreate(state);
@@ -215,6 +223,7 @@ public final class Home extends Activity {
         f.addAction(Intent.ACTION_PACKAGE_CHANGED);
         f.addDataScheme("package");
         registerReceiver(packages, f);
+        registerReceiver(idlePauseReceiver, new IntentFilter("tv.dumbtv.home.SET_IDLE_PAUSE"));
         Keeper.start(this);
         if (tv != null) tv.registerCallback(inputWatch, ui);
         firstApps(catalog, times);
@@ -351,6 +360,9 @@ public final class Home extends Activity {
     @Override
     protected void onDestroy() {
         unregisterReceiver(packages);
+        try {
+            unregisterReceiver(idlePauseReceiver);
+        } catch (IllegalArgumentException ignored) {}
         if (tv != null) tv.unregisterCallback(inputWatch);
         io.shutdownNow();
         colorIo.shutdownNow();
@@ -1236,6 +1248,15 @@ public final class Home extends Activity {
         }
         o.inJustDecodeBounds = false;
         return BitmapFactory.decodeFile(f.getPath(), o);
+    }
+
+    /** The panel's Auto-switch row changed: keep it; onResume, next, reschedules the idle switch. */
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode != Quick.REQUEST_CODE || resultCode != RESULT_OK || data == null) return;
+        String paused = data.getStringExtra(Quick.EXTRA_IDLE_PAUSE);
+        if (paused != null) cfg.set(Quick.CONF_IDLE_PAUSE, "0".equals(paused) ? null : paused);
     }
 
     /**

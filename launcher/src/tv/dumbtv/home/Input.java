@@ -66,6 +66,7 @@ public final class Input extends Activity {
     private TvView view;
     private TextView name, status;
     private String id;
+    private boolean backDown;
     private final Runnable hideName = () -> name.animate().alpha(0f).setDuration(250)
             .withEndAction(() -> name.setVisibility(View.GONE)).start();
     private final Runnable noSignal = () -> status(getString(NO_SIGNAL));
@@ -123,6 +124,10 @@ public final class Input extends Activity {
      */
     private static boolean viewerIsLiveTv(ResolveInfo app) {
         return app.activityInfo != null && AMAZON_LIVE_TV.equals(app.activityInfo.packageName);
+    }
+
+    static boolean isOpen() {
+        return instance != null;
     }
 
     /**
@@ -189,6 +194,7 @@ public final class Input extends Activity {
     @Override
     @SuppressWarnings("deprecation")
     protected void onStop() {
+        backDown = false;
         ui.removeCallbacksAndMessages(null);
         getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         if (view != null) {
@@ -204,14 +210,32 @@ public final class Input extends Activity {
         super.onDestroy();
     }
 
-    /** BACK leaves; Menu or Info shows the input's name again. Other keys go to the input. */
+    /**
+     * BACK leaves; Menu opens the quick settings panel where it is installed (and the home screen
+     * is not locked), otherwise it shows the input's name again, as Info does. Other keys go to the
+     * input.
+     */
     @Override
     public boolean dispatchKeyEvent(KeyEvent e) {
         switch (e.getKeyCode()) {
             case KeyEvent.KEYCODE_BACK:
-                if (e.getAction() == KeyEvent.ACTION_UP) finish();
+                if (e.getAction() == KeyEvent.ACTION_DOWN) {
+                    backDown = true;
+                    return true;
+                } else if (e.getAction() == KeyEvent.ACTION_UP) {
+                    if (backDown) {
+                        backDown = false;
+                        finish();
+                    }
+                    return true;
+                }
                 return true;
             case KeyEvent.KEYCODE_MENU:
+                if (e.getAction() != KeyEvent.ACTION_DOWN || e.getRepeatCount() > 0) return true;
+                Config cfg = Config.get(this);
+                if (Quick.enabled(this, cfg) && Quick.open(this, cfg.accent(), "input")) return true;
+                showName();
+                return true;
             case KeyEvent.KEYCODE_INFO:
                 if (e.getAction() == KeyEvent.ACTION_DOWN) showName();
                 return true;
