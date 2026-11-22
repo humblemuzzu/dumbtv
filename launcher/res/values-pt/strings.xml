@@ -134,6 +134,9 @@
     <string name="choice_tile_style">Estilo dos blocos</string>
     <string name="choice_tile_style_original">Original</string>
     <string name="choice_tile_style_afterglow">Afterglow</string>
+    <string name="choice_tile_fill">Fundo dos blocos</string>
+    <string name="choice_tile_fill_clear">Transparente</string>
+    <string name="choice_tile_fill_solid">Sólido</string>
     <string name="choice_chips">Estilo dos botões</string>
     <string name="choice_chips_text">Texto</string>
     <string name="choice_chips_icons">Ícones</string>

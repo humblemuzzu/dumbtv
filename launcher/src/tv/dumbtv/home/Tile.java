@@ -56,7 +56,8 @@ final class Tile extends View {
 
         chip = !app;
         this.accent = accent;
-        fill.setColor(app ? Ui.SURFACE : Ui.CHIP_IDLE);
+        boolean solid = app && "solid".equals(Config.get(c).get(Config.TILE_FILL));
+        fill.setColor(solid ? Ui.SURFACE : Ui.CHIP_IDLE);
         ring.setStyle(Paint.Style.STROKE);
         ring.setStrokeWidth(stroke);
         ring.setColor(accent);
