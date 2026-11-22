@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Alexa Smart Home's icon, redrawn: the app ships it as a single 48 px bitmap. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="48dp"
+    android:height="48dp"
+    android:viewportWidth="48"
+    android:viewportHeight="48">
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#FFC2C2C2"
+        android:strokeWidth="3"
+        android:strokeLineJoin="round"
+        android:pathData="M6.5,23L24,7.5L41.5,23V41Q41.5,43 39.5,43H8.5Q6.5,43 6.5,41Z" />
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#FFC2C2C2"
+        android:strokeWidth="3"
+        android:strokeLineCap="round"
+        android:pathData="M17,26V34M30,22.5V30" />
+    <path
+        android:fillColor="#FFC2C2C2"
+        android:pathData="M13.3,25a3.7,3.7 0,1 0,7.4 0a3.7,3.7 0,1 0,-7.4 0zM26.2,32a3.8,3.8 0,1 0,7.6 0a3.8,3.8 0,1 0,-7.6 0z" />
+</vector>

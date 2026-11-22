@@ -284,7 +284,7 @@ public final class Home extends Activity {
     private Runnable artJob(Item it, boolean cornerIcon) {
         String pack = cfg.get(IconPack.KEY, IconPack.OFF);
         String chosen = cfg.get(IconPack.CHOSEN + it.id, null);
-        return () -> Catalog.art(getPackageManager(), it, cornerIcon, replacementArt(it, chosen, pack));
+        return () -> Catalog.art(this, it, cornerIcon, replacementArt(it, chosen, pack));
     }
 
     /**

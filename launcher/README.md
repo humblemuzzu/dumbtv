@@ -83,6 +83,10 @@ you open an app. On Fire OS 7 and 8 the Settings button opens Amazon's settings 
 | Library banner | shown (default), hidden. It only appears once a library folder holds titles (see below) |
 | Icon pack | off, or an installed icon pack; reads "None installed" until one is ([Icon packs](#icon-packs)) |
 
+Icons are loaded at the highest density the app ships, so they stay sharp at tile size.
+Alexa Smart Home, Fire TV's quick settings and Amazon home's profile icon ship only a 48 or 96 px
+bitmap; dumbtv home draws its own vector copy of those three.
+
 Below them: Next wallpaper, which apps and inputs appear on the home screen, a
 reset for order, names, picked icons and hidden tiles, and **Open Amazon's home screen**. Apps
 without a TV banner, like the Appstore, start hidden; tick them to add them.

@@ -5,11 +5,13 @@ import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
+import android.content.res.Resources;
 import android.graphics.drawable.Drawable;
 import android.media.tv.TvContract;
 import android.media.tv.TvInputInfo;
 import android.media.tv.TvInputManager;
 import android.text.TextUtils;
+import android.util.DisplayMetrics;
 
 import java.text.Collator;
 import java.util.ArrayList;
@@ -63,12 +65,43 @@ final class Catalog {
      * art: a wide one fills the tile like a banner, any other is drawn as a centered icon.
      * Slow: off the UI thread.
      */
-    static void art(PackageManager pm, Item it, boolean cornerIcon, Drawable replacement) {
+    static void art(Context c, Item it, boolean cornerIcon, Drawable replacement) {
         if (it.info == null) return;
+        PackageManager pm = c.getPackageManager();
         boolean wide = replacement != null && isWide(replacement);
         it.banner = wide ? replacement : replacement == null ? it.info.loadBanner(pm) : null;
         it.icon = replacement != null && !wide ? replacement
-                : it.banner == null || cornerIcon ? it.info.loadIcon(pm) : null;
+                : it.banner == null || cornerIcon ? sharpIcon(c, it.info) : null;
+    }
+
+    /**
+     * The name of dumbtv home's own vector copy of a package's icon, for built-in apps whose only
+     * icon is a small bitmap (48 or 96 px) that blurs at tile size: res/drawable/builtin_*.xml.
+     * Looked up by name, so adding one is adding the file.
+     */
+    static String redrawn(String pkg) {
+        return "builtin_" + pkg.replace('.', '_');
+    }
+
+    /**
+     * The {@link #redrawn} copy when there is one, else the app's icon at the highest density it
+     * ships rather than the TV's own (xhdpi on a 1080p Fire TV): tiles draw icons larger than a
+     * launcher grid would, and the xhdpi bitmap blurs when it is scaled up.
+     */
+    static Drawable sharpIcon(Context c, ActivityInfo ai) {
+        int own = c.getResources().getIdentifier(redrawn(ai.packageName), "drawable", c.getPackageName());
+        if (own != 0) return c.getDrawable(own);
+        int res = ai.getIconResource();
+        if (res != 0) {
+            try {
+                Drawable d = c.getPackageManager().getResourcesForApplication(ai.applicationInfo)
+                        .getDrawableForDensity(res, DisplayMetrics.DENSITY_XXXHIGH, null);
+                if (d != null) return d;
+            } catch (PackageManager.NameNotFoundException | Resources.NotFoundException e) {
+                // fall through to the system's choice
+            }
+        }
+        return ai.loadIcon(c.getPackageManager());
     }
 
     /** TV banners are 16:9; anything clearly wider than tall is drawn across the whole tile. */
