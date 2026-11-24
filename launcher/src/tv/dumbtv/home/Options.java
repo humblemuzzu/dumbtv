@@ -50,7 +50,7 @@ public final class Options extends Activity {
         int columns = 5;
         cardW = (getResources().getDisplayMetrics().widthPixels - dp(96) - dp(18) * (columns - 1)) / columns - 1;
 
-        TextView title = Ui.text(this, 34, Ui.TEXT, Ui.serif(this));
+        TextView title = Ui.text(this, 30, Ui.TEXT, Ui.SYSTEM_LIGHT);
         title.setText(R.string.options);
         title.setPadding(0, 0, 0, dp(18));
         list.addView(title);
@@ -70,21 +70,21 @@ public final class Options extends Activity {
         }, "icon-packs").start();
         Grid actions = new Grid(this);
         actions.setPadding(0, dp(28), 0, 0);
-        actions.addView(action(getString(R.string.next_wallpaper), () -> {
+        actions.addView(action(getString(R.string.next_wallpaper), Icons.NEXT_WALLPAPER, () -> {
             cfg.nextWallpaper();
             refresh();
         }));
-        actions.addView(action(getString(R.string.apps_on_home), () -> pick(Catalog.APPS)));
-        actions.addView(action(getString(R.string.inputs_on_home), () -> pick(Catalog.INPUTS)));
-        actions.addView(action(getString(R.string.reset_layout), this::reset));
-        actions.addView(action(getString(R.string.export_settings), this::export));
-        actions.addView(action(getString(R.string.open_amazon_home), () -> {
+        actions.addView(action(getString(R.string.apps_on_home), Icons.APPS, () -> pick(Catalog.APPS)));
+        actions.addView(action(getString(R.string.inputs_on_home), Icons.INPUTS, () -> pick(Catalog.INPUTS)));
+        actions.addView(action(getString(R.string.reset_layout), Icons.RESET, this::reset));
+        actions.addView(action(getString(R.string.export_settings), Icons.EXPORT, this::export));
+        actions.addView(action(getString(R.string.open_amazon_home), Icons.AMAZON_HOME, () -> {
             Guard.amazon(this);
             finish();
         }));
         list.addView(actions);
 
-        TextView about = Ui.text(this, 13, Ui.FAINT, Ui.medium(this));
+        TextView about = Ui.text(this, 13, Ui.FAINT, Ui.SYSTEM_MEDIUM);
         about.setLineSpacing(0, 1.4f);
         about.setPadding(0, dp(32), 0, 0);
         about.setText(getString(R.string.about, cfg.dir + "/" + Config.FILE, Config.WALLPAPERS,
@@ -108,13 +108,23 @@ public final class Options extends Activity {
 
     private View choice(Config.Choice c) {
         LinearLayout row = card();
-        row.addView(name(Text.title(this, c)));
-        TextView value = Ui.text(this, 21, Ui.TEXT, Ui.serif(this));
+        TextView name = name();
+        row.addView(name);
+        TextView value = Ui.text(this, 19, Ui.TEXT, Ui.SYSTEM_MEDIUM);
         fit(value);
-        row.addView(value);
+        // on/off choices wear a Material switch at the end of their line
+        boolean binary = c.values.length == 2 && Arrays.asList(c.values).contains("on")
+                && Arrays.asList(c.values).contains("off");
+        row.addView(value, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT));
         row.setOnClickListener(v -> step(c, 1));
         row.setOnLongClickListener(v -> step(c, -1));
         Runnable show = () -> {
+            name.setText(Icons.lead(this, Icons.forChoice(c.key), Text.title(this, c), cfg.accent()));
+            if (binary) {
+                value.setCompoundDrawablesRelativeWithIntrinsicBounds(null, null,
+                        new Toggle(this, "on".equals(cfg.get(c)), cfg.accent()), null);
+            }
             String text = Text.name(this, c, cfg.get(c));
             if (c == Config.ACCENT) {
                 SpannableString s = new SpannableString("●  " + text);
@@ -150,14 +160,14 @@ public final class Options extends Activity {
         return true;
     }
 
-    private View action(String text, Runnable run) {
+    private View action(String text, String glyph, Runnable run) {
         LinearLayout row = card();
-        TextView v = Ui.text(this, 15, Ui.TEXT, Ui.medium(this));
-        v.setText(text);
+        TextView v = Ui.text(this, 15, Ui.TEXT, Ui.SYSTEM_MEDIUM);
         v.setMaxLines(2);
         v.setEllipsize(TextUtils.TruncateAt.END);
         row.addView(v);
         row.setOnClickListener(x -> run.run());
+        refreshers.add(() -> v.setText(Icons.lead(this, glyph, text, cfg.accent())));
         refreshers.add(() -> style(row));
         return row;
     }
@@ -190,9 +200,8 @@ public final class Options extends Activity {
         row.setBackground(bg);
     }
 
-    private TextView name(String text) {
-        TextView v = Ui.text(this, 13, Ui.MUTED, Ui.medium(this));
-        v.setText(text);
+    private TextView name() {
+        TextView v = Ui.text(this, 13, Ui.MUTED, Ui.SYSTEM_MEDIUM);
         fit(v);
         v.setPadding(0, 0, 0, dp(6));
         return v;

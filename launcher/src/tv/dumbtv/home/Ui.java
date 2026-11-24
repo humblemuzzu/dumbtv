@@ -2,14 +2,16 @@ package tv.dumbtv.home;
 
 import android.content.Context;
 import android.content.res.ColorStateList;
+import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.Paint;
 import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
 import android.graphics.drawable.LayerDrawable;
 import android.graphics.drawable.StateListDrawable;
 import android.text.TextPaint;
-import android.text.style.MetricAffectingSpan;
+import android.text.style.ReplacementSpan;
 import android.util.TypedValue;
 import android.widget.TextView;
 
@@ -35,28 +37,52 @@ final class Ui {
         return medium;
     }
 
-    /** Material Symbols Rounded, filled, with only the weather icons (see Weather.symbol). */
+    /** Material Symbols Rounded, filled, cut down to the glyphs in Weather.symbol and Icons. */
     static Typeface icons(Context c) {
-        if (icons == null) icons = font(c, "fonts/MaterialSymbolsRounded-Weather.ttf", "sans-serif");
+        if (icons == null) icons = font(c, "fonts/MaterialSymbolsRounded.ttf", "sans-serif");
         return icons;
     }
 
-    /** A typeface for part of a text; TypefaceSpan only takes a Typeface from Android 9. */
-    static final class FontSpan extends MetricAffectingSpan {
+    /** dumbtv's own system fonts, kept for Options: Instrument is for the home screen only. */
+    static final Typeface SYSTEM_LIGHT = Typeface.create("sans-serif-light", Typeface.NORMAL);
+    static final Typeface SYSTEM_MEDIUM = Typeface.create("sans-serif-medium", Typeface.NORMAL);
+
+    /**
+     * An icon glyph inside a line of text, centred on the text's body rather than sitting on its
+     * baseline: the icon font's metrics differ from the text's, so a plain span rides high.
+     */
+    static final class GlyphSpan extends ReplacementSpan {
         private final Typeface face;
+        private final float scale;
+        private final int color;
 
-        FontSpan(Typeface face) {
+        /** {@code color} 0 takes the text's own colour, which follows focus. */
+        GlyphSpan(Typeface face, float scale, int color) {
             this.face = face;
+            this.scale = scale;
+            this.color = color;
+        }
+
+        private TextPaint glyph(Paint text) {
+            TextPaint p = new TextPaint(text);
+            p.setTypeface(face);
+            p.setTextSize(text.getTextSize() * scale);
+            if (color != 0) p.setColor(color);
+            return p;
         }
 
         @Override
-        public void updateDrawState(TextPaint p) {
-            p.setTypeface(face);
+        public int getSize(Paint paint, CharSequence text, int start, int end, Paint.FontMetricsInt fm) {
+            if (fm != null) paint.getFontMetricsInt(fm);
+            return Math.round(glyph(paint).measureText(text, start, end));
         }
 
         @Override
-        public void updateMeasureState(TextPaint p) {
-            p.setTypeface(face);
+        public void draw(Canvas canvas, CharSequence text, int start, int end, float x, int top, int y,
+                int bottom, Paint paint) {
+            TextPaint p = glyph(paint);
+            float middle = y + (paint.ascent() + paint.descent()) / 2;
+            canvas.drawText(text, start, end, x, middle - (p.ascent() + p.descent()) / 2, p);
         }
     }
 
@@ -75,6 +101,14 @@ final class Ui {
     /** Black on light accents, white on dark ones. */
     static int ink(int color) {
         return Color.luminance(color) > 0.5f ? 0xFF000000 : 0xFFFFFFFF;
+    }
+
+    /** {@code a} moved {@code t} of the way to {@code b}, opaque. */
+    static int mix(int a, int b, float t) {
+        return Color.rgb(
+                Math.round(Color.red(a) + (Color.red(b) - Color.red(a)) * t),
+                Math.round(Color.green(a) + (Color.green(b) - Color.green(a)) * t),
+                Math.round(Color.blue(a) + (Color.blue(b) - Color.blue(a)) * t));
     }
 
     static TextView text(Context c, float sp, int color, Typeface face) {

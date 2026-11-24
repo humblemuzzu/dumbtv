@@ -65,6 +65,8 @@ public final class Home extends Activity {
     private final ExecutorService io = Executors.newSingleThreadExecutor();
     private final ExecutorService colorIo = Executors.newSingleThreadExecutor();
     private final List<TextView> chips = new ArrayList<>();
+    /** The Material icon in front of each text chip's name. */
+    private final java.util.Map<TextView, String> chipGlyphs = new java.util.HashMap<>();
     /** Weather next to the clock; focusable like a chip, hidden until there is a forecast. */
     private TextView weather;
     /** The next hours beside the weather chip: time, icon and temperature for each. */
@@ -686,7 +688,8 @@ public final class Home extends Activity {
         // a Material 3 tonal chip: icon and temperature in a rounded container
         weather = Ui.text(this, 22, Ui.TEXT, Ui.medium(this));
         weather.setGravity(Gravity.CENTER_VERTICAL);
-        weather.setPadding(dp(16), dp(10), dp(20), dp(10));
+        weather.setPadding(dp(8), dp(8), dp(20), dp(8));
+        weather.setCompoundDrawablePadding(dp(12));
         weather.setFocusable(true);
         weather.setClickable(true);
         weather.setVisibility(View.GONE);
@@ -715,12 +718,12 @@ public final class Home extends Activity {
         when.addView(meter, under);
         head.addView(when, new LinearLayout.LayoutParams(0, WRAP, 1f));
         // shortcut: borrows the Options icon for Chip style › Icons; give Art its own if that style is used
-        head.addView(chip(getString(R.string.art), R.drawable.chip_options, R.drawable.chip_options_mark,
+        head.addView(chip(getString(R.string.art), Icons.ART, R.drawable.chip_options, R.drawable.chip_options_mark,
                 v -> startActivity(new Intent(this, ArtScreen.class))));
-        head.addView(chip(getString(R.string.options), R.drawable.chip_options, R.drawable.chip_options_mark,
-                v -> startActivity(new Intent(this, Options.class))));
-        head.addView(chip(getString(R.string.settings), R.drawable.chip_settings, R.drawable.chip_settings_mark,
-                v -> openSettings()));
+        head.addView(chip(getString(R.string.options), Icons.OPTIONS, R.drawable.chip_options,
+                R.drawable.chip_options_mark, v -> startActivity(new Intent(this, Options.class))));
+        head.addView(chip(getString(R.string.settings), Icons.SETTINGS, R.drawable.chip_settings,
+                R.drawable.chip_settings_mark, v -> openSettings()));
         column.addView(head, new LinearLayout.LayoutParams(MATCH, WRAP));
         // Home position › Bottom: the page fills the screen (setFillViewport), and this stretch
         // takes what the banner and the rows leave of it, so they sit on the bottom edge. When
@@ -812,9 +815,10 @@ public final class Home extends Activity {
      * corner stays quiet and the remote still says where OK goes. {@code shape} and
      * {@code mark} are the two layers {@link Ui#chipIcon} tints; {@link #apply} draws them.
      */
-    private TextView chip(String label, int shape, int mark, View.OnClickListener click) {
+    private TextView chip(String label, String glyph, int shape, int mark, View.OnClickListener click) {
         TextView v = Ui.text(this, 14, Ui.TEXT, Ui.medium(this));
         v.setTag(new int[] {shape, mark});
+        chipGlyphs.put(v, glyph);
         v.setContentDescription(label);
         v.setGravity(Gravity.CENTER);
         v.setFocusable(true);
@@ -839,11 +843,16 @@ public final class Home extends Activity {
     }
 
     /** Text and padding for the chip style: the name always for text, on focus only for icons. */
+    /** The accent at a quarter strength, for Material's tonal containers. */
+    static int tonal(int accent) {
+        return (accent & 0x00FFFFFF) | 0x40000000;
+    }
+
     private void chipLook(TextView c, boolean focused) {
         if (!iconChips()) {
-            c.setText(c.getContentDescription());
+            c.setText(Icons.lead(this, chipGlyphs.get(c), c.getContentDescription()));
             c.setCompoundDrawablePadding(0);
-            c.setPadding(dp(18), dp(9), dp(18), dp(9));
+            c.setPadding(dp(16), dp(9), dp(20), dp(9));
             return;
         }
         c.setText(focused ? c.getContentDescription() : "");
@@ -856,14 +865,15 @@ public final class Home extends Activity {
         int accent = cfg.accent();
         boolean icons = iconChips();
         for (TextView c : chips) {
-            Ui.focusStyle(c, accent, 0x14FFFFFF, dp(icons ? 21 : 18));
+            // Material's tonal button: a wash of the accent at rest, the accent itself on focus
+            Ui.focusStyle(c, accent, tonal(accent), dp(icons ? 21 : 18));
             int[] art = (int[]) c.getTag();
             c.setCompoundDrawablesRelative(icons ? Ui.chipIcon(getDrawable(art[0]), getDrawable(art[1]),
                     accent, dp(22)) : null, null, null, null);
             chipLook(c, c.isFocused());
             c.setVisibility(locked() ? View.GONE : View.VISIBLE);
         }
-        Ui.focusStyle(weather, accent, 0x1FFFFFFF, dp(16));
+        Ui.focusStyle(weather, accent, tonal(accent), dp(20));
         showWeather();
         meter.setVisibility("on".equals(cfg.get(Config.MEMORY)) ? View.VISIBLE : View.GONE);
         meter.setAccent(accent);
@@ -1242,13 +1252,20 @@ public final class Home extends Activity {
 
     /** Shows the last forecast next to the clock; with no place set or no answer yet, nothing. */
     private void showWeather() {
-        CharSequence brief = Weather.brief(this, Weather.last());
-        weather.setText(brief);
-        // the icon is a private-use glyph a screen reader would spell out
-        weather.setContentDescription(brief == null ? null : brief.subSequence(1, brief.length()).toString().trim());
-        if (brief == null && weather.isFocused()) focusFirst();
-        weather.setVisibility(brief == null ? View.GONE : View.VISIBLE);
-        showHours(brief == null ? null : Weather.last());
+        JSONObject now = Weather.now(Weather.last());
+        if (now != null) {
+            int code = now.optInt("weather_code", -1), accent = cfg.accent();
+            String temp = Math.round(now.optDouble("temperature_2m")) + "°";
+            weather.setText(temp);
+            weather.setCompoundDrawablesRelativeWithIntrinsicBounds(new Cookie(this,
+                    Weather.symbol(code, now.optInt("is_day", 1) == 1),
+                    // a pale tone of the accent with a deep one inside, clear on the tonal chip and the filled one
+                    Ui.mix(accent, 0xFFFFFFFF, 0.6f), Ui.mix(accent, 0xFF000000, 0.55f), 34), null, null, null);
+            weather.setContentDescription(temp + " " + Weather.describe(code));
+        }
+        if (now == null && weather.isFocused()) focusFirst();
+        weather.setVisibility(now == null ? View.GONE : View.VISIBLE);
+        showHours(now == null ? null : Weather.last());
     }
 
     /** Six columns two hours apart, from the hour after this one; empty without a forecast. */

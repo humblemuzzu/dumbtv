@@ -1,10 +1,6 @@
 package tv.dumbtv.home;
 
-import android.content.Context;
 import android.os.Handler;
-import android.text.SpannableStringBuilder;
-import android.text.Spanned;
-import android.text.style.RelativeSizeSpan;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -106,15 +102,10 @@ final class Weather {
         }
     }
 
-    /** The icon and "9°" for the clock, or null when the forecast lacks the current values. */
-    static CharSequence brief(Context c, JSONObject data) {
+    /** The current conditions, or null when the forecast lacks a temperature for now. */
+    static JSONObject now(JSONObject data) {
         JSONObject now = data == null ? null : data.optJSONObject("current");
-        if (now == null || !now.has("temperature_2m")) return null;
-        SpannableStringBuilder s = new SpannableStringBuilder(
-                symbol(now.optInt("weather_code", -1), now.optInt("is_day", 1) == 1));
-        s.setSpan(new Ui.FontSpan(Ui.icons(c)), 0, s.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-        s.setSpan(new RelativeSizeSpan(1.3f), 0, s.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-        return s.append("  ").append(Math.round(now.optDouble("temperature_2m")) + "°");
+        return now == null || !now.has("temperature_2m") ? null : now;
     }
 
     /** Index of the current hour in the hourly arrays; they share the current time's zone. */
@@ -152,17 +143,17 @@ final class Weather {
 
     /**
      * A Material Symbols Rounded glyph, drawn with {@link Ui#icons}. The font in assets holds
-     * only these code points; adding one here means adding it to the subset too.
+     * only these code points and the ones in {@link Icons}; a new one goes into the subset too.
      */
     static String symbol(int code, boolean day) {
-        if (code == 0 || code == 1) return day ? "" : ""; // sunny, clear_night
-        if (code == 2) return day ? "" : ""; // partly_cloudy_day, partly_cloudy_night
-        if (code == 3) return ""; // cloud
-        if (code == 45 || code == 48) return ""; // foggy
-        if (code >= 51 && code <= 57) return ""; // rainy_light
-        if (code >= 61 && code <= 67 || code >= 80 && code <= 82) return ""; // rainy
-        if (code >= 71 && code <= 77 || code == 85 || code == 86) return ""; // weather_snowy
-        if (code >= 95) return ""; // thunderstorm
-        return ""; // device_thermostat
+        if (code == 0 || code == 1) return day ? "\uE81A" : "\uF159"; // sunny, clear_night
+        if (code == 2) return day ? "\uF172" : "\uF174"; // partly_cloudy_day, partly_cloudy_night
+        if (code == 3) return "\uF15C"; // cloud
+        if (code == 45 || code == 48) return "\uE818"; // foggy
+        if (code >= 51 && code <= 57) return "\uF61E"; // rainy_light
+        if (code >= 61 && code <= 67 || code >= 80 && code <= 82) return "\uF176"; // rainy
+        if (code >= 71 && code <= 77 || code == 85 || code == 86) return "\uE2CD"; // weather_snowy
+        if (code >= 95) return "\uEBDB"; // thunderstorm
+        return "\uE1FF"; // device_thermostat
     }
 }

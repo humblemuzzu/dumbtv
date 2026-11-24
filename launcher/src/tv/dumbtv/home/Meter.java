@@ -5,6 +5,7 @@ import android.app.ActivityManager;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Paint;
+import android.graphics.Path;
 import android.graphics.RectF;
 import android.text.TextPaint;
 import android.view.View;
@@ -26,6 +27,8 @@ final class Meter extends View {
     private final Paint bar = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final RectF ring = new RectF();
     private final int width, size, stroke, gap;
+    private final float amp;
+    private final Path path = new Path();
     private String label = "";
     /** The words around the numbers; Home hands in the TV's language with {@link #setWords}. */
     private String title = "Memory", free = "%1$d MB free of %2$d MB", lowNote = "running low";
@@ -44,7 +47,8 @@ final class Meter extends View {
         percent.setTextAlign(Paint.Align.CENTER);
         width = Ui.dp(c, 280);
         size = Ui.dp(c, 30);
-        stroke = Ui.dp(c, 3.5f);
+        stroke = Ui.dp(c, 3f);
+        amp = Ui.dp(c, 1.2f);
         gap = Ui.dp(c, 10);
         for (Paint p : new Paint[] {track, bar}) {
             p.setStyle(Paint.Style.STROKE);
@@ -114,14 +118,28 @@ final class Meter extends View {
         setMeasuredDimension(width, size);
     }
 
+    /** The filled part: radius {@code r} swinging by {@code amp}, nine waves to a full turn. */
+    private Path wave(float cx, float cy, float r, float share) {
+        path.reset();
+        int steps = Math.max(2, Math.round(120 * share));
+        for (int i = 0; i <= steps; i++) {
+            double a = Math.toRadians(-90 + 360.0 * share * i / steps);
+            double rr = r + amp * Math.sin(9 * a);
+            float x = (float) (cx + rr * Math.cos(a)), y = (float) (cy + rr * Math.sin(a));
+            if (i == 0) path.moveTo(x, y);
+            else path.lineTo(x, y);
+        }
+        return path;
+    }
+
     @Override
     protected void onDraw(Canvas canvas) {
         float half = stroke / 2f, mid = getHeight() / 2f;
         ring.set(half, mid - size / 2f + half, size - half, mid + size / 2f - half);
         canvas.drawOval(ring, track);
         bar.setColor(low ? LOW_COLOR : accent);
-        // filled clockwise from the top, as a phone's storage ring
-        canvas.drawArc(ring, -90, 360 * Math.max(0f, shown), false, bar);
+        // filled clockwise from the top as a wavy line, Material 3 Expressive's progress ring
+        canvas.drawPath(wave(ring.centerX(), ring.centerY(), ring.width() / 2f - amp, Math.max(0f, shown)), bar);
         canvas.drawText(Math.round(100 * Math.max(0f, shown)) + "%", size / 2f,
                 mid - (percent.ascent() + percent.descent()) / 2, percent);
         // only the name beside the ring; the free and total MB stay in the content description
