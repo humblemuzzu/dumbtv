@@ -96,7 +96,7 @@ final class Config {
     static final Choice SWITCH = new Choice("switch", "Open inputs with", "auto",
             new String[] {"auto", "tv", "home"},
             new String[] {"Automatic", "The TV's app", "dumbtv home"});
-    static final Choice BACKGROUND = new Choice("background", "Background", "black",
+    static final Choice BACKGROUND = new Choice("background", "Background", "image",
             new String[] {"black", "graphite", "midnight", "image", "adaptive", "adaptive-tint"},
             new String[] {"Black", "Graphite", "Midnight", "Image file", "Adaptive solid", "Adaptive wallpaper tint"});
     static final Choice DIM = new Choice("dim", "Image dim", "40",

@@ -35,10 +35,10 @@ final class Meter extends View {
     Meter(Context c) {
         super(c);
         name.setColor(Ui.FAINT);
-        name.setTypeface(Ui.MEDIUM);
+        name.setTypeface(Ui.medium(c));
         name.setTextSize(Ui.dp(c, 13));
         value.setColor(Ui.MUTED);
-        value.setTypeface(Ui.MEDIUM);
+        value.setTypeface(Ui.medium(c));
         value.setTextSize(Ui.dp(c, 13));
         track.setColor(0x26FFFFFF);
         width = Ui.dp(c, 280);

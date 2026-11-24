@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- guard_label stays English: scripts/accessibility.sh finds the service by it. -->
-    <string name="guard_description">Sendet die HOME-Taste an den dumbtv-Startbildschirm statt an den von Amazon. Es liest keine Bildschirminhalte und hat keinen Internetzugang.</string>
+    <string name="guard_description">Sendet die HOME-Taste an den dumbtv-Startbildschirm statt an den von Amazon. Es liest keine Bildschirminhalte und nutzt das Internet nicht.</string>
 
     <!-- Home screen -->
     <string name="options">Optionen</string>
@@ -58,7 +58,7 @@
     <string name="reset_message">Reihenfolge, Namen, ausgewählte Symbole und ausgeblendete Kacheln werden auf Standard zurückgesetzt. Farben und Größen bleiben erhalten.</string>
     <string name="reset">Zurücksetzen</string>
     <string name="lock_on">Optionen und Einstellungen sind jetzt auf dem Startbildschirm ausgeblendet. Halten Sie ☰ Menü für %1$d Sekunden gedrückt, um hier zurückzukommen.</string>
-    <string name="about">Einstellungsdatei: %1$s\nEin Hintergrundbild: Benennen Sie es exakt als wallpaper.jpg (oder .png) und legen Sie es in diesen Ordner\nMehrere Hintergrundbilder: Legen Sie sie in %2$s/ mit beliebigen Namen ab und wählen Sie wie es gewechselt werden soll\nDann Hintergrund › "Bilddatei" oder "Adaptiver Farbon des Hintergrundbildes" wählen. Keine Berechtigung erforderlich\nUnter Fire OS 8 kann adb auf diesen Ordner nicht zugreifen; verwenden Sie stattdessen %3$s (Einstellungen exportieren legt eine Kopie dort ab)\n"Adaptiver Farboton des Hintergrundbildes" nutzt Graphit, bis Sie ein Hintergrundbild hinzufügen\nBibliotheksbanner: Legen Sie Bilder und %4$s in %5$s/ in diesem Ordner ab\nSymbolpaket: Installieren Sie eines und wählen Sie es oben aus; halten Sie OK auf einer Kachel › Symbol gedrückt, um das Symbol einer App zu wählen\nKeine Internetberechtigung. Kein Tracking, keine Werbung, keine Accounts.</string>
+    <string name="about">Einstellungsdatei: %1$s\nEin Hintergrundbild: Benennen Sie es exakt als wallpaper.jpg (oder .png) und legen Sie es in diesen Ordner\nMehrere Hintergrundbilder: Legen Sie sie in %2$s/ mit beliebigen Namen ab und wählen Sie wie es gewechselt werden soll\nDann Hintergrund › "Bilddatei" oder "Adaptiver Farbon des Hintergrundbildes" wählen. Keine Berechtigung erforderlich\nUnter Fire OS 8 kann adb auf diesen Ordner nicht zugreifen; verwenden Sie stattdessen %3$s (Einstellungen exportieren legt eine Kopie dort ab)\n"Adaptiver Farboton des Hintergrundbildes" nutzt Graphit, bis Sie ein Hintergrundbild hinzufügen\nBibliotheksbanner: Legen Sie Bilder und %4$s in %5$s/ in diesem Ordner ab\nSymbolpaket: Installieren Sie eines und wählen Sie es oben aus; halten Sie OK auf einer Kachel › Symbol gedrückt, um das Symbol einer App zu wählen\nInternet nur für das Wetter, sobald ein Ort in der Einstellungsdatei steht. Kein Tracking, keine Werbung, keine Accounts.</string>
 
     <string name="icon_for">Symbol für %1$s</string>
     <string name="icon_filter">Nach Name filtern</string>

@@ -14,6 +14,7 @@ import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
+import android.graphics.drawable.GradientDrawable;
 import android.media.tv.TvInputManager;
 import android.net.Uri;
 import android.os.Bundle;
@@ -38,6 +39,9 @@ import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import org.json.JSONArray;
+import org.json.JSONObject;
+
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Date;
@@ -61,6 +65,10 @@ public final class Home extends Activity {
     private final ExecutorService io = Executors.newSingleThreadExecutor();
     private final ExecutorService colorIo = Executors.newSingleThreadExecutor();
     private final List<TextView> chips = new ArrayList<>();
+    /** Weather next to the clock; focusable like a chip, hidden until there is a forecast. */
+    private TextView weather;
+    /** The next hours beside the weather chip: time, icon and temperature for each. */
+    private LinearLayout hours;
     private Config cfg;
     private TvInputManager tv;
     private int applied = -1, appsGeneration;
@@ -154,9 +162,11 @@ public final class Home extends Activity {
         Row(String kind, String name, LinearLayout parent) {
             this.kind = kind;
             int edge = dp(56), bleed = dp(14);
-            title = Ui.text(Home.this, 12, Ui.FAINT, Ui.MEDIUM);
+            title = Ui.text(Home.this, 15, Ui.FAINT, Ui.serif(Home.this));
             title.setText(name.toUpperCase(Locale.ROOT));
             title.setLetterSpacing(0.14f);
+            // no "APPS" heading: unseen, but it stays in the layout to carry the row's shift
+            if (Catalog.APPS.equals(kind)) title.setAlpha(0f);
             title.setPadding(edge, dp(20), edge, dp(2));
             strip = new LinearLayout(Home.this);
             strip.setClipChildren(false);
@@ -180,7 +190,8 @@ public final class Home extends Activity {
             scroll.setPadding(edge - bleed, 0, edge - bleed, 0);
             scroll.addView(strip, new FrameLayout.LayoutParams(WRAP, WRAP));
             grid = new Grid(Home.this);
-            grid.setPadding(edge, dp(12), edge, dp(8));
+            grid.setPadding(edge, Catalog.APPS.equals(kind) ? dp(22) : dp(12), edge, dp(8));
+            if (Catalog.APPS.equals(kind)) grid.setGlass(glass(), dp(14), dp(10));
             parent.addView(title, new LinearLayout.LayoutParams(MATCH, WRAP));
             parent.addView(scroll, new LinearLayout.LayoutParams(MATCH, WRAP));
             parent.addView(grid, new LinearLayout.LayoutParams(MATCH, WRAP));
@@ -282,7 +293,12 @@ public final class Home extends Activity {
     private Runnable artJob(Item it, boolean cornerIcon) {
         String pack = cfg.get(IconPack.KEY, IconPack.OFF);
         String chosen = cfg.get(IconPack.CHOSEN + it.id, null);
-        return () -> Catalog.art(getPackageManager(), it, cornerIcon, replacementArt(it, chosen, pack));
+        return () -> {
+            Catalog.art(getPackageManager(), it, cornerIcon, replacementArt(it, chosen, pack));
+            if (cornerIcon && BrandColors.forPackage(it.id) == null) {
+                it.tileColor = FocusColor.tileColor(it.icon != null ? it.icon : it.banner);
+            }
+        };
     }
 
     /**
@@ -313,6 +329,7 @@ public final class Home extends Activity {
     @Override
     protected void onResume() {
         super.onResume();
+        ArtDream.restore(this);
         resumed = true;
         inFront = true;
         Guard.arrived(this);
@@ -570,10 +587,11 @@ public final class Home extends Activity {
                     for (TextView c : chips) if (c.getVisibility() == View.VISIBLE) return c;
                 }
                 if (focused == hero && direction != View.FOCUS_DOWN) return focused;
-                if (direction == View.FOCUS_DOWN && chips.contains(focused) && heroShown()) {
+                boolean top = chips.contains(focused) || focused == weather;
+                if (direction == View.FOCUS_DOWN && top && heroShown()) {
                     return hero;
                 }
-                if (direction == View.FOCUS_DOWN && (chips.contains(focused) || focused == hero)) {
+                if (direction == View.FOCUS_DOWN && (top || focused == hero)) {
                     View remembered = rememberedTile(lastFocusedKind);
                     if (remembered != null) return remembered;
                     for (Row row : rows()) {
@@ -630,7 +648,9 @@ public final class Home extends Activity {
                     int x = at[0] + focused.getWidth() / 2;
                     TextView best = null;
                     int bestGap = Integer.MAX_VALUE;
-                    for (TextView c : chips) {
+                    List<TextView> targets = new ArrayList<>(chips);
+                    if (weather.getVisibility() == View.VISIBLE) targets.add(weather);
+                    for (TextView c : targets) {
                         c.getLocationOnScreen(at);
                         int gap = Math.abs(at[0] + c.getWidth() / 2 - x);
                         if (gap < bestGap) {
@@ -656,10 +676,34 @@ public final class Home extends Activity {
         head.setPadding(dp(56), 0, dp(56), dp(12));
         LinearLayout when = new LinearLayout(this);
         when.setOrientation(LinearLayout.VERTICAL);
-        clock = Ui.text(this, 52, Ui.TEXT, Ui.LIGHT);
-        date = Ui.text(this, 15, Ui.MUTED, Ui.MEDIUM);
+        clock = Ui.text(this, 52, Ui.TEXT, Ui.serif(this));
+        date = Ui.text(this, 15, Ui.MUTED, Ui.medium(this));
         date.setPadding(dp(2), dp(8), 0, 0);
-        when.addView(clock);
+        LinearLayout clockRow = new LinearLayout(this);
+        clockRow.setGravity(Gravity.CENTER_VERTICAL);
+        clockRow.setClipChildren(false);
+        clockRow.addView(clock);
+        // a Material 3 tonal chip: icon and temperature in a rounded container
+        weather = Ui.text(this, 22, Ui.TEXT, Ui.medium(this));
+        weather.setGravity(Gravity.CENTER_VERTICAL);
+        weather.setPadding(dp(16), dp(10), dp(20), dp(10));
+        weather.setFocusable(true);
+        weather.setClickable(true);
+        weather.setVisibility(View.GONE);
+        weather.setOnClickListener(v -> startActivity(new Intent(this, WeatherScreen.class)));
+        weather.setOnFocusChangeListener((v, has) -> {
+            v.animate().scaleX(has ? 1.06f : 1f).scaleY(has ? 1.06f : 1f).setDuration(110).start();
+            if (has) focusBackground(null);
+        });
+        LinearLayout.LayoutParams beside = new LinearLayout.LayoutParams(WRAP, WRAP);
+        beside.leftMargin = dp(18);
+        clockRow.addView(weather, beside);
+        hours = new LinearLayout(this);
+        hours.setGravity(Gravity.CENTER_VERTICAL);
+        LinearLayout.LayoutParams after = new LinearLayout.LayoutParams(WRAP, WRAP);
+        after.leftMargin = dp(12);
+        clockRow.addView(hours, after);
+        when.addView(clockRow);
         when.addView(date);
         meter = new Meter(this);
         meter.setWords(getString(R.string.meter_title), getString(R.string.meter_free),
@@ -670,6 +714,9 @@ public final class Home extends Activity {
         under.leftMargin = dp(2);
         when.addView(meter, under);
         head.addView(when, new LinearLayout.LayoutParams(0, WRAP, 1f));
+        // shortcut: borrows the Options icon for Chip style › Icons; give Art its own if that style is used
+        head.addView(chip(getString(R.string.art), R.drawable.chip_options, R.drawable.chip_options_mark,
+                v -> startActivity(new Intent(this, ArtScreen.class))));
         head.addView(chip(getString(R.string.options), R.drawable.chip_options, R.drawable.chip_options_mark,
                 v -> startActivity(new Intent(this, Options.class))));
         head.addView(chip(getString(R.string.settings), R.drawable.chip_settings, R.drawable.chip_settings_mark,
@@ -766,7 +813,7 @@ public final class Home extends Activity {
      * {@code mark} are the two layers {@link Ui#chipIcon} tints; {@link #apply} draws them.
      */
     private TextView chip(String label, int shape, int mark, View.OnClickListener click) {
-        TextView v = Ui.text(this, 14, Ui.TEXT, Ui.MEDIUM);
+        TextView v = Ui.text(this, 14, Ui.TEXT, Ui.medium(this));
         v.setTag(new int[] {shape, mark});
         v.setContentDescription(label);
         v.setGravity(Gravity.CENTER);
@@ -816,6 +863,8 @@ public final class Home extends Activity {
             chipLook(c, c.isFocused());
             c.setVisibility(locked() ? View.GONE : View.VISIBLE);
         }
+        Ui.focusStyle(weather, accent, 0x1FFFFFFF, dp(16));
+        showWeather();
         meter.setVisibility("on".equals(cfg.get(Config.MEMORY)) ? View.VISIBLE : View.GONE);
         meter.setAccent(accent);
         hero.setAccent(accent);
@@ -971,6 +1020,28 @@ public final class Home extends Activity {
     }
 
     private int appRowShift() {
+        int titleH = titleHeight();
+        int scrollH = cardSize()[1] + dp(46);
+        int desired = Math.round((titleH + scrollH) * 0.70f);
+
+        int screenH = getResources().getDisplayMetrics().heightPixels;
+        int maxShift = Math.max(0, screenH - dp(40) - headHeight() - titleH - scrollH - dp(32));
+        return Math.min(desired, maxShift);
+    }
+
+    /**
+     * The grid's shift: down until exactly two lines of apps fit above the bottom edge, like
+     * Apple TV's home. The lines below come into view as the focus moves down to them.
+     */
+    private int gridShift() {
+        View first = apps.grid.getChildCount() > 0 ? apps.grid.getChildAt(0) : null;
+        int line = first != null && first.getMeasuredHeight() > 0 ? first.getMeasuredHeight() : cardSize()[1];
+        int twoLines = apps.grid.getPaddingTop() + 2 * line + dp(18);
+        int screenH = getResources().getDisplayMetrics().heightPixels;
+        return Math.max(0, screenH - dp(40) - headHeight() - titleHeight() - twoLines - dp(36));
+    }
+
+    private int titleHeight() {
         int titleH = apps.title.getHeight();
         if (titleH <= 0) {
             apps.title.measure(
@@ -978,11 +1049,10 @@ public final class Home extends Activity {
                     View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED));
             titleH = apps.title.getMeasuredHeight();
         }
-        if (titleH <= 0) titleH = dp(38);
-        int scrollH = cardSize()[1] + dp(46);
-        int desired = Math.round((titleH + scrollH) * 0.70f);
+        return titleH > 0 ? titleH : dp(38);
+    }
 
-        int screenH = getResources().getDisplayMetrics().heightPixels;
+    private int headHeight() {
         int headH = head != null && head.getHeight() > 0 ? head.getHeight() : 0;
         if (headH <= 0 && head != null) {
             head.measure(
@@ -990,9 +1060,7 @@ public final class Home extends Activity {
                     View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED));
             headH = head.getMeasuredHeight();
         }
-        if (headH <= 0) headH = dp(96);
-        int maxShift = Math.max(0, screenH - dp(40) - headH - titleH - scrollH - dp(32));
-        return Math.min(desired, maxShift);
+        return headH > 0 ? headH : dp(96);
     }
 
     private void adjustAppRowPosition() {
@@ -1003,8 +1071,13 @@ public final class Home extends Activity {
         // The library banner takes that space when it shows, and so does All apps. With Home
         // position › Bottom the spacer already puts the apps on the bottom edge: the shift is
         // measured from the display, not the page, and could push them below it.
-        int targetMargin = (!atBottom() && !"grid".equals(cfg.get(Config.LAYOUT)) && isInputsHidden()
-                && !heroShown() && allApps.title.getVisibility() != View.VISIBLE) ? appRowShift() : 0;
+        boolean gridMode = "grid".equals(cfg.get(Config.LAYOUT));
+        int targetMargin = 0;
+        if (!atBottom() && !heroShown()) {
+            // the inputs and All apps rows sit below the grid, so they do not stop its shift
+            if (gridMode) targetMargin = gridShift();
+            else if (isInputsHidden() && allApps.title.getVisibility() != View.VISIBLE) targetMargin = appRowShift();
+        }
         if (lp.topMargin != targetMargin) {
             lp.topMargin = targetMargin;
             apps.title.setLayoutParams(lp);
@@ -1155,7 +1228,60 @@ public final class Home extends Activity {
         first.requestFocus();
     }
 
+    /**
+     * Frosted glass for the first line of apps: a light veil brighter at the top, and a thin
+     * bright rim. No blur behind it: live blur needs Android 12, and Fire OS 8 is Android 11.
+     */
+    private Drawable glass() {
+        GradientDrawable veil = new GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM,
+                new int[] {0x38FFFFFF, 0x1AFFFFFF, 0x14FFFFFF});
+        veil.setCornerRadius(dp(24));
+        veil.setStroke(Math.max(1, dp(1)), 0x40FFFFFF);
+        return veil;
+    }
+
+    /** Shows the last forecast next to the clock; with no place set or no answer yet, nothing. */
+    private void showWeather() {
+        CharSequence brief = Weather.brief(this, Weather.last());
+        weather.setText(brief);
+        // the icon is a private-use glyph a screen reader would spell out
+        weather.setContentDescription(brief == null ? null : brief.subSequence(1, brief.length()).toString().trim());
+        if (brief == null && weather.isFocused()) focusFirst();
+        weather.setVisibility(brief == null ? View.GONE : View.VISIBLE);
+        showHours(brief == null ? null : Weather.last());
+    }
+
+    /** Six columns from the hour after this one; empty without a forecast. */
+    private void showHours(JSONObject data) {
+        hours.removeAllViews();
+        JSONObject hourly = data == null ? null : data.optJSONObject("hourly");
+        JSONArray time = hourly == null ? null : hourly.optJSONArray("time");
+        if (time == null) return;
+        JSONArray temp = hourly.optJSONArray("temperature_2m"), code = hourly.optJSONArray("weather_code"),
+                day = hourly.optJSONArray("is_day");
+        int start = Weather.firstHour(data) + 1;
+        for (int i = start; i < Math.min(start + 6, time.length()); i++) {
+            LinearLayout col = new LinearLayout(this);
+            col.setOrientation(LinearLayout.VERTICAL);
+            col.setGravity(Gravity.CENTER_HORIZONTAL);
+            col.setPadding(dp(10), 0, dp(10), 0);
+            String t = time.optString(i);
+            TextView when = Ui.text(this, 13, Ui.MUTED, Ui.medium(this));
+            when.setText(t.length() >= 16 ? t.substring(11, 13) : t);
+            TextView icon = Ui.text(this, 22, Ui.TEXT, Ui.icons(this));
+            icon.setText(Weather.symbol(code == null ? -1 : code.optInt(i, -1), day == null || day.optInt(i, 1) == 1));
+            icon.setPadding(0, dp(4), 0, dp(3));
+            TextView deg = Ui.text(this, 15, Ui.TEXT, Ui.medium(this));
+            deg.setText(temp == null ? "" : Math.round(temp.optDouble(i)) + "°");
+            col.addView(when);
+            col.addView(icon);
+            col.addView(deg);
+            hours.addView(col);
+        }
+    }
+
     private void tick() {
+        Weather.refresh(cfg, ui, this::showWeather);
         String mode = cfg.get(Config.CLOCK);
         boolean h24 = "24h".equals(mode) || "auto".equals(mode) && DateFormat.is24HourFormat(this);
         Date now = new Date();
@@ -1179,7 +1305,8 @@ public final class Home extends Activity {
     private void background() {
         String mode = cfg.get(Config.BACKGROUND);
         boolean image = "image".equals(mode) || "adaptive-tint".equals(mode);
-        File file = image ? cfg.wallpaper() : null;
+        File picked = image ? cfg.wallpaper() : null;
+        File file = image && picked == null ? bundledWallpaper() : picked;
         tintWallpaper = "adaptive-tint".equals(mode) && file != null;
         if ("adaptive".equals(mode)) {
             if (!mode.equals(backgroundMode)) {
@@ -1224,6 +1351,25 @@ public final class Home extends Activity {
                 if (key.equals(wallKey)) wall.setImageBitmap(b);
             });
         });
+    }
+
+    /**
+     * The wallpaper that ships in the APK, for Background › Image before any picture is added.
+     * Copied out of the assets once, as everything here reads wallpapers from files.
+     */
+    private File bundledWallpaper() {
+        File f = new File(getFilesDir(), "bundled-wallpaper.jpg");
+        if (f.isFile()) return f;
+        try (java.io.InputStream in = getAssets().open("wallpapers/waves.jpg");
+             java.io.OutputStream out = new java.io.FileOutputStream(f)) {
+            byte[] buf = new byte[16384];
+            for (int n; (n = in.read(buf)) > 0; ) out.write(buf, 0, n);
+            return f;
+        } catch (java.io.IOException e) {
+            // a half-written copy would be shown broken on every later start
+            if (f.exists() && !f.delete()) android.util.Log.w("dumbtv", "could not remove " + f);
+            return null;
+        }
     }
 
     private static Bitmap decode(File f, int w, int h) {

@@ -98,10 +98,10 @@ final class Hero extends FrameLayout {
 
         caption = new LinearLayout(c);
         caption.setOrientation(LinearLayout.VERTICAL);
-        title = Ui.text(c, 28, Ui.TEXT, Ui.MEDIUM);
+        title = Ui.text(c, 30, Ui.TEXT, Ui.serif(c));
         title.setSingleLine();
         title.setShadowLayer(dp(6), 0, 0, 0x99000000);
-        sub = Ui.text(c, 13, Ui.MUTED, Ui.MEDIUM);
+        sub = Ui.text(c, 13, Ui.MUTED, Ui.medium(c));
         sub.setLetterSpacing(0.06f);
         sub.setPadding(0, dp(8), 0, 0);
         caption.addView(title, new LinearLayout.LayoutParams(WRAP, WRAP));

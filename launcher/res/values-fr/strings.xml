@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- guard_label stays English: scripts/accessibility.sh finds the service by it. -->
-    <string name="guard_description">Remplace l\'écran d\'accueil d\'Amazon par celui de dumbtv lors d\'un appui sur le bouton Accueil. Ne lit aucun contenu à l\'écran et n\'accède pas à Internet.</string>
+    <string name="guard_description">Remplace l\'écran d\'accueil d\'Amazon par celui de dumbtv lors d\'un appui sur le bouton Accueil. Ne lit aucun contenu à l\'écran et n\'utilise pas Internet.</string>
 
     <!-- Home screen -->
     <string name="options">Options</string>
@@ -58,7 +58,7 @@
     <string name="reset_message">L\'ordre, les noms, les icônes personnalisées et les éléments masqués seront remis à zéro. Les couleurs et les tailles seront conservées.</string>
     <string name="reset">Réinitialiser</string>
     <string name="lock_on">Les options et paramètres sont masqués sur l\'accueil. Maintenez la touche ☰ Menu enfoncée pendant %1$d secondes pour revenir ici.</string>
-    <string name="about">Fichier de config : %1$s\nUn seul fond d\'écran : nommez-le exactement wallpaper.jpg (ou .png) et placez-le dans ce dossier\nFonds multiples : placez-les dans %2$s/ avec le nom de votre choix, puis choisissez le mode de rotation\nEnsuite, allez dans Fond d\'écran › « Fichier image » ou « Teinte adaptative »\nAucune autorisation requise.\nSous Fire OS 8, adb ne peut pas accéder directement à ce dossier ; utilisez plutôt %3$s (l\'exportation des paramètres y dépose une copie)\nLa « Teinte adaptative » utilise du graphite par défaut en attendant un fond d\'écran\nBannières de bibliothèque : placez les images et %4$s dans %5$s/ dans ce dossier\nPack d\'icônes : installez-en un et activez-le ci-dessus ; maintenez OK sur une tuile › Icône pour changer l\'icône d\'une app\nPas d\'accès Internet. Zéro traqueur, zéro pub, zéro compte.</string>
+    <string name="about">Fichier de config : %1$s\nUn seul fond d\'écran : nommez-le exactement wallpaper.jpg (ou .png) et placez-le dans ce dossier\nFonds multiples : placez-les dans %2$s/ avec le nom de votre choix, puis choisissez le mode de rotation\nEnsuite, allez dans Fond d\'écran › « Fichier image » ou « Teinte adaptative »\nAucune autorisation requise.\nSous Fire OS 8, adb ne peut pas accéder directement à ce dossier ; utilisez plutôt %3$s (l\'exportation des paramètres y dépose une copie)\nLa « Teinte adaptative » utilise du graphite par défaut en attendant un fond d\'écran\nBannières de bibliothèque : placez les images et %4$s dans %5$s/ dans ce dossier\nPack d\'icônes : installez-en un et activez-le ci-dessus ; maintenez OK sur une tuile › Icône pour changer l\'icône d\'une app\nInternet seulement pour la météo, une fois un lieu indiqué dans le fichier de réglages. Zéro traqueur, zéro pub, zéro compte.</string>
 
     <string name="icon_for">Icône pour %1$s</string>
     <string name="icon_filter">Filtrer par nom</string>

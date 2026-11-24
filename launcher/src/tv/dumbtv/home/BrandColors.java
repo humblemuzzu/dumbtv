@@ -12,7 +12,8 @@ final class BrandColors {
             case "com.hulu.plus": return new int[] {0xFF10864C, 0xFF10864C};
             case "com.netflix.ninja": return new int[] {0xFF85050C, 0xFF85050C};
             case "com.pandora.android.gtv": return new int[] {0xFF391E75, 0xFF7B0C5D, 0xFF8C3A34};
-            case "com.cbs.ott": return new int[] {0xFF003A94, 0xFF003A94};
+            case "com.cbs.ott":
+            case "com.cbs.ca": return new int[] {0xFF003A94, 0xFF003A94};
             case "com.peacock.peacockfiretv": return new int[] {0xFF92760A, 0xFF94420A, 0xFF8B0C26, 0xFF61187A, 0xFF035B82, 0xFF036425};
             case "com.plexapp.android": return new int[] {0xFF886600, 0xFF886600};
             case "com.amazon.firebat": return new int[] {0xFF006182, 0xFF006182};

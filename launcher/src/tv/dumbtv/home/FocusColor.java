@@ -16,7 +16,18 @@ final class FocusColor {
     }
 
     static int from(Drawable art) {
-        if (art == null || art.getConstantState() == null) return FALLBACK;
+        int[] pixels = pixels(art);
+        return pixels == null ? FALLBACK : representative(pixels);
+    }
+
+    /** An Afterglow tile's color from the app's art, or 0 when the art has none. */
+    static int tileColor(Drawable art) {
+        int[] pixels = pixels(art);
+        return pixels == null ? 0 : vivid(pixels);
+    }
+
+    private static int[] pixels(Drawable art) {
+        if (art == null || art.getConstantState() == null) return null;
         Bitmap bitmap = null;
         try {
             Drawable copy = art.getConstantState().newDrawable().mutate();
@@ -25,9 +36,9 @@ final class FocusColor {
             copy.draw(new Canvas(bitmap));
             int[] pixels = new int[48 * 48];
             bitmap.getPixels(pixels, 0, 48, 0, 0, 48, 48);
-            return representative(pixels);
+            return pixels;
         } catch (RuntimeException ignored) {
-            return FALLBACK;
+            return null;
         } finally {
             if (bitmap != null) bitmap.recycle();
         }
@@ -35,6 +46,19 @@ final class FocusColor {
 
     /** Hue groups favor useful colored regions over a large neutral icon background. */
     static int representative(int[] pixels) {
+        return pick(pixels, true);
+    }
+
+    /**
+     * The strongest hue group only, or 0: a black and white logo, or one whose color is a few
+     * stray pixels, would otherwise tint its tile grey or a random hue.
+     */
+    static int vivid(int[] pixels) {
+        int color = pick(pixels, false);
+        return color == FALLBACK ? 0 : color;
+    }
+
+    private static int pick(int[] pixels, boolean neutral) {
         float[] weights = new float[12];
         float[] red = new float[12], green = new float[12], blue = new float[12];
         int visible = 0;
@@ -58,9 +82,10 @@ final class FocusColor {
             visible++;
         }
         if (visible == 0) return FALLBACK;
-        int best = 0;
-        for (int i = 1; i < weights.length; i++) if (weights[i] > weights[best]) best = i;
+        int best = neutral ? 0 : 1;
+        for (int i = best + 1; i < weights.length; i++) if (weights[i] > weights[best]) best = i;
         if (weights[best] == 0) return FALLBACK;
+        if (!neutral && weights[best] < 0.03f * visible) return FALLBACK;
         int r = Math.round(red[best] / weights[best]);
         int g = Math.round(green[best] / weights[best]);
         int b = Math.round(blue[best] / weights[best]);

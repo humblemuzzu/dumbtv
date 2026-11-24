@@ -1,6 +1,8 @@
 package tv.dumbtv.home;
 
 import android.content.Context;
+import android.graphics.Canvas;
+import android.graphics.drawable.Drawable;
 import android.view.View;
 import android.view.ViewGroup;
 
@@ -15,6 +17,32 @@ import android.view.ViewGroup;
  */
 final class Grid extends ViewGroup {
     private final int hGap, vGap;
+    private Drawable glass;
+    private int glassX, glassY;
+
+    /**
+     * A panel behind the first line of tiles, like Apple TV's top row, drawn before the tiles
+     * with {@code padX} beside and {@code padY} above and below them (below their name, when
+     * names show). Null removes it.
+     */
+    void setGlass(Drawable panel, int padX, int padY) {
+        glass = panel;
+        glassX = padX;
+        glassY = padY;
+        invalidate();
+    }
+
+    @Override
+    protected void dispatchDraw(Canvas canvas) {
+        int n = getChildCount();
+        if (glass != null && n > 0) {
+            View first = getChildAt(0), last = getChildAt(Math.min(columns(), n) - 1);
+            glass.setBounds(first.getLeft() - glassX, first.getTop() - glassY,
+                    last.getRight() + glassX, first.getBottom() + glassY);
+            glass.draw(canvas);
+        }
+        super.dispatchDraw(canvas);
+    }
 
     Grid(Context c) {
         super(c);

@@ -15,6 +15,12 @@
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.REORDER_TASKS"
         android:maxSdkVersion="27" />
+    <!-- Only Weather uses it, and only once weather.lat and weather.lon are set in home.conf:
+         it sends those coordinates to api.open-meteo.com and nothing else. -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <!-- Only ArtDream: lowers the backlight while the screensaver shows and puts it back.
+         Not granted at install: appops set tv.dumbtv.home WRITE_SETTINGS allow. -->
+    <uses-permission android:name="android.permission.WRITE_SETTINGS" />
 
     <application
         android:label="@string/app_name"
@@ -63,6 +69,31 @@
             android:excludeFromRecents="true"
             android:screenOrientation="landscape"
             android:windowSoftInputMode="stateHidden"
+            android:configChanges="keyboard|keyboardHidden|navigation|orientation|screenSize|screenLayout|uiMode" />
+
+        <activity
+            android:name=".ArtScreen"
+            android:exported="false"
+            android:excludeFromRecents="true"
+            android:screenOrientation="landscape"
+            android:configChanges="keyboard|keyboardHidden|navigation|orientation|screenSize|screenLayout|uiMode" />
+
+        <service
+            android:name=".ArtDream"
+            android:exported="true"
+            android:label="@string/art"
+            android:permission="android.permission.BIND_DREAM_SERVICE">
+            <intent-filter>
+                <action android:name="android.service.dreams.DreamService" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </service>
+
+        <activity
+            android:name=".WeatherScreen"
+            android:exported="false"
+            android:excludeFromRecents="true"
+            android:screenOrientation="landscape"
             android:configChanges="keyboard|keyboardHidden|navigation|orientation|screenSize|screenLayout|uiMode" />
 
         <activity

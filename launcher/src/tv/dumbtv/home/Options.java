@@ -8,11 +8,10 @@ import android.media.tv.TvInputManager;
 import android.os.Bundle;
 import android.text.SpannableString;
 import android.text.Spanned;
+import android.text.TextUtils;
 import android.text.style.ForegroundColorSpan;
 import android.view.Gravity;
-import android.view.KeyEvent;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
@@ -22,12 +21,14 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-/** Every setting is a row: left/right or OK cycles it, and the change is saved at once. */
+/**
+ * Every setting is a card in a grid, readable from the sofa: OK steps it forward, a long press
+ * steps it back, and the change is saved at once. The arrows move between cards.
+ */
 public final class Options extends Activity {
-    private static final int WRAP = ViewGroup.LayoutParams.WRAP_CONTENT;
-
     private final List<Runnable> refreshers = new ArrayList<>();
     private Config cfg;
+    private int cardW;
 
     @Override
     protected void onCreate(Bundle state) {
@@ -40,43 +41,52 @@ public final class Options extends Activity {
         scroll.setBackgroundColor(0xFF0C0C0E);
         LinearLayout list = new LinearLayout(this);
         list.setOrientation(LinearLayout.VERTICAL);
-        list.setPadding(dp(56), dp(40), dp(56), dp(40));
+        list.setPadding(dp(48), dp(32), dp(48), dp(40));
+        list.setClipChildren(false);
+        list.setClipToPadding(false);
+        scroll.setClipChildren(false);
         scroll.addView(list);
+        // five cards a line: the width left by the margins and Grid's 18 dp gaps
+        int columns = 5;
+        cardW = (getResources().getDisplayMetrics().widthPixels - dp(96) - dp(18) * (columns - 1)) / columns - 1;
 
-        TextView title = Ui.text(this, 30, Ui.TEXT, Ui.LIGHT);
+        TextView title = Ui.text(this, 34, Ui.TEXT, Ui.serif(this));
         title.setText(R.string.options);
-        title.setPadding(dp(16), 0, 0, dp(20));
+        title.setPadding(0, 0, 0, dp(18));
         list.addView(title);
 
-        for (Config.Choice c : Config.CHOICES) list.addView(choice(c));
-        LinearLayout packRow = new LinearLayout(this);
-        packRow.setOrientation(LinearLayout.VERTICAL);
-        list.addView(packRow);
+        Grid settings = new Grid(this);
+        for (Config.Choice c : Config.CHOICES) settings.addView(choice(c));
+        list.addView(settings);
         // Finding the packs opens every theme app's resources: keep it off the UI thread.
         new Thread(() -> {
             Config.Choice packs = IconPack.choice(IconPack.installed(getPackageManager()),
                     getString(R.string.icon_pack_off), getString(R.string.icon_pack_none));
             runOnUiThread(() -> {
-                if (!isDestroyed()) packRow.addView(choice(packs));
+                if (isDestroyed()) return;
+                settings.addView(choice(packs));
+                refresh();
             });
         }, "icon-packs").start();
-        list.addView(action(getString(R.string.next_wallpaper), () -> {
+        Grid actions = new Grid(this);
+        actions.setPadding(0, dp(28), 0, 0);
+        actions.addView(action(getString(R.string.next_wallpaper), () -> {
             cfg.nextWallpaper();
             refresh();
         }));
-        list.addView(gap());
-        list.addView(action(getString(R.string.apps_on_home), () -> pick(Catalog.APPS)));
-        list.addView(action(getString(R.string.inputs_on_home), () -> pick(Catalog.INPUTS)));
-        list.addView(action(getString(R.string.reset_layout), this::reset));
-        list.addView(action(getString(R.string.export_settings), this::export));
-        list.addView(action(getString(R.string.open_amazon_home), () -> {
+        actions.addView(action(getString(R.string.apps_on_home), () -> pick(Catalog.APPS)));
+        actions.addView(action(getString(R.string.inputs_on_home), () -> pick(Catalog.INPUTS)));
+        actions.addView(action(getString(R.string.reset_layout), this::reset));
+        actions.addView(action(getString(R.string.export_settings), this::export));
+        actions.addView(action(getString(R.string.open_amazon_home), () -> {
             Guard.amazon(this);
             finish();
         }));
+        list.addView(actions);
 
-        TextView about = Ui.text(this, 13, Ui.FAINT, Ui.MEDIUM);
+        TextView about = Ui.text(this, 13, Ui.FAINT, Ui.medium(this));
         about.setLineSpacing(0, 1.4f);
-        about.setPadding(dp(16), dp(28), 0, 0);
+        about.setPadding(0, dp(32), 0, 0);
         about.setText(getString(R.string.about, cfg.dir + "/" + Config.FILE, Config.WALLPAPERS,
                 "/sdcard/Android/media/" + getPackageName() + "/", Library.FILE, Library.DIR));
         list.addView(about);
@@ -97,32 +107,22 @@ public final class Options extends Activity {
     }
 
     private View choice(Config.Choice c) {
-        LinearLayout row = row();
-        TextView name = label(Text.title(this, c));
-        TextView value = Ui.text(this, 16, Ui.MUTED, Ui.MEDIUM);
-        value.setGravity(Gravity.END);
-        row.addView(name, new LinearLayout.LayoutParams(0, WRAP, 1f));
-        row.addView(value, new LinearLayout.LayoutParams(WRAP, WRAP));
+        LinearLayout row = card();
+        row.addView(name(Text.title(this, c)));
+        TextView value = Ui.text(this, 21, Ui.TEXT, Ui.serif(this));
+        fit(value);
+        row.addView(value);
         row.setOnClickListener(v -> step(c, 1));
-        row.setOnKeyListener((v, code, e) -> {
-            if (e.getAction() != KeyEvent.ACTION_DOWN) return false;
-            if (code == KeyEvent.KEYCODE_DPAD_LEFT) return step(c, -1);
-            if (code == KeyEvent.KEYCODE_DPAD_RIGHT) return step(c, 1);
-            return false;
-        });
+        row.setOnLongClickListener(v -> step(c, -1));
         Runnable show = () -> {
-            boolean focused = row.isFocused();
             String text = Text.name(this, c, cfg.get(c));
             if (c == Config.ACCENT) {
                 SpannableString s = new SpannableString("●  " + text);
                 s.setSpan(new ForegroundColorSpan(cfg.accent()), 0, 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-                value.setText(focused ? "‹  " : "");
-                value.append(s);
-                if (focused) value.append("  ›");
+                value.setText(s);
             } else {
-                value.setText(focused ? "‹  " + text + "  ›" : text);
+                value.setText(text);
             }
-            value.setTextColor(focused ? Ui.TEXT : Ui.MUTED);
             boolean off = (c == Config.DIM || c == Config.ROTATE)
                     && !"image".equals(cfg.get(Config.BACKGROUND))
                     && !"adaptive-tint".equals(cfg.get(Config.BACKGROUND))
@@ -130,7 +130,6 @@ public final class Options extends Activity {
                     || c == Config.ALL_APPS && "on".equals(cfg.get(Config.LOCK));
             row.setAlpha(off ? 0.4f : 1f);
         };
-        row.setOnFocusChangeListener((v, has) -> show.run());
         refreshers.add(show);
         refreshers.add(() -> style(row));
         return row;
@@ -152,46 +151,56 @@ public final class Options extends Activity {
     }
 
     private View action(String text, Runnable run) {
-        LinearLayout row = row();
-        row.addView(label(text), new LinearLayout.LayoutParams(0, WRAP, 1f));
-        TextView chevron = Ui.text(this, 16, Ui.MUTED, Ui.MEDIUM);
-        chevron.setText("›");
-        row.addView(chevron);
-        row.setOnClickListener(v -> run.run());
+        LinearLayout row = card();
+        TextView v = Ui.text(this, 15, Ui.TEXT, Ui.medium(this));
+        v.setText(text);
+        v.setMaxLines(2);
+        v.setEllipsize(TextUtils.TruncateAt.END);
+        row.addView(v);
+        row.setOnClickListener(x -> run.run());
         refreshers.add(() -> style(row));
         return row;
     }
 
-    private LinearLayout row() {
-        LinearLayout row = new LinearLayout(this);
+    /** A card of one fixed size: Grid lays every child out at the first one's size. */
+    private LinearLayout card() {
+        int h = dp(78);
+        LinearLayout row = new LinearLayout(this) {
+            @Override
+            protected void onMeasure(int ws, int hs) {
+                super.onMeasure(MeasureSpec.makeMeasureSpec(cardW, MeasureSpec.EXACTLY),
+                        MeasureSpec.makeMeasureSpec(h, MeasureSpec.EXACTLY));
+            }
+        };
+        row.setOrientation(LinearLayout.VERTICAL);
         row.setGravity(Gravity.CENTER_VERTICAL);
         row.setFocusable(true);
         row.setClickable(true);
-        row.setPadding(dp(16), dp(14), dp(16), dp(14));
-        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(dp(600), WRAP);
-        lp.bottomMargin = dp(4);
-        row.setLayoutParams(lp);
+        row.setPadding(dp(16), dp(10), dp(16), dp(10));
+        row.setOnFocusChangeListener((v, has) ->
+                v.animate().scaleX(has ? 1.05f : 1f).scaleY(has ? 1.05f : 1f).setDuration(110).start());
         return row;
     }
 
     private void style(View row) {
         StateListDrawable bg = new StateListDrawable();
         bg.addState(new int[] {android.R.attr.state_focused},
-                Ui.round((cfg.accent() & 0x00FFFFFF) | 0x33000000, dp(10)));
-        bg.addState(new int[0], Ui.round(0x00000000, dp(10)));
+                Ui.round((cfg.accent() & 0x00FFFFFF) | 0x59000000, dp(16)));
+        bg.addState(new int[0], Ui.round(0x14FFFFFF, dp(16)));
         row.setBackground(bg);
     }
 
-    private TextView label(String text) {
-        TextView v = Ui.text(this, 16, Ui.TEXT, Ui.MEDIUM);
+    private TextView name(String text) {
+        TextView v = Ui.text(this, 13, Ui.MUTED, Ui.medium(this));
         v.setText(text);
+        fit(v);
+        v.setPadding(0, 0, 0, dp(6));
         return v;
     }
 
-    private View gap() {
-        View v = new View(this);
-        v.setLayoutParams(new LinearLayout.LayoutParams(1, dp(18)));
-        return v;
+    private static void fit(TextView v) {
+        v.setSingleLine(true);
+        v.setEllipsize(TextUtils.TruncateAt.END);
     }
 
     private void pick(String kind) {

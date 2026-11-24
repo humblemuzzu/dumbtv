@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- guard_label stays English: scripts/accessibility.sh finds the service by it. -->
-    <string name="guard_description">Manda il tasto HOME alla home di dumbtv invece che a quella di Amazon. Non legge il contenuto dello schermo e non ha accesso a internet.</string>
+    <string name="guard_description">Manda il tasto HOME alla home di dumbtv invece che a quella di Amazon. Non legge il contenuto dello schermo e non usa internet.</string>
 
     <!-- Home screen -->
     <string name="options">Opzioni</string>
@@ -58,7 +58,7 @@
     <string name="reset_message">Ordine, nomi, icone scelte e tessere nascoste tornano come all\'inizio. Colori e dimensioni restano.</string>
     <string name="reset">Ripristina</string>
     <string name="lock_on">Ora Opzioni e Impostazioni sono nascoste nella home. Tieni premuto ☰ Menu per %1$d secondi per tornare qui.</string>
-    <string name="about">File delle impostazioni: %1$s\nUn solo sfondo: chiamalo esattamente wallpaper.jpg (o .png) e mettilo in quella cartella\nPiù sfondi: mettili in %2$s/ con qualsiasi nome e scegli un cambio sfondo\nPoi scegli Sfondo › Immagine o Immagine con velatura adattiva. Non serve alcun permesso\nSu Fire OS 8 adb non raggiunge quella cartella: usa %3$s (Esporta impostazioni ci mette una copia)\nImmagine con velatura adattiva mostra grafite finché non aggiungi uno sfondo\nBanner libreria: metti le immagini e %4$s in %5$s/ dentro quella cartella\nPacchetto icone: installane uno e sceglilo qui sopra; tieni premuto OK su una tessera › Icona per scegliere l\'icona di un\'app\nNessun permesso internet. Nessun tracciamento, nessuna pubblicità, nessun account.</string>
+    <string name="about">File delle impostazioni: %1$s\nUn solo sfondo: chiamalo esattamente wallpaper.jpg (o .png) e mettilo in quella cartella\nPiù sfondi: mettili in %2$s/ con qualsiasi nome e scegli un cambio sfondo\nPoi scegli Sfondo › Immagine o Immagine con velatura adattiva. Non serve alcun permesso\nSu Fire OS 8 adb non raggiunge quella cartella: usa %3$s (Esporta impostazioni ci mette una copia)\nImmagine con velatura adattiva mostra grafite finché non aggiungi uno sfondo\nBanner libreria: metti le immagini e %4$s in %5$s/ dentro quella cartella\nPacchetto icone: installane uno e sceglilo qui sopra; tieni premuto OK su una tessera › Icona per scegliere l\'icona di un\'app\nInternet solo per il meteo, dopo aver impostato un luogo nel file delle impostazioni. Nessun tracciamento, nessuna pubblicità, nessun account.</string>
 
     <string name="icon_for">Icona per %1$s</string>
     <string name="icon_filter">Filtra per nome</string>

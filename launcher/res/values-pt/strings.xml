@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="guard_description">Envia o botão HOME para a tela inicial do dumbtv em vez da tela inicial da Amazon. Não lê o conteúdo da tela e não tem acesso à internet.</string>
+    <string name="guard_description">Envia o botão HOME para a tela inicial do dumbtv em vez da tela inicial da Amazon. Não lê o conteúdo da tela e não usa a internet.</string>
 
     <!-- Home screen -->
     <string name="options">Opções</string>
@@ -57,7 +57,7 @@
     <string name="reset_message">Ordem, nomes, ícones escolhidos e blocos ocultos voltam ao padrão. Cores e tamanhos são mantidos.</string>
     <string name="reset">Redefinir</string>
     <string name="lock_on">Opções e Configurações agora estão ocultas na tela inicial. Segure ☰ Menu por %1$d segundos para voltar aqui.</string>
-    <string name="about">Arquivo de configurações: %1$s\nUm papel de parede: nomeie exatamente wallpaper.jpg (ou .png) e coloque nessa pasta\nVários papéis de parede: coloque em %2$s/ com qualquer nome e escolha uma rotação\nDepois escolha Fundo › Arquivo de imagem ou Tom adaptativo do papel de parede. Não precisa de permissão\nNo Fire OS 8 o adb não alcança essa pasta; use %3$s (Exportar configurações coloca uma cópia lá)\nTom adaptativo do papel de parede mostra grafite até você adicionar um papel de parede\nBanner da biblioteca: coloque imagens e %4$s em %5$s/ nessa pasta\nPacote de ícones: instale um e escolha acima; segure OK em um bloco › Ícone para escolher o ícone de um app\nSem permissão de internet. Sem rastreamento, sem anúncios, sem contas.</string>
+    <string name="about">Arquivo de configurações: %1$s\nUm papel de parede: nomeie exatamente wallpaper.jpg (ou .png) e coloque nessa pasta\nVários papéis de parede: coloque em %2$s/ com qualquer nome e escolha uma rotação\nDepois escolha Fundo › Arquivo de imagem ou Tom adaptativo do papel de parede. Não precisa de permissão\nNo Fire OS 8 o adb não alcança essa pasta; use %3$s (Exportar configurações coloca uma cópia lá)\nTom adaptativo do papel de parede mostra grafite até você adicionar um papel de parede\nBanner da biblioteca: coloque imagens e %4$s em %5$s/ nessa pasta\nPacote de ícones: instale um e escolha acima; segure OK em um bloco › Ícone para escolher o ícone de um app\nInternet só para a previsão do tempo, quando há um local no arquivo de configurações. Sem rastreamento, sem anúncios, sem contas.</string>
 
     <string name="icon_for">Ícone de %1$s</string>
     <string name="icon_filter">Filtrar por nome</string>

@@ -16,6 +16,8 @@ final class Item {
     volatile Drawable banner, icon;
     volatile int backgroundColor;
     volatile boolean colorRequested;
+    /** Afterglow color read from the app's art; 0 until read, or when the art has no color. */
+    volatile int tileColor;
 
     Item(String id, CharSequence label, Intent intent) {
         this.id = id;

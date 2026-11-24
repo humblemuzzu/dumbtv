@@ -7,18 +7,18 @@ import android.graphics.ColorMatrixColorFilter;
 import android.graphics.LinearGradient;
 import android.graphics.Paint;
 import android.graphics.Shader;
-import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
 import android.text.TextPaint;
 import android.text.TextUtils;
-
-import java.util.Locale;
 
 /** Optional text artwork, using only installed icons and locally defined colors. */
 final class AfterglowTile {
     private final Context context;
     private final String title;
-    private final int[] colors;
+    private final int[] known;
+    private final int accent;
+    private int[] colors;
+    private int width;
     private final Paint brand = new Paint();
     private final Paint fade = new Paint();
     private final Paint edge = new Paint(Paint.ANTI_ALIAS_FLAG);
@@ -28,11 +28,12 @@ final class AfterglowTile {
 
     AfterglowTile(Context c, String packageId, CharSequence label, int accent) {
         context = c;
-        title = label.toString().toUpperCase(Locale.ROOT);
-        int[] known = BrandColors.forPackage(packageId);
+        title = label.toString();
+        known = BrandColors.forPackage(packageId);
+        this.accent = accent;
         colors = known != null ? known : new int[] {accent, accent};
         text.setColor(Ui.TEXT);
-        text.setTypeface(Typeface.create("sans-serif", Typeface.BOLD));
+        text.setTypeface(Ui.serif(c));
         text.setTextAlign(Paint.Align.CENTER);
         ColorMatrix mono = new ColorMatrix();
         mono.setSaturation(0);
@@ -43,17 +44,26 @@ final class AfterglowTile {
     }
 
     void resize(int w, int h) {
+        width = w;
         brand.setShader(new LinearGradient(0, 0, w, 0, colors, null, Shader.TileMode.CLAMP));
         fade.setShader(new LinearGradient(0, 0, 0, h,
                 new int[] {0xFF101010, 0xFF101010, 0xD6101010, 0x87101010, 0x00101010},
                 new float[] {0f, .25f, .5f, .75f, 1f}, Shader.TileMode.CLAMP));
-        float size = Ui.dp(context, 17), room = w - Ui.dp(context, 24);
+        float size = Ui.dp(context, 21), room = w - Ui.dp(context, 24);
         text.setTextSize(size);
-        while (text.measureText(title) > room && size > Ui.dp(context, 11)) text.setTextSize(--size);
+        while (text.measureText(title) > room && size > Ui.dp(context, 13)) text.setTextSize(--size);
         fitted = TextUtils.ellipsize(title, text, room, TextUtils.TruncateAt.END);
     }
 
-    void draw(Canvas canvas, Drawable icon, int w, int h) {
+    /** {@code auto} is the color read from the app's art, which arrives after the first frame. */
+    void draw(Canvas canvas, Drawable icon, int auto, int w, int h) {
+        if (known == null) {
+            int want = auto != 0 ? auto : accent;
+            if (colors[0] != want) {
+                colors = new int[] {want, want};
+                brand.setShader(new LinearGradient(0, 0, width, 0, colors, null, Shader.TileMode.CLAMP));
+            }
+        }
         canvas.drawRect(0, 0, w, h, brand);
         canvas.drawRect(0, 0, w, h, fade);
         canvas.drawText(fitted, 0, fitted.length(), w / 2f,

@@ -153,11 +153,11 @@ public final class Input extends Activity {
             root.addView(view, new FrameLayout.LayoutParams(MATCH, MATCH));
         }
 
-        status = Ui.text(this, 22, Ui.MUTED, Ui.MEDIUM);
+        status = Ui.text(this, 22, Ui.MUTED, Ui.medium(this));
         status.setVisibility(View.GONE);
         root.addView(status, new FrameLayout.LayoutParams(WRAP, WRAP, Gravity.CENTER));
 
-        name = Ui.text(this, 20, Ui.TEXT, Ui.MEDIUM);
+        name = Ui.text(this, 20, Ui.TEXT, Ui.medium(this));
         name.setText(getIntent().getCharSequenceExtra(EXTRA_NAME));
         name.setPadding(dp(22), dp(10), dp(22), dp(10));
         name.setBackground(Ui.round(0xB3000000, dp(10)));

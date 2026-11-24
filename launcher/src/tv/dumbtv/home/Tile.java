@@ -45,7 +45,7 @@ final class Tile extends View {
         boolean app = Catalog.isApp(kind);
         afterglow = app && "afterglow".equals(Config.get(c).get(Config.TILE_STYLE))
                 ? new AfterglowTile(c, item.id, title, accent) : null;
-        labelH = app && afterglow == null ? Ui.dp(c, 26) : 0;
+        labelH = app && afterglow == null && !"never".equals(labels) ? Ui.dp(c, 26) : 0;
         labelAlways = "always".equals(labels);
         labelOnFocus = "focus".equals(labels);
         radius = Ui.dp(c, 10);
@@ -57,11 +57,11 @@ final class Tile extends View {
         ring.setColor(accent);
         dot.setColor(0xFF34C759);
         inner.setColor(Ui.TEXT);
-        inner.setTypeface(Ui.MEDIUM);
+        inner.setTypeface(Ui.serif(c));
         inner.setTextAlign(Paint.Align.CENTER);
         inner.setTextSize(Ui.dp(c, app ? 14 : 17));
         under.setColor(Ui.TEXT);
-        under.setTypeface(Ui.MEDIUM);
+        under.setTypeface(Ui.serif(c));
         under.setTextAlign(Paint.Align.CENTER);
         under.setTextSize(Ui.dp(c, 13));
 
@@ -111,7 +111,7 @@ final class Tile extends View {
         canvas.clipPath(clip);
         canvas.drawRect(card, fill);
         if (afterglow != null) {
-            afterglow.draw(canvas, icon, cardW, cardH);
+            afterglow.draw(canvas, icon, item.tileColor, cardW, cardH);
         } else if (banner != null) {
             banner.setBounds(0, 0, cardW, cardH);
             banner.draw(canvas);

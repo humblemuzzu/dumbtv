@@ -88,7 +88,7 @@ public final class IconPicker extends Activity {
         root.setBackgroundColor(0xFF0C0C0E);
         root.setPadding(dp(56), dp(32), dp(56), 0);
 
-        TextView title = Ui.text(this, 26, Ui.TEXT, Ui.LIGHT);
+        TextView title = Ui.text(this, 26, Ui.TEXT, Ui.serif(this));
         title.setText(getString(R.string.icon_for, label));
         root.addView(title);
 
@@ -113,7 +113,7 @@ public final class IconPicker extends Activity {
         fl.topMargin = dp(12);
         root.addView(filter, fl);
 
-        status = Ui.text(this, 13, Ui.FAINT, Ui.MEDIUM);
+        status = Ui.text(this, 13, Ui.FAINT, Ui.medium(this));
         status.setText(R.string.icon_reading);
         status.setPadding(0, dp(6), 0, dp(10));
         root.addView(status);
@@ -279,11 +279,11 @@ public final class IconPicker extends Activity {
             ImageView image = new ImageView(IconPicker.this);
             image.setScaleType(ImageView.ScaleType.FIT_CENTER);
             card.addView(image, new FrameLayout.LayoutParams(MATCH, MATCH));
-            TextView text = Ui.text(IconPicker.this, 15, Ui.TEXT, Ui.MEDIUM);
+            TextView text = Ui.text(IconPicker.this, 15, Ui.TEXT, Ui.medium(IconPicker.this));
             text.setGravity(Gravity.CENTER);
             card.addView(text, new FrameLayout.LayoutParams(MATCH, MATCH));
             cell.addView(card, new LinearLayout.LayoutParams(MATCH, dp(108)));
-            TextView name = Ui.text(IconPicker.this, 12, Ui.MUTED, Ui.MEDIUM);
+            TextView name = Ui.text(IconPicker.this, 12, Ui.MUTED, Ui.medium(IconPicker.this));
             name.setSingleLine();
             name.setEllipsize(TextUtils.TruncateAt.END);
             name.setPadding(dp(4), dp(4), dp(4), 0);

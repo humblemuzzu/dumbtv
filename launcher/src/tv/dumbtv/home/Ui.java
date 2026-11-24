@@ -8,6 +8,8 @@ import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
 import android.graphics.drawable.LayerDrawable;
 import android.graphics.drawable.StateListDrawable;
+import android.text.TextPaint;
+import android.text.style.MetricAffectingSpan;
 import android.util.TypedValue;
 import android.widget.TextView;
 
@@ -17,10 +19,54 @@ final class Ui {
     static final int FAINT = 0x66FFFFFF;
     static final int SURFACE = 0xFF1C1D21;
     static final int DIALOG = android.R.style.Theme_DeviceDefault_Dialog_Alert;
-    static final Typeface LIGHT = Typeface.create("sans-serif-light", Typeface.NORMAL);
-    static final Typeface MEDIUM = Typeface.create("sans-serif-medium", Typeface.NORMAL);
+    private static Typeface serif, medium, icons;
 
     private Ui() {}
+
+    /** Instrument Serif: the clock, titles and app names. */
+    static Typeface serif(Context c) {
+        if (serif == null) serif = font(c, "fonts/InstrumentSerif-Regular.ttf", "sans-serif-light");
+        return serif;
+    }
+
+    /** Instrument Sans Medium: everything smaller. */
+    static Typeface medium(Context c) {
+        if (medium == null) medium = font(c, "fonts/InstrumentSans-Medium.ttf", "sans-serif-medium");
+        return medium;
+    }
+
+    /** Material Symbols Rounded, filled, with only the weather icons (see Weather.symbol). */
+    static Typeface icons(Context c) {
+        if (icons == null) icons = font(c, "fonts/MaterialSymbolsRounded-Weather.ttf", "sans-serif");
+        return icons;
+    }
+
+    /** A typeface for part of a text; TypefaceSpan only takes a Typeface from Android 9. */
+    static final class FontSpan extends MetricAffectingSpan {
+        private final Typeface face;
+
+        FontSpan(Typeface face) {
+            this.face = face;
+        }
+
+        @Override
+        public void updateDrawState(TextPaint p) {
+            p.setTypeface(face);
+        }
+
+        @Override
+        public void updateMeasureState(TextPaint p) {
+            p.setTypeface(face);
+        }
+    }
+
+    private static Typeface font(Context c, String asset, String fallback) {
+        try {
+            return Typeface.createFromAsset(c.getApplicationContext().getAssets(), asset);
+        } catch (RuntimeException e) {
+            return Typeface.create(fallback, Typeface.NORMAL);
+        }
+    }
 
     static int dp(Context c, float v) {
         return Math.round(v * c.getResources().getDisplayMetrics().density);

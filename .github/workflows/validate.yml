@@ -62,6 +62,11 @@ jobs:
           java -cp "/tmp/host:$jar" tv.dumbtv.home.MeterTest
           javac -d /tmp/host -cp "/tmp/host:$jar" launcher/tests/LibraryTest.java
           java -cp "/tmp/host:$jar" tv.dumbtv.home.LibraryTest
+          javac -d /tmp/host -cp "$jar" launcher/src/tv/dumbtv/home/Weather.java \
+            launcher/src/tv/dumbtv/home/Ui.java launcher/src/tv/dumbtv/home/Config.java \
+            launcher/src/tv/dumbtv/home/Library.java launcher/src/tv/dumbtv/home/Recent.java \
+            launcher/tests/WeatherTest.java
+          java -cp "/tmp/host:$jar" tv.dumbtv.home.WeatherTest
       - name: the release apk installs on fire os 6
         run: |
           min=$("$ANDROID_HOME/build-tools/34.0.0/aapt2" dump badging launcher/build/dumbtv-home.apk | sed -nE "s/^(minSdkVersion|sdkVersion):'([0-9]+)'.*/\2/p")
