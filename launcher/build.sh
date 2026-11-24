@@ -25,6 +25,9 @@ JAR=$SDK/platforms/android-$MIN_SDK/android.jar
 BT=$(find "$SDK/build-tools" -mindepth 1 -maxdepth 1 -type d 2>/dev/null | sort -V | tail -1 || true)
 [[ -f $JAR ]] || { echo "error: $JAR missing — sdkmanager 'platforms;android-$MIN_SDK'" >&2; exit 1; }
 [[ -x $BT/aapt2 ]] || { echo "error: no build-tools in $SDK — sdkmanager 'build-tools;34.0.0'" >&2; exit 1; }
+# Windows build-tools ship d8 and apksigner as .bat files only.
+D8=$BT/d8; [[ -e $D8 ]] || D8=$BT/d8.bat
+APKSIGNER=$BT/apksigner; [[ -e $APKSIGNER ]] || APKSIGNER=$BT/apksigner.bat
 
 JDK17_PATHS=(/opt/homebrew/opt/openjdk@17/libexec/openjdk.jdk/Contents/Home /usr/lib/jvm/java-17-openjdk)
 javac_major() { "$1/bin/javac" -version 2>&1 | sed -n 's/^javac \([0-9]*\).*/\1/p'; }
@@ -67,20 +70,22 @@ mkdir -p "$WORK/gen" "$WORK/classes" build
 "$BT/aapt2" link -I "$JAR" --manifest AndroidManifest.xml "$WORK/res.zip" \
   --min-sdk-version "$MIN_SDK" --target-sdk-version 28 \
   --version-code "$VERSION_CODE" --version-name "$VERSION_NAME" \
-  --java "$WORK/gen" -o "$WORK/app.apk"
+  -A assets --java "$WORK/gen" -o "$WORK/app.apk"
 
 find src "$WORK/gen" -name '*.java' > "$WORK/sources.txt"
 "$JAVA_HOME/bin/javac" --release 8 -Xlint:all -Xlint:-options -Werror -encoding UTF-8 \
   -classpath "$JAR" -d "$WORK/classes" @"$WORK/sources.txt"
 
 find "$WORK/classes" -name '*.class' > "$WORK/classes.txt"
-"$BT/d8" --release --min-api "$MIN_SDK" --lib "$JAR" --output "$WORK" @"$WORK/classes.txt"
-(cd "$WORK" && zip -q -X app.apk classes.dex)
+"$D8" --release --min-api "$MIN_SDK" --lib "$JAR" --output "$WORK" @"$WORK/classes.txt"
+if command -v zip >/dev/null; then (cd "$WORK" && zip -q -X app.apk classes.dex)
+else (cd "$WORK" && python -I -c "import zipfile; zipfile.ZipFile('app.apk', 'a', zipfile.ZIP_DEFLATED).write('classes.dex')")
+fi
 
 "$BT/zipalign" -f -p 4 "$WORK/app.apk" "$WORK/aligned.apk"
-"$BT/apksigner" sign --ks "$KEYSTORE" --ks-pass "pass:$KEYPASS" --key-pass "pass:$KEYPASS" \
+"$APKSIGNER" sign --ks "$KEYSTORE" --ks-pass "pass:$KEYPASS" --key-pass "pass:$KEYPASS" \
   --out build/dumbtv-home.apk "$WORK/aligned.apk"
-"$BT/apksigner" verify build/dumbtv-home.apk
+"$APKSIGNER" verify build/dumbtv-home.apk
 
 perms=$("$BT/aapt2" dump permissions build/dumbtv-home.apk | grep -c 'uses-permission' || true)
 printf 'built build/dumbtv-home.apk  %s bytes  %s uses-permission entries\n' \
