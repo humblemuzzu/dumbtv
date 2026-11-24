@@ -26,7 +26,7 @@ public final class ArtDream extends DreamService {
         setInteractive(true);
         setFullscreen(true);
         ArtView.translucent(getWindow());
-        art = new ArtView(this);
+        art = new ArtView(this, 3 * 60_000L);
         setContentView(art);
     }
 

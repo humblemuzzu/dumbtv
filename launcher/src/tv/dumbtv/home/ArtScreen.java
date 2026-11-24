@@ -12,7 +12,7 @@ public final class ArtScreen extends Activity {
     protected void onCreate(Bundle state) {
         super.onCreate(state);
         ArtView.translucent(getWindow());
-        art = new ArtView(this);
+        art = new ArtView(this, 5 * 60_000L);
         setContentView(art);
     }
 

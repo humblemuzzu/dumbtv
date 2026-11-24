@@ -677,8 +677,8 @@ public final class Home extends Activity {
         LinearLayout when = new LinearLayout(this);
         when.setOrientation(LinearLayout.VERTICAL);
         clock = Ui.text(this, 52, Ui.TEXT, Ui.serif(this));
-        date = Ui.text(this, 15, Ui.MUTED, Ui.medium(this));
-        date.setPadding(dp(2), dp(8), 0, 0);
+        date = Ui.text(this, 18, Ui.MUTED, Ui.medium(this));
+        date.setPadding(dp(2), dp(18), 0, 0);
         LinearLayout clockRow = new LinearLayout(this);
         clockRow.setGravity(Gravity.CENTER_VERTICAL);
         clockRow.setClipChildren(false);
@@ -1251,7 +1251,7 @@ public final class Home extends Activity {
         showHours(brief == null ? null : Weather.last());
     }
 
-    /** Six columns from the hour after this one; empty without a forecast. */
+    /** Six columns two hours apart, from the hour after this one; empty without a forecast. */
     private void showHours(JSONObject data) {
         hours.removeAllViews();
         JSONObject hourly = data == null ? null : data.optJSONObject("hourly");
@@ -1260,7 +1260,7 @@ public final class Home extends Activity {
         JSONArray temp = hourly.optJSONArray("temperature_2m"), code = hourly.optJSONArray("weather_code"),
                 day = hourly.optJSONArray("is_day");
         int start = Weather.firstHour(data) + 1;
-        for (int i = start; i < Math.min(start + 6, time.length()); i++) {
+        for (int i = start; i < Math.min(start + 12, time.length()); i += 2) {
             LinearLayout col = new LinearLayout(this);
             col.setOrientation(LinearLayout.VERTICAL);
             col.setGravity(Gravity.CENTER_HORIZONTAL);

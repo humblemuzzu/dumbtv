@@ -32,9 +32,10 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * Art mode, as on a picture-frame TV: one painting filling the screen, a new one every five
- * minutes or on left/right through a fade to black, and its title for a few seconds after each change. Paintings
- * and art.txt (file, title, artist, date; tab separated) live in the media folder's art/.
+ * Art mode, as on a picture-frame TV: one painting filling the screen, a new one every few
+ * minutes (three as the screensaver, five from the Art button) or on left/right through a fade
+ * to black, and its title for a few seconds after each change. Paintings and art.txt (file,
+ * title, artist, date; tab separated) live in the media folder's art/.
  * Shared by the screensaver ({@link ArtDream}) and the Art button ({@link ArtScreen}).
  *
  * Fire OS draws apps at 1920x1080 and scales them up to a 4K panel. The painting goes to a
@@ -42,7 +43,8 @@ import java.util.List;
  * as it does video; the fade and the caption are drawn above it at the interface's size.
  */
 final class ArtView extends FrameLayout implements SurfaceHolder.Callback {
-    private static final long EVERY = 5 * 60_000L, CAPTION = 6_000L;
+    private static final long CAPTION = 6_000L;
+    private final long every;
 
     private final Handler ui = new Handler(Looper.getMainLooper());
     private final List<String[]> works = new ArrayList<>();
@@ -63,22 +65,24 @@ final class ArtView extends FrameLayout implements SurfaceHolder.Callback {
         @Override
         public void run() {
             change(1);
-            ui.postDelayed(this, EVERY);
+            ui.postDelayed(this, every);
         }
     };
 
     private final Runnable hideCaption = () -> captionFade = animate(caption, 0f, 1200, v -> caption = v);
 
-    /** Left/right on the remote: the painting before or after, and the five minutes start over. */
+    /** Left/right on the remote: the painting before or after, and the wait starts over. */
     void step(int by) {
         if (fade != null && fade.isRunning()) return;
         ui.removeCallbacks(next);
         change(by);
-        ui.postDelayed(next, EVERY);
+        ui.postDelayed(next, every);
     }
 
-    ArtView(Context c) {
+    /** {@code everyMs}: how long each painting stays before the next one. */
+    ArtView(Context c, long everyMs) {
         super(c);
+        every = everyMs;
         setWillNotDraw(false);
         File[] media = c.getExternalMediaDirs();
         dir = new File(media.length > 0 && media[0] != null ? media[0] : c.getFilesDir(), "art");

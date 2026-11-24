@@ -5,25 +5,27 @@ import android.app.ActivityManager;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Paint;
+import android.graphics.RectF;
 import android.text.TextPaint;
 import android.view.View;
 
 /**
- * Options › Memory meter: free memory under the date, as one line of text over a thin bar of
- * what is in use. The numbers come from ActivityManager.getMemoryInfo, which needs no
+ * Options › Memory meter: free memory under the date, as a ring filled to the share in use,
+ * with that share inside it and the word Memory beside it. The numbers come from ActivityManager.getMemoryInfo, which needs no
  * permission. It only shows; nothing is closed or freed.
  */
 final class Meter extends View {
-    /** Below this share of memory free, the bar turns amber even before Android says "low". */
+    /** Below this share of memory free, the ring turns amber even before Android says "low". */
     static final float LOW_SHARE = 0.15f;
     private static final int LOW_COLOR = 0xFFFFB340;
 
     private final ActivityManager.MemoryInfo info = new ActivityManager.MemoryInfo();
     private final TextPaint name = new TextPaint(Paint.ANTI_ALIAS_FLAG);
-    private final TextPaint value = new TextPaint(Paint.ANTI_ALIAS_FLAG);
+    private final TextPaint percent = new TextPaint(Paint.ANTI_ALIAS_FLAG);
     private final Paint track = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint bar = new Paint(Paint.ANTI_ALIAS_FLAG);
-    private final int width, barH, gap;
+    private final RectF ring = new RectF();
+    private final int width, size, stroke, gap;
     private String label = "";
     /** The words around the numbers; Home hands in the TV's language with {@link #setWords}. */
     private String title = "Memory", free = "%1$d MB free of %2$d MB", lowNote = "running low";
@@ -34,16 +36,22 @@ final class Meter extends View {
 
     Meter(Context c) {
         super(c);
-        name.setColor(Ui.FAINT);
         name.setTypeface(Ui.medium(c));
-        name.setTextSize(Ui.dp(c, 13));
-        value.setColor(Ui.MUTED);
-        value.setTypeface(Ui.medium(c));
-        value.setTextSize(Ui.dp(c, 13));
-        track.setColor(0x26FFFFFF);
+        name.setTextSize(Ui.dp(c, 12));
+        percent.setColor(Ui.TEXT);
+        percent.setTypeface(Ui.medium(c));
+        percent.setTextSize(Ui.dp(c, 9));
+        percent.setTextAlign(Paint.Align.CENTER);
         width = Ui.dp(c, 280);
-        barH = Ui.dp(c, 4);
-        gap = Ui.dp(c, 7);
+        size = Ui.dp(c, 30);
+        stroke = Ui.dp(c, 3.5f);
+        gap = Ui.dp(c, 10);
+        for (Paint p : new Paint[] {track, bar}) {
+            p.setStyle(Paint.Style.STROKE);
+            p.setStrokeWidth(stroke);
+            p.setStrokeCap(Paint.Cap.ROUND);
+        }
+        track.setColor(0x26FFFFFF);
     }
 
     /** "247 MB free of 903 MB". */
@@ -78,7 +86,7 @@ final class Meter extends View {
         invalidate();
     }
 
-    /** Reads memory now; the bar eases to the new level, except the first time. */
+    /** Reads memory now; the ring eases to the new level, except the first time. */
     void update(ActivityManager am) {
         if (am == null) return;
         am.getMemoryInfo(info);
@@ -103,20 +111,21 @@ final class Meter extends View {
 
     @Override
     protected void onMeasure(int widthSpec, int heightSpec) {
-        int text = (int) Math.ceil(value.descent() - value.ascent());
-        setMeasuredDimension(width, text + gap + barH);
+        setMeasuredDimension(width, size);
     }
 
     @Override
     protected void onDraw(Canvas canvas) {
-        float baseline = -value.ascent();
-        String head = title + "  ";
-        canvas.drawText(head, 0, baseline, name);
-        value.setColor(low ? LOW_COLOR : Ui.MUTED);
-        canvas.drawText(label, name.measureText(head), baseline, value);
-        float top = getHeight() - barH, r = barH / 2f;
-        canvas.drawRoundRect(0, top, width, top + barH, r, r, track);
+        float half = stroke / 2f, mid = getHeight() / 2f;
+        ring.set(half, mid - size / 2f + half, size - half, mid + size / 2f - half);
+        canvas.drawOval(ring, track);
         bar.setColor(low ? LOW_COLOR : accent);
-        canvas.drawRoundRect(0, top, Math.max(barH, width * Math.max(0f, shown)), top + barH, r, r, bar);
+        // filled clockwise from the top, as a phone's storage ring
+        canvas.drawArc(ring, -90, 360 * Math.max(0f, shown), false, bar);
+        canvas.drawText(Math.round(100 * Math.max(0f, shown)) + "%", size / 2f,
+                mid - (percent.ascent() + percent.descent()) / 2, percent);
+        // only the name beside the ring; the free and total MB stay in the content description
+        name.setColor(low ? LOW_COLOR : Ui.MUTED);
+        canvas.drawText(title, size + gap, mid - (name.ascent() + name.descent()) / 2, name);
     }
 }
