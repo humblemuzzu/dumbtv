@@ -4,11 +4,13 @@ An optional helper for a Fire TV whose AirPlay (screen mirroring from a Mac, iPh
 works once and then fails: the Mac says it is sharing, the TV shows nothing, and after about
 40 seconds the Mac gives up.
 
-## The bug
+## The bugs
 
 AirPlay on Fire OS is two processes from `com.apple.airplay.amazon.airplay`:
 `com.amazon.airplaydaemon` (the receiver: mDNS adverts and RTSP on port 7000, started only at
 boot) and the player, the screen you see during a session.
+
+### 1. Dead player tasks
 
 1. Leaving a session, with HOME or BACK, ends it cleanly but leaves the player's task behind.
 2. Low memory kills the background player soon after, seen 1.7 s after HOME on a 2 GB TV.
@@ -22,12 +24,22 @@ An app on the TV cannot remove another app's task: `REMOVE_TASKS` and Amazon's
 8.1.0.3 adbd refuses connections from the TV itself (CVE-2024-27350). `adb shell am stack remove`
 from another machine on the network does it, so this runs on a computer that is usually on.
 
+### 2. Dropped Bonjour advertising
+
+Under system memory pressure (`onLowMemory`), `com.amazon.airplaydaemon` drops its Bonjour
+advertisements (`_airplay._tcp.`) while its RTSP server on port 7000 stays open and healthy.
+Because the TV goes silent on LAN mDNS, Apple devices cannot discover it or fall back to stale
+cached IP addresses (resulting in connection timeouts).
+
 ## What it does
 
-It follows the TV's event log over network adb. The moment the player process dies
-(`am_proc_died`), it removes the hidden AirPlay player tasks, but only while no player process
-is running, so a live session is never touched. It also sweeps once on every (re)connect, for
-example after the computer wakes. Several computers can run it at once. It logs only removals.
+- **Task sweeper (macOS and Windows):** Follows the TV's event log over network adb. The moment
+  the player process dies (`am_proc_died`), it removes hidden player tasks, but only while no
+  player process is running, so a live session is never touched. It also sweeps once on every
+  (re)connect, for example after the computer wakes.
+- **Bonjour proxy (macOS):** `sweep.sh` checks whether the TV's RTSP port 7000 is open. If port
+  7000 is listening but native Bonjour advertising has dropped, it advertises the service via
+  `dns-sd -P` so Apple devices can discover and connect to the TV.
 
 It changes nothing on the TV except removing those dead tasks. Never force-stop
 `com.apple.airplay.amazon.airplay`: only a reboot starts the daemon again.
