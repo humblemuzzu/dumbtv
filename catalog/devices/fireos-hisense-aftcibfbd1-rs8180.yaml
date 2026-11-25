@@ -1,0 +1,25 @@
+id: fireos-hisense-aftcibfbd1-rs8180
+title: "Hisense AFTCIBFBD1"
+contributors:
+  - bennytheshap
+platform: fireos
+status: untested
+tested_on: "RS8180.3749N"
+models: []
+adb:
+  port: 5555
+  transport: wifi
+developer_mode: >-
+  Settings > My Fire TV > About > click the device name 7 times, then My Fire TV > Developer Options > ADB debugging: ON
+ip_location: "Settings > About > Network"
+prompts: []
+data:
+  packages: data/fireos/packages.txt
+  protected: data/fireos/protected.txt
+  never_disable: data/fireos/never-disable.txt
+  user_apps: data/fireos/user-apps.txt
+quirks: []
+notes: "Worked great"
+verify:
+  blocked: data/blocklists/verify-blocked.txt
+  allowed: data/blocklists/verify-allowed.txt
