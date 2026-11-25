@@ -164,7 +164,7 @@ public final class Input extends Activity {
             values.add(current);
             names.add(current + " minutes");
         }
-        return new Config.Choice(Config.IDLE_INPUT, "Switch when idle", "off",
+        return new Config.Choice(Config.IDLE_INPUT, "Switch to startup input after", "off",
                 values.toArray(new String[0]), names.toArray(new String[0]));
     }
 
