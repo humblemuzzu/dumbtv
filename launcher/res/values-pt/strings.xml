@@ -121,6 +121,8 @@
     <string name="choice_background_image">Arquivo de imagem</string>
     <string name="choice_background_adaptive">Cor adaptativa</string>
     <string name="choice_background_adaptive_tint">Tom adaptativo do papel de parede</string>
+    <string name="choice_background_aurora">Aurora boreal</string>
+    <string name="choice_background_video">Arquivo de vídeo</string>
     <string name="choice_dim">Escurecer imagem</string>
     <string name="choice_rotate">Rotação do papel de parede</string>
     <string name="choice_rotate_off">Desligada</string>
@@ -134,6 +136,9 @@
     <string name="choice_tile_style">Estilo dos blocos</string>
     <string name="choice_tile_style_original">Original</string>
     <string name="choice_tile_style_afterglow">Afterglow</string>
+    <string name="choice_tile_fill">Fundo dos blocos</string>
+    <string name="choice_tile_fill_clear">Transparente</string>
+    <string name="choice_tile_fill_solid">Sólido</string>
     <string name="choice_chips">Estilo dos botões</string>
     <string name="choice_chips_text">Texto</string>
     <string name="choice_chips_icons">Ícones</string>

@@ -79,6 +79,8 @@ public final class Home extends Activity {
     private FrameLayout root;
     private LinearLayout column;
     private ImageView wall;
+    private Aurora aurora;
+    private Backdrop backdrop;
     private View shade;
     private View tint;
     private LinearLayout head;
@@ -289,7 +291,7 @@ public final class Home extends Activity {
     private Runnable artJob(Item it, boolean cornerIcon) {
         String pack = cfg.get(IconPack.KEY, IconPack.OFF);
         String chosen = cfg.get(IconPack.CHOSEN + it.id, null);
-        return () -> Catalog.art(getPackageManager(), it, cornerIcon, replacementArt(it, chosen, pack));
+        return () -> Catalog.art(this, it, cornerIcon, replacementArt(it, chosen, pack));
     }
 
     /**
@@ -429,6 +431,8 @@ public final class Home extends Activity {
         if (current == this) current = null;
         ui.removeCallbacks(idle);
         hero.stop();
+        aurora.stop();
+        backdrop.pause();
         stopColorAnimation();
         targetColor = 0;
         unregisterReceiver(time);
@@ -606,6 +610,12 @@ public final class Home extends Activity {
         wall = new ImageView(this);
         wall.setScaleType(ImageView.ScaleType.CENTER_CROP);
         root.addView(wall, new FrameLayout.LayoutParams(MATCH, MATCH));
+        aurora = new Aurora(this);
+        aurora.setVisibility(View.GONE);
+        root.addView(aurora, new FrameLayout.LayoutParams(MATCH, MATCH));
+        backdrop = new Backdrop(this);
+        backdrop.setVisibility(View.GONE);
+        root.addView(backdrop, new FrameLayout.LayoutParams(MATCH, MATCH));
         shade = new View(this);
         root.addView(shade, new FrameLayout.LayoutParams(MATCH, MATCH));
         tint = new View(this);
@@ -897,7 +907,7 @@ public final class Home extends Activity {
         int accent = cfg.accent();
         boolean icons = iconChips();
         for (TextView c : chips) {
-            Ui.focusStyle(c, accent, 0x14FFFFFF, dp(icons ? 21 : 18));
+            Ui.focusStyle(c, accent, Ui.CHIP_IDLE, dp(icons ? 21 : 18));
             int[] art = (int[]) c.getTag();
             c.setCompoundDrawablesRelative(icons ? Ui.chipIcon(getDrawable(art[0]), getDrawable(art[1]),
                     accent, dp(22)) : null, null, null, null);
@@ -1121,7 +1131,8 @@ public final class Home extends Activity {
 
     private void focusBackground(Item it) {
         String mode = cfg.get(Config.BACKGROUND);
-        if (!resumed || !"adaptive".equals(mode) && !"adaptive-tint".equals(mode)) return;
+        boolean glow = "aurora".equals(mode);
+        if (!resumed || !"adaptive".equals(mode) && !"adaptive-tint".equals(mode) && !glow) return;
         if ("adaptive-tint".equals(mode) && !tintWallpaper) return;
         if (it != null && it.info != null && it.backgroundColor == 0 && !it.colorRequested
                 && (it.banner != null || it.icon != null)) {
@@ -1133,6 +1144,11 @@ public final class Home extends Activity {
                     if (focusedItem() == it) focusBackground(it);
                 });
             });
+        }
+        if (glow) {
+            // FALLBACK is a neutral grey: the night palette, same as no colour yet
+            aurora.seed(it == null || it.backgroundColor == FocusColor.FALLBACK ? 0 : it.backgroundColor);
+            return;
         }
         int color = it == null || it.backgroundColor == 0 ? FocusColor.FALLBACK : it.backgroundColor;
         if ("adaptive-tint".equals(mode)) color = FocusColor.tint(color);
@@ -1296,8 +1312,26 @@ public final class Home extends Activity {
             tint.setBackgroundColor(Color.TRANSPARENT);
             root.setBackgroundColor(cfg.background());
         }
+        boolean glow = "aurora".equals(mode);
+        if (glow) {
+            aurora.setVisibility(View.VISIBLE);
+            if (resumed) aurora.start();
+            focusBackground(focusedItem());
+        } else if (aurora.getVisibility() != View.GONE) {
+            aurora.release();
+            aurora.setVisibility(View.GONE);
+        }
+        File video = "video".equals(mode) ? cfg.video() : null;
+        if (video != null) {
+            backdrop.setVisibility(View.VISIBLE);
+            if (resumed) backdrop.play(video);
+        } else if (backdrop.getVisibility() != View.GONE) {
+            backdrop.play(null);
+            backdrop.setVisibility(View.GONE);
+        }
         int dim = Integer.parseInt(cfg.get(Config.DIM));
-        shade.setBackgroundColor(file == null ? Color.TRANSPARENT : Color.argb(dim * 255 / 100, 0, 0, 0));
+        boolean shaded = file != null || glow || video != null;
+        shade.setBackgroundColor(shaded ? Color.argb(dim * 255 / 100, 0, 0, 0) : Color.TRANSPARENT);
         String key = file == null ? null : file.getPath() + ":" + file.lastModified();
         if (key == null ? wallKey == null : key.equals(wallKey)) return;
         wallKey = key;

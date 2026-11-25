@@ -123,6 +123,8 @@
     <string name="choice_background_image">Bilddatei</string>
     <string name="choice_background_adaptive">Adaptiv einfarbig</string>
     <string name="choice_background_adaptive_tint">Adaptiver Farbton des Hintergrundbildes</string>
+    <string name="choice_background_aurora">Polarlicht</string>
+    <string name="choice_background_video">Videodatei</string>
     <string name="choice_dim">Bild abdunkeln</string>
     <string name="choice_rotate">Wechsel des Hintergrundbildes</string>
     <string name="choice_rotate_off">Aus</string>
@@ -136,6 +138,9 @@
     <string name="choice_tile_style">Design der App-Kachel</string>
     <string name="choice_tile_style_original">Original</string>
     <string name="choice_tile_style_afterglow">Afterglow</string>
+    <string name="choice_tile_fill">Hintergrund der App-Kachel</string>
+    <string name="choice_tile_fill_clear">Durchsichtig</string>
+    <string name="choice_tile_fill_solid">Deckend</string>
     <string name="choice_chips">Stil der Schaltflächen</string>
     <string name="choice_chips_text">Text</string>
     <string name="choice_chips_icons">Symbole</string>

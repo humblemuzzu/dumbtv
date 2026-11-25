@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Fire TV's quick settings icon, redrawn: the app ships it as a single 48 px bitmap. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="48dp"
+    android:height="48dp"
+    android:viewportWidth="48"
+    android:viewportHeight="48">
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#FFFFA724"
+        android:strokeWidth="2"
+        android:pathData="M7,7h14v14h-14zM27,7h14v14h-14zM7,27h14v14h-14zM34,26V42M26,34.5H42" />
+</vector>

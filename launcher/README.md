@@ -78,9 +78,14 @@ you open an app. On Fire OS 7 and 8 the Settings button opens Amazon's settings 
 | Image dim, wallpaper rotation | for image backgrounds |
 | Child lock | off, on: hides Options and Settings and turns off Hold OK and ☰ Menu on tiles, so the home screen only opens apps and inputs (see below) |
 | App tile style | original (default), Afterglow: uppercase names inside the tile, a brand-color fade into black, a grayscale installed app icon in the corner, and a thin focus border |
+| App tile fill | see-through (default), solid: what an app without a TV banner sits on. See-through is the input tiles' faint fill, so the background shows around the icon; solid is the old dark card. Banners cover the tile either way |
 | Chip style | text (default), icons: Options and Settings become round icon buttons whose knobs and gear hub take the accent color; the name shows next to the icon while it has the focus |
 | Library banner | shown (default), hidden. It only appears once a library folder holds titles (see below) |
 | Icon pack | off, or an installed icon pack; reads "None installed" until one is ([Icon packs](#icon-packs)) |
+
+Icons are loaded at the highest density the app ships, so they stay sharp at tile size.
+Alexa Smart Home, Fire TV's quick settings and Amazon home's profile icon ship only a 48 or 96 px
+bitmap; dumbtv home draws its own vector copy of those three.
 
 Below them: Next wallpaper, which apps and inputs appear on the home screen, a
 reset for order, names, picked icons and hidden tiles, and **Open Amazon's home screen**. Apps
@@ -253,9 +258,9 @@ wake_input=home
 idle_input=0
 # unset, off, or an epoch time in ms until which idle_input waits
 idle_pause=
-# black graphite midnight image adaptive adaptive-tint
+# black graphite midnight image adaptive adaptive-tint aurora video
 background=black
-# 0 20 40 60 80, image backgrounds only
+# 0 20 40 60 80, image, aurora and video backgrounds only
 dim=40
 # off visit hourly daily daytime (visit = every return to the home screen)
 rotate=off
@@ -375,6 +380,22 @@ in `morning-coast.jpg`.
 `background=adaptive` takes a dark colour from the focused app's artwork.
 `background=adaptive-tint` keeps the wallpaper and adds a light wash of that
 colour; without a wallpaper it shows graphite.
+
+| ![Aurora background](../docs/assets/screens/aurora.png) | ![Video background, input tiles in the chips' look](../docs/assets/screens/video.png) |
+|---|---|
+
+`background=aurora` draws slow-drifting light in colours taken from the focused app
+(a green-to-violet night sky for inputs and grey icons). No files; `dim` applies. It
+runs only while the home screen is in front and holds still when animations are off.
+
+`background=video` loops `background.mp4` from the settings folder, muted, behind the
+rows. It plays only while the home screen is in front (the decoder is free for whatever
+opens next) and resumes where it stopped. Use 1080p H.264 High@4.1: an x265 HEVC
+encode decoded no frames on a Fire OS 8 MediaTek TV (AFTHY7ABBA). `dim` applies.
+
+```sh
+adb push loop.mp4 /sdcard/Android/media/tv.dumbtv.home/background.mp4
+```
 
 ## How HOME works on Fire OS
 

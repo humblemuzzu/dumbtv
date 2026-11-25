@@ -122,6 +122,8 @@
     <string name="choice_background_image">Fichier image</string>
     <string name="choice_background_adaptive">Couleur unie adaptative</string>
     <string name="choice_background_adaptive_tint">Teinte adaptative du fond d\'écran</string>
+    <string name="choice_background_aurora">Aurore boréale</string>
+    <string name="choice_background_video">Fichier vidéo</string>
     <string name="choice_dim">Assombrir l\'arrière-plan</string>
     <string name="choice_rotate">Rotation du fond d\'écran</string>
     <string name="choice_rotate_off">Désactivée</string>
@@ -135,6 +137,9 @@
     <string name="choice_tile_style">Style des tuiles d\'apps</string>
     <string name="choice_tile_style_original">Original</string>
     <string name="choice_tile_style_afterglow">Afterglow (Lueur)</string>
+    <string name="choice_tile_fill">Fond des tuiles d\'apps</string>
+    <string name="choice_tile_fill_clear">Transparent</string>
+    <string name="choice_tile_fill_solid">Opaque</string>
     <string name="choice_chips">Style des boutons</string>
     <string name="choice_chips_text">Texte</string>
     <string name="choice_chips_icons">Icônes</string>
