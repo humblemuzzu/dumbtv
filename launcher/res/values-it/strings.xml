@@ -138,7 +138,7 @@
     <string name="choice_tile_style">Stile tessere app</string>
     <string name="choice_tile_style_original">Originale</string>
     <string name="choice_tile_style_afterglow">Afterglow</string>
-    <string name="choice_tile_fill">Sfondo tessere app</string>
+    <string name="choice_tile_fill">Sfondo tessere</string>
     <string name="choice_tile_fill_clear">Trasparente</string>
     <string name="choice_tile_fill_solid">Pieno</string>
     <string name="choice_chips">Stile pulsanti</string>

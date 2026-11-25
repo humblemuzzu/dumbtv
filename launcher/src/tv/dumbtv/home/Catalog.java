@@ -75,22 +75,11 @@ final class Catalog {
     }
 
     /**
-     * The name of dumbtv home's own vector copy of a package's icon, for built-in apps whose only
-     * icon is a small bitmap (48 or 96 px) that blurs at tile size: res/drawable/builtin_*.xml.
-     * Looked up by name, so adding one is adding the file.
-     */
-    static String redrawn(String pkg) {
-        return "builtin_" + pkg.replace('.', '_');
-    }
-
-    /**
-     * The {@link #redrawn} copy when there is one, else the app's icon at the highest density it
-     * ships rather than the TV's own (xhdpi on a 1080p Fire TV): tiles draw icons larger than a
-     * launcher grid would, and the xhdpi bitmap blurs when it is scaled up.
+     * The app's icon at the highest density it ships rather than the TV's own (xhdpi on a 1080p
+     * Fire TV): tiles draw icons larger than a launcher grid would, and the xhdpi bitmap blurs
+     * when it is scaled up.
      */
     static Drawable sharpIcon(Context c, ActivityInfo ai) {
-        int own = c.getResources().getIdentifier(redrawn(ai.packageName), "drawable", c.getPackageName());
-        if (own != 0) return c.getDrawable(own);
         int res = ai.getIconResource();
         if (res != 0) {
             try {

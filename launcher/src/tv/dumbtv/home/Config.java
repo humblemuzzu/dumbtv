@@ -126,10 +126,10 @@ final class Config {
     static final Choice TILE_STYLE = new Choice("tile_style", "App tile style", "original",
             new String[] {"original", "afterglow"}, new String[] {"Original", "Afterglow"});
     /**
-     * What an app tile without a banner sits on: the inputs' see-through fill, so the background
-     * shows around the icon, or the opaque dark card.
+     * What app tiles without a banner and input tiles sit on: the opaque dark card, or the corner
+     * chips' see-through fill, so the background shows through.
      */
-    static final Choice TILE_FILL = new Choice("tile_fill", "App tile fill", "clear",
+    static final Choice TILE_FILL = new Choice("tile_fill", "Tile fill", "solid",
             new String[] {"clear", "solid"}, new String[] {"See-through", "Solid"});
     /** Options and Settings in the corner: text chips, or icon buttons whose name shows on focus. */
     static final Choice CHIPS = new Choice("chips", "Chip style", "text",

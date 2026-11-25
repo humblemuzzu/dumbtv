@@ -31,7 +31,7 @@ final class Tile extends View {
     private final Paint dot = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final TextPaint inner = new TextPaint(Paint.ANTI_ALIAS_FLAG);
     private final TextPaint under = new TextPaint(Paint.ANTI_ALIAS_FLAG);
-    /** Inputs wear the corner chips' look: a faint see-through fill, the accent fill on focus. */
+    /** With Tile fill › See-through, inputs wear the corner chips' look: a faint fill, the accent on focus. */
     private final boolean chip;
     private final int accent;
     private boolean moving;
@@ -54,10 +54,10 @@ final class Tile extends View {
         radius = Ui.dp(c, 10);
         stroke = Ui.dp(c, afterglow == null ? 2.5f : 1f);
 
-        chip = !app;
+        boolean clear = "clear".equals(Config.get(c).get(Config.TILE_FILL));
+        chip = !app && clear;
         this.accent = accent;
-        boolean solid = app && "solid".equals(Config.get(c).get(Config.TILE_FILL));
-        fill.setColor(solid ? Ui.SURFACE : Ui.CHIP_IDLE);
+        fill.setColor(clear ? Ui.CHIP_IDLE : app ? Ui.SURFACE : 0xFF17181B);
         ring.setStyle(Paint.Style.STROKE);
         ring.setStrokeWidth(stroke);
         ring.setColor(accent);

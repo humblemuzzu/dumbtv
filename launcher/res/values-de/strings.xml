@@ -138,7 +138,7 @@
     <string name="choice_tile_style">Design der App-Kachel</string>
     <string name="choice_tile_style_original">Original</string>
     <string name="choice_tile_style_afterglow">Afterglow</string>
-    <string name="choice_tile_fill">Hintergrund der App-Kachel</string>
+    <string name="choice_tile_fill">Kachelhintergrund</string>
     <string name="choice_tile_fill_clear">Durchsichtig</string>
     <string name="choice_tile_fill_solid">Deckend</string>
     <string name="choice_chips">Stil der Schaltflächen</string>

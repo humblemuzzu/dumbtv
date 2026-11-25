@@ -137,7 +137,7 @@
     <string name="choice_tile_style">Style des tuiles d\'apps</string>
     <string name="choice_tile_style_original">Original</string>
     <string name="choice_tile_style_afterglow">Afterglow (Lueur)</string>
-    <string name="choice_tile_fill">Fond des tuiles d\'apps</string>
+    <string name="choice_tile_fill">Fond des tuiles</string>
     <string name="choice_tile_fill_clear">Transparent</string>
     <string name="choice_tile_fill_solid">Opaque</string>
     <string name="choice_chips">Style des boutons</string>

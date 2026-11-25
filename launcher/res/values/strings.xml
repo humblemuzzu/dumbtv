@@ -140,7 +140,7 @@
     <string name="choice_tile_style">App tile style</string>
     <string name="choice_tile_style_original">Original</string>
     <string name="choice_tile_style_afterglow">Afterglow</string>
-    <string name="choice_tile_fill">App tile fill</string>
+    <string name="choice_tile_fill">Tile fill</string>
     <string name="choice_tile_fill_clear">See-through</string>
     <string name="choice_tile_fill_solid">Solid</string>
     <string name="choice_chips">Chip style</string>
