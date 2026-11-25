@@ -142,11 +142,12 @@ For a TV that mostly shows one source (a Chromecast, a cable box):
   directly to an input (HDMI 1, Chromecast, Live TV, etc.). Saved as `wake_input`
   in [the settings file](#the-settings-file). Fire OS 7 and 8 only: the wake is seen by
   the HOME guard, which Fire OS 6 does not run.
-- `idle_input=<minutes>` in the settings file: after that long on home with no key
-  pressed, switch to the startup input. Set `idle_input` below the screensaver delay
+- **Options › Switch when idle**: after that long on home with no key pressed (1 to 30
+  minutes, or Off), switch to the startup input. Set it below the screensaver delay
   (Settings, 5 minutes by default) and the input's own picture, such as a Chromecast's
   ambient photos, takes the screensaver's place. HOME still returns to the home screen.
-  `idle_pause=off` stops the idle switch, and `idle_pause=<epoch ms>` stops it until then.
+  Saved as `idle_input` in the settings file. `idle_pause=off` stops the idle switch,
+  and `idle_pause=<epoch ms>` stops it until then.
 
 ## Child lock
 
@@ -252,8 +253,8 @@ inputs=on
 switch=auto
 # home, or an input's id (Options › Show on startup)
 wake_input=home
-# minutes on the home screen before wake_input opens; 0 = never
-idle_input=0
+# off, or minutes on the home screen before wake_input opens (Options › Switch when idle)
+idle_input=off
 # unset, off, or an epoch time in ms until which idle_input waits
 idle_pause=
 # black graphite midnight image adaptive adaptive-tint aurora video

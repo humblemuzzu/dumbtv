@@ -51,10 +51,14 @@ public final class Options extends Activity {
         TvInputManager tv = (TvInputManager) getSystemService(Context.TV_INPUT_SERVICE);
         List<Item> inputs = Catalog.inputs(this, tv);
         Config.Choice startup = inputs.isEmpty() ? null : Input.choice(cfg, inputs);
+        Config.Choice idle = inputs.isEmpty() ? null : Input.idleChoice(cfg);
 
         for (Config.Choice c : Config.CHOICES) {
             list.addView(choice(c));
-            if (c == Config.SWITCH && startup != null) list.addView(choice(startup));
+            if (c == Config.SWITCH && startup != null) {
+                list.addView(choice(startup));
+                if (idle != null) list.addView(choice(idle));
+            }
         }
         LinearLayout packRow = new LinearLayout(this);
         packRow.setOrientation(LinearLayout.VERTICAL);
@@ -136,6 +140,7 @@ public final class Options extends Activity {
                     && !(c == Config.DIM && "aurora".equals(cfg.get(Config.BACKGROUND)))
                     && !(c == Config.DIM && "video".equals(cfg.get(Config.BACKGROUND)))
                     || c == Config.SWITCH && "off".equals(cfg.get(Config.INPUTS))
+                    || Config.IDLE_INPUT.equals(c.key) && ("home".equals(cfg.get(Config.WAKE_INPUT, "home")) || "off".equals(cfg.get(Config.INPUTS)))
                     || c == Config.ALL_APPS && "on".equals(cfg.get(Config.LOCK));
             row.setAlpha(off ? 0.4f : 1f);
         };

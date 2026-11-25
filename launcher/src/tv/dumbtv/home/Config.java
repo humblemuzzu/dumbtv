@@ -43,6 +43,11 @@ final class Config {
      */
     static final String WAKE_INPUT = "wake_input";
     /**
+     * How long on home with no key pressed before switching to {@link #WAKE_INPUT}, in minutes.
+     * "off", unset or 0 disables the idle switch.
+     */
+    static final String IDLE_INPUT = "idle_input";
+    /**
      * Stops {@code idle_input}: "off", or until an epoch time in ms. Unset or "0" lets it run.
      */
     static final String IDLE_PAUSE = "idle_pause";

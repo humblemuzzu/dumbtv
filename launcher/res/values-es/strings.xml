@@ -115,6 +115,8 @@
     <string name="choice_switch_home">dumbtv home</string>
     <string name="choice_wake_input">Mostrar al inicio</string>
     <string name="choice_wake_input_home">Pantalla de inicio</string>
+    <string name="choice_idle_input">Cambiar al estar inactivo</string>
+    <string name="choice_idle_input_off">Desactivado</string>
     <string name="choice_background">Fondo</string>
     <string name="choice_background_black">Negro</string>
     <string name="choice_background_graphite">Grafito</string>

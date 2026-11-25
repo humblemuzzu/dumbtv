@@ -19,6 +19,9 @@ final class Text {
         if (Config.WAKE_INPUT.equals(choice.key) && !"home".equals(value)) {
             return choice.name(value);
         }
+        if (Config.IDLE_INPUT.equals(choice.key) && !"off".equals(value)) {
+            return choice.name(value);
+        }
         return find(c, "choice_" + choice.key + "_" + value.replace('-', '_'), choice.name(value));
     }
 
