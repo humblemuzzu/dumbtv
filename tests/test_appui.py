@@ -13,11 +13,12 @@ VIEWS = 'dnsField advancedConfigCheck enableAddFilter startBtn logOutput'
 
 
 def run(script, views=VIEWS, backup='Backup Manager is enabled / provisioned / not pending init',
-        failed_dumps=0, checked=''):
+        failed_dumps=0, checked='', dialog=False, steal_to=''):
     with tempfile.TemporaryDirectory() as tmp:
         env = dict(os.environ, ADB=str(ROOT / 'tests' / 'fake_screen_adb.py'), SERIAL='test-tv',
                    FAKE_DIR=tmp, VIEWS=views, BACKUP_FIRST_LINE=backup,
-                   FAILED_DUMPS=str(failed_dumps), CHECKED=checked)
+                   FAILED_DUMPS=str(failed_dumps), CHECKED=checked,
+                   DIALOG='1' if dialog else '0', STEAL_TO=steal_to)
         result = subprocess.run(
             ['bash', '-c', 'set -uo pipefail; source scripts/lib.sh; source scripts/appdata.sh; '
              'source scripts/appui.sh; ' + script + '; echo "rc=$?"'],
@@ -46,9 +47,20 @@ class FocusTest(unittest.TestCase):
 
     def test_a_busy_screen_is_read_again_before_any_key(self):
         # Four blind TABs would carry the focus past startBtn and round the loop again.
-        out, log = run('ui_press startBtn', failed_dumps=4)
+        out, log = run('ui_press startBtn', failed_dumps=4, dialog=True)
         self.assertIn('rc=0', out)
         self.assertEqual(log.count('input keyevent KEYCODE_TAB'), 3)
+
+    def test_a_log_that_takes_the_focus_back_does_not_stop_the_tick(self):
+        # #196: on a rerun the filter is live and dumbtv home is installed. Every uiautomator
+        # dump rebinds Guard, Guard wakes the filter, and the filter's log takes the focus.
+        out, log = run('ui_tick advancedConfigCheck', steal_to='logOutput')
+        self.assertIn('rc=0', out)
+        self.assertLess(log.count('input keyevent KEYCODE_TAB'), 40)
+
+    def test_focus_is_read_without_uiautomator_when_the_activity_shows_the_view(self):
+        _, log = run('ui_focus startBtn')
+        self.assertFalse(any(line.startswith('uiautomator') for line in log))
 
     def test_an_unreadable_screen_presses_nothing(self):
         # A ticked box read as unticked would be pressed, and so unticked.
