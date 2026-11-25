@@ -194,10 +194,17 @@ interface's routing table, which is empty. `ip rule` then names a table that
 `ip route show table all | grep tun` does not. Run `./scripts/dnsfilter.sh` again:
 it now turns that rebuild off.
 
-If it still happens, the always-on VPN and the app's own boot start are racing
-(seen on an AFTTI43, issue #58). Add `FILTER_AUTOSTART=0` to `dumbtv.conf` and run
-`./scripts/dnsfilter.sh` again. Fire OS 6 needs the app's own start, so the script
-ignores this setting there.
+If it still happens, the always-on VPN and the app's own boot start are racing.
+Either can be switched off in `dumbtv.conf`, then run `./scripts/dnsfilter.sh` again:
+
+- `FILTER_ALWAYS_ON=0` leaves the start to the app's own boot receiver, so the system
+  no longer brings the VPN up early in the boot. This fixed an AFTKRT on RS8185.3898N
+  (#226). The VPN is then not restarted by Android if the app dies; dumbtv home still
+  wakes it.
+- `FILTER_AUTOSTART=0` leaves the start to the always-on VPN (an AFTTI43, issue #58).
+  Fire OS 6 needs the app's own start, so the script ignores this setting there.
+
+Not both: with both off nothing starts the filter, and the script refuses it.
 
 ### Blocked hosts resolve again after an app crashed or the TV ran out of memory
 

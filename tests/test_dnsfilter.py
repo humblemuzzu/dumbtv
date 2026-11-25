@@ -66,7 +66,8 @@ class RouteTest(unittest.TestCase):
                        FAKE_TV_STATE=str(state), FAKE_TV_LOG=str(log), FAKE_CURL_DIR=str(files),
                        CONF=str(tmp / "dumbtv.conf"), REPORT=str(tmp / "report"),
                        PATH=f"{bin_dir}{os.pathsep}{os.environ['PATH']}")
-            for name in ("DNS_UPSTREAM", "SYSTEM_DNS", "FILTER_AUTOSTART", "DNSFILTER", "PRIME"):
+            for name in ("DNS_UPSTREAM", "SYSTEM_DNS", "FILTER_AUTOSTART", "FILTER_ALWAYS_ON",
+                         "DNSFILTER", "PRIME"):
                 env.pop(name, None)
             result = subprocess.run(
                 ["bash", str(ROOT / "scripts" / "dnsfilter.sh"), "-y", "--no-reboot"],
@@ -152,6 +153,24 @@ class RouteTest(unittest.TestCase):
         # TclAppBoot blocks the VPN service of an app without AUTO_START (#176).
         self.pushed_conf({"net.dns1": GATEWAY}, sdk=34)
         self.assertIn("appops set dnsfilter.android AUTO_START allow", self.touched)
+
+    def test_always_on_is_set_by_default(self):
+        self.pushed_conf({"net.dns1": GATEWAY}, sdk=28)
+        self.assertIn("settings put secure always_on_vpn_app dnsfilter.android", self.touched)
+
+    def test_always_on_can_be_left_to_the_apps_own_start(self):
+        # An AFTKRT whose system-started VPN never carried a lookup (#225, #226).
+        self.pushed_conf({"net.dns1": GATEWAY}, sdk=28, conf="FILTER_ALWAYS_ON=0\n")
+        self.assertIn("settings delete secure always_on_vpn_app", self.commands)
+        self.assertFalse([c for c in self.touched if "always_on_vpn_app" in c])
+
+    def test_both_starts_off_is_refused_before_any_change(self):
+        result, conf = self.run_filter({"net.dns1": GATEWAY}, sdk=28,
+                                       conf="FILTER_ALWAYS_ON=0\nFILTER_AUTOSTART=0\n")
+        self.assertEqual(result.returncode, 1)
+        self.assertIn("nothing to start the filter", result.stderr)
+        self.assertIsNone(conf)
+        self.assertEqual(self.touched, [])
 
     def test_no_bypass_on_fire_os_7_and_8_by_default(self):
         self.assertEqual(self.whitelist(28), ["androidAppWhiteList = <none>"])
