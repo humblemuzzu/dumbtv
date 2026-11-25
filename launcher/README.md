@@ -329,6 +329,9 @@ seinfeld.jpg | Seinfeld | com.netflix.ninja | https://www.netflix.com/title/7015
   hbomax.com address), Paramount+ `https://www.paramountplus.com/shows/<name>/` and
   `/movies/video/<id>/`. `adb shell cmd package resolve-activity -a
   android.intent.action.VIEW -d <link> <package>` shows whether an app takes a link.
+- A title can open Amazon's home (`com.amazon.tv.launcher`), with or without a link of
+  its own. As with Options › Open Amazon's home screen, HOME then stays on Amazon's home
+  until you open an app.
 - Wide pictures work best; the banner crops to about 3.8 : 1. Only the picture on
   screen and the one fading in are held in memory.
 

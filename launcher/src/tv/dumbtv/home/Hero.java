@@ -168,7 +168,10 @@ final class Hero extends FrameLayout {
 
     void openCurrent() {
         if (entries.isEmpty()) return;
-        Library.open(getContext(), entries.get(index));
+        Library.Entry e = entries.get(index);
+        // As for the tile: the Guard would cover Amazon's home again the moment it opened (#215).
+        if (Guard.AMAZON.equals(e.pkg)) Guard.pause();
+        Library.open(getContext(), e);
     }
 
     private void reschedule(long delay) {
