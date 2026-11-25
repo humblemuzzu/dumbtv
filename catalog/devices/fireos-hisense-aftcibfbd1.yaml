@@ -2,9 +2,10 @@ id: fireos-hisense-aftcibfbd1
 title: "Hisense 65U65SFC Pro Fire TV Edition (AFTCIBFBD1)"
 contributors:
   - sonofamitch86
+  - jjwright8
 platform: fireos
 status: tested
-tested_on: "Fire OS 8.1.8.0, RS8180.3749N (Android 11, SDK 30)"
+tested_on: "Fire OS 8.1.8.0, RS8180.3749N (Android 11, SDK 30), two units"
 models:
   - "AFTCIBFBD1 (Hisense 65U65SFC Pro Fire TV Edition)"
 adb:
@@ -29,7 +30,9 @@ quirks:
   - "The first dnsfilter.sh run ended at its manual step: the remote overlay covered personalDNSfilter, so the config editor could not be reached. Clearing the overlay and re-running dnsfilter.sh -y configured the app over adb, and its self-test passed."
   - "On macOS the first adb connect failed with 'No route to host' while ping and nc reached port 5555; a retry after adb kill-server connected (macOS Local Network permission for adb)."
   - "11 third-party apps were present and untouched. com.amazon.comms.starktachyon was already disabled by the system before the pass."
-notes: "debloat.sh (32 packages disabled, 5 absent, 0 suspect), lockdown.sh, dnsfilter.sh and launcher.sh ran with PRIME=1 ALEXA=1 LAUNCHER=1 DNSFILTER=1 YOUTUBE=0; verify.sh reported all checks passed. SmartTube was installed alongside the stock YouTube app, which stayed enabled."
+  - "Second unit (issue #218): dnsfilter.sh needed no one at the remote. The backup service is off, so it typed the settings into personalDNSfilter's config editor over adb (about two minutes), rebooted, and its self-test passed. Unable to Detect Your Remote did not appear on either reboot."
+  - "Second unit: com.amazon.tv.developer.dataservice kept running after it was disabled; debloat.sh switched its ops off and blocked its metered data."
+notes: "Two units. Second unit: the same run with dumbtv home 1.11 (32 disabled, 5 absent, 0 suspect), verify.sh all checks passed. First unit: debloat.sh (32 packages disabled, 5 absent, 0 suspect), lockdown.sh, dnsfilter.sh and launcher.sh ran with PRIME=1 ALEXA=1 LAUNCHER=1 DNSFILTER=1 YOUTUBE=0; verify.sh reported all checks passed. SmartTube was installed alongside the stock YouTube app, which stayed enabled."
 verify:
   blocked: data/blocklists/verify-blocked.txt
   allowed: data/blocklists/verify-allowed.txt

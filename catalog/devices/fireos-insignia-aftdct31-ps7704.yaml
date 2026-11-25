@@ -1,9 +1,12 @@
 id: fireos-insignia-aftdct31-ps7704
-title: "Insignia AFTDCT31"
+title: "Insignia Fire TV (AFTDCT31), PS7704.5024N"
+contributors:
+  - jonhay
 platform: fireos
 status: tested
 tested_on: "PS7704.5024N"
-models: []
+models:
+  - "AFTDCT31"
 adb:
   port: 5555
   transport: wifi
@@ -20,7 +23,7 @@ data:
   never_disable: data/fireos/never-disable.txt
   user_apps: data/fireos/user-apps.txt
 quirks:
-  - "PS7704.5024N with parental controls on (PARENTAL_CONTROLS_STATE=1): launcher.sh failed inside all.sh with 'Fire OS did not bind the HOME guard' after its own off-and-on retry. Running launcher.sh -y once more, with parental controls still on and nothing else changed, bound the guard and verify.sh passed."
+  - "PS7704.5024N with parental controls on (PARENTAL_CONTROLS_STATE=1): launcher.sh failed inside all.sh with 'Fire OS did not bind the HOME guard' after its own off-and-on retry. Running launcher.sh -y once more, with parental controls still on and nothing else changed, bound the guard and verify.sh passed. Since this report launcher.sh switches the guard off and on a third time before it gives up."
   - "com.amazon.tv.developer.dataservice kept running after being disabled; debloat.sh cut its background work as designed."
 notes: "Fire OS 7.7.0.4 (PS7704.5024N, Android 9, SDK 28). all.sh with PRIME=1 ALEXA=1 LAUNCHER=1 DNSFILTER=1 YOUTUBE=0: debloat disabled 32, protected 0, suspect 0, apps uninstalled 0; dnsfilter self-test passed after the script's own reboot; launcher.sh needed a second run (see quirks); verify.sh then exited 0 with all checks passing: 33 disabled, 13 settings, filter 396 entries, launcher 1.11, data saver on."
 verify:

@@ -1,0 +1,30 @@
+id: fireos-jvc-aftso001
+title: "JVC LT-55CF890 Fire TV Edition, UK (AFTSO001)"
+contributors:
+  - scantillion
+platform: fireos
+status: tested
+tested_on: "PS7717.5744N"
+models:
+  - "AFTSO001 (JVC LT-55CF890 and LT-55CF890(B) Fire TV Edition)"
+adb:
+  port: 5555
+  transport: wifi
+developer_mode: "Not recorded in the report (issue #214)."
+ip_location: "Not recorded in the report (issue #214)."
+prompts:
+  - name: "Allow USB debugging?"
+    blocks_automation: true
+    fix: "tick Always allow from this computer, press Allow on the remote"
+data:
+  packages: data/fireos/packages.txt
+  protected: data/fireos/protected.txt
+  never_disable: data/fireos/never-disable.txt
+  user_apps: data/fireos/user-apps.txt
+quirks:
+  - "com.amazon.neo.minerva.logcat kept running after it was disabled; debloat.sh switched its ops off and blocked its metered data."
+  - "On one Mac (an M6 iMac) the adb server kept exiting between commands, so preflight.sh reported that the TV stopped responding. Another Mac worked, so it is the computer, not the TV."
+notes: "Fire OS 7.7.1.7 (PS7717.5744N, Android 9, SDK 28, armeabi-v7a, kernel 4.9.118). all.sh with Prime and Alexa kept, launcher and DNS filter on, SYSTEM_DNS=0, no SmartTube: 36 packages disabled (35 by the pass, 1 already off), 1 absent, 13 privacy settings, data saver on, filter 396 entries on tun0, dumbtv home 1.11 with HOME landing on it; verify.sh all checks passed."
+verify:
+  blocked: data/blocklists/verify-blocked.txt
+  allowed: data/blocklists/verify-allowed.txt

@@ -1,9 +1,12 @@
 id: fireos-toshiba-aftha004
-title: "Toshiba AFTHA004"
+title: "Toshiba Fire TV Edition (AFTHA004)"
+contributors:
+  - jonhay
 platform: fireos
 status: tested
-tested_on: "PS7717.5746N.0036408029696"
-models: []
+tested_on: "PS7717.5746N"
+models:
+  - "AFTHA004 (Toshiba Fire TV Edition)"
 adb:
   port: 5555
   transport: wifi
