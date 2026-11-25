@@ -66,6 +66,26 @@
             android:configChanges="keyboard|keyboardHidden|navigation|orientation|screenSize|screenLayout|uiMode" />
 
         <activity
+            android:name=".ArtScreen"
+            android:exported="false"
+            android:excludeFromRecents="true"
+            android:screenOrientation="landscape"
+            android:configChanges="keyboard|keyboardHidden|navigation|orientation|screenSize|screenLayout|uiMode" />
+
+        <!-- Art mode as the screensaver, chosen over adb (README, Art mode): Fire OS lists only
+             Amazon's own screensaver in its menu. -->
+        <service
+            android:name=".ArtDream"
+            android:exported="true"
+            android:label="@string/art"
+            android:permission="android.permission.BIND_DREAM_SERVICE">
+            <intent-filter>
+                <action android:name="android.service.dreams.DreamService" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </service>
+
+        <activity
             android:name=".Input"
             android:exported="false"
             android:excludeFromRecents="true"

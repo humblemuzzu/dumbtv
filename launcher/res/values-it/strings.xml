@@ -5,6 +5,7 @@
 
     <!-- Home screen -->
     <string name="options">Opzioni</string>
+    <string name="art">Arte</string>
     <string name="settings">Impostazioni</string>
     <string name="row_apps">App</string>
     <string name="row_inputs">Ingressi</string>
@@ -153,4 +154,7 @@
     <string name="choice_library">Banner libreria</string>
     <string name="choice_library_on">Visibile</string>
     <string name="choice_library_off">Nascosto</string>
+    <string name="choice_art">Modalità Arte</string>
+    <string name="choice_art_off">Spenta</string>
+    <string name="choice_art_on">Accesa</string>
 </resources>

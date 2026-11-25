@@ -63,6 +63,8 @@ public final class Home extends Activity {
     private final ExecutorService io = Executors.newSingleThreadExecutor();
     private final ExecutorService colorIo = Executors.newSingleThreadExecutor();
     private final List<TextView> chips = new ArrayList<>();
+    /** Opens Art mode; shown only with Options › Art mode on. */
+    private TextView artChip;
     private Config cfg;
     private TvInputManager tv;
     private int applied = -1, appsGeneration;
@@ -729,6 +731,8 @@ public final class Home extends Activity {
                     TextView best = null;
                     int bestGap = Integer.MAX_VALUE;
                     for (TextView c : chips) {
+                        // a chip switched off (Art mode off) is gone, and must not take the focus
+                        if (c.getVisibility() != View.VISIBLE) continue;
                         c.getLocationOnScreen(at);
                         int gap = Math.abs(at[0] + c.getWidth() / 2 - x);
                         if (gap < bestGap) {
@@ -768,6 +772,9 @@ public final class Home extends Activity {
         under.leftMargin = dp(2);
         when.addView(meter, under);
         head.addView(when, new LinearLayout.LayoutParams(0, WRAP, 1f));
+        artChip = chip(getString(R.string.art), R.drawable.chip_art, R.drawable.chip_art_mark,
+                v -> startActivity(new Intent(this, ArtScreen.class)));
+        head.addView(artChip);
         head.addView(chip(getString(R.string.options), R.drawable.chip_options, R.drawable.chip_options_mark,
                 v -> startActivity(new Intent(this, Options.class))));
         head.addView(chip(getString(R.string.settings), R.drawable.chip_settings, R.drawable.chip_settings_mark,
@@ -914,6 +921,7 @@ public final class Home extends Activity {
             chipLook(c, c.isFocused());
             c.setVisibility(locked() ? View.GONE : View.VISIBLE);
         }
+        if (!"on".equals(cfg.get(Config.ART))) artChip.setVisibility(View.GONE);
         meter.setVisibility("on".equals(cfg.get(Config.MEMORY)) ? View.VISIBLE : View.GONE);
         meter.setAccent(accent);
         hero.setAccent(accent);

@@ -5,6 +5,7 @@
 
     <!-- Pantalla de inicio -->
     <string name="options">Opciones</string>
+    <string name="art">Arte</string>
     <string name="settings">Ajustes</string>
     <string name="row_apps">Apps</string>
     <string name="row_inputs">Entradas</string>
@@ -152,4 +153,7 @@
     <string name="choice_library">Banner de biblioteca</string>
     <string name="choice_library_on">Visible</string>
     <string name="choice_library_off">Oculto</string>
+    <string name="choice_art">Modo arte</string>
+    <string name="choice_art_off">Desactivado</string>
+    <string name="choice_art_on">Activado</string>
 </resources>
