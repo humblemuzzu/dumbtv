@@ -4,6 +4,7 @@
 
     <!-- Home screen -->
     <string name="options">Opções</string>
+    <string name="art">Arte</string>
     <string name="settings">Configurações</string>
     <string name="row_apps">Apps</string>
     <string name="row_inputs">Entradas</string>
@@ -151,4 +152,7 @@
     <string name="choice_library">Banner da biblioteca</string>
     <string name="choice_library_on">Visível</string>
     <string name="choice_library_off">Oculto</string>
+    <string name="choice_art">Modo Arte</string>
+    <string name="choice_art_off">Desativado</string>
+    <string name="choice_art_on">Ativado</string>
 </resources>

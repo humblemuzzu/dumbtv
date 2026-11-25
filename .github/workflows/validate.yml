@@ -62,6 +62,9 @@ jobs:
           java -cp "/tmp/host:$jar" tv.dumbtv.home.MeterTest
           javac -d /tmp/host -cp "/tmp/host:$jar" launcher/tests/LibraryTest.java
           java -cp "/tmp/host:$jar" tv.dumbtv.home.LibraryTest
+          javac -d /tmp/host -cp "/tmp/host:$jar" launcher/src/tv/dumbtv/home/ArtView.java \
+            launcher/tests/ArtTest.java
+          java -cp "/tmp/host:$jar" tv.dumbtv.home.ArtTest
           javac --release 8 -Xlint:all -Werror -d /tmp/host launcher/src/tv/dumbtv/home/AuroraPalette.java \
             launcher/tests/AuroraPaletteTest.java
           java -cp /tmp/host tv.dumbtv.home.AuroraPaletteTest

@@ -82,6 +82,7 @@ you open an app. On Fire OS 7 and 8 the Settings button opens Amazon's settings 
 | Chip style | text (default), icons: Options and Settings become round icon buttons whose knobs and gear hub take the accent color; the name shows next to the icon while it has the focus |
 | Library banner | shown (default), hidden. It only appears once a library folder holds titles (see below) |
 | Icon pack | off, or an installed icon pack; reads "None installed" until one is ([Icon packs](#icon-packs)) |
+| Art mode | off (default), on: an Art button next to Options opens [Art mode](#art-mode) |
 
 Icons are loaded at the highest density the app ships, so they stay sharp at tile size.
 
@@ -264,6 +265,8 @@ dim=40
 rotate=off
 # off on
 lock=off
+# off on (the Art button)
+art=off
 # off, or an installed icon pack's package
 icon_pack=off
 icon.com.stremio.one=com.example.iconpack/stremio
@@ -341,6 +344,52 @@ else `sips` on macOS, else not at all; an optional `crop.conf` of `image fractio
 moves the crop, 0 top to 1 bottom), asks before it replaces the TV's library folder, and
 returns to the home screen so the banner reloads. Pictures must sit beside
 `library.conf`; a name with a `/` is skipped.
+
+### Art mode
+
+Paintings on the whole screen, as on a picture-frame TV. With Options › Art mode on, an
+Art button sits next to Options; it can also be the TV's screensaver. A new painting
+comes every five minutes (three as the screensaver) through a fade to black, ◀ ▶ step
+through them, and any other key goes back. The title shows for six seconds after each
+change. Nothing is downloaded and no permission is added: the pictures are pushed from a
+computer.
+
+The pictures go in `art/` in the media folder, with an optional `art.txt` beside them,
+one line per picture, tab separated:
+
+```
+# file	title	artist	date
+wave.jpg	The Great Wave off Kanagawa	Katsushika Hokusai	c. 1831
+nighthawks.jpg	Nighthawks	Edward Hopper	1942
+```
+
+```sh
+adb shell mkdir -p /sdcard/Android/media/tv.dumbtv.home/art
+adb push *.jpg art.txt /sdcard/Android/media/tv.dumbtv.home/art/
+```
+
+- Without `art.txt`, every picture in the folder shows, without a caption. Lines whose
+  picture is missing are skipped, and so are names with a `/` or `\`, or that start
+  with a dot.
+- Pictures fill the screen and are cropped to it around their centre, so 16:9 ones
+  show whole. The order is shuffled each time Art mode opens.
+- On a 4K panel the painting is drawn at 3840x2160: Fire OS draws apps at 1920x1080,
+  so the picture goes to a SurfaceView with the panel's own buffer size, which the
+  compositor shows pixel for pixel, as it does video. One picture is decoded at a time.
+
+**As the screensaver.** Fire OS lists only Amazon's screensaver in its menu, so it is
+chosen over adb:
+
+```sh
+adb shell settings put secure screensaver_components tv.dumbtv.home/tv.dumbtv.home.ArtDream
+```
+
+It starts when Amazon's would, after the system setting `screen_off_timeout`, and the TV
+still goes to sleep at the secure setting `sleep_timeout`. Back to Amazon's:
+
+```sh
+adb shell settings put secure screensaver_components com.amazon.ftv.screensaver/.app.services.ScreensaverService
+```
 
 ### Fire OS 8: where adb can write
 
@@ -493,6 +542,9 @@ Delete both to stop.
 | `src/.../Recent.java` | when each app was last opened, for App order › Recently used |
 | `src/.../Hero.java` | the library banner: cross-fade, slow zoom, ◀ ▶ and OK |
 | `src/.../Library.java` | reads `library/library.conf` and opens a title in its app |
+| `src/.../ArtView.java` | Art mode: `art/` and `art.txt`, the 4K SurfaceView, the fade and the caption |
+| `src/.../ArtScreen.java` | Art mode from the Art button |
+| `src/.../ArtDream.java` | Art mode as the screensaver |
 | `src/.../BootReceiver.java` | restarts the Keeper after a boot or an update |
 | `build.sh` | aapt2, javac, d8, zipalign, apksigner |
 | `install.sh` | download and checksum (or `--build`), install, HOME hook, `--undo` |

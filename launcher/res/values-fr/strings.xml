@@ -5,6 +5,7 @@
 
     <!-- Home screen -->
     <string name="options">Options</string>
+    <string name="art">Art</string>
     <string name="settings">Paramètres</string>
     <string name="row_apps">Applications</string>
     <string name="row_inputs">Entrées TV</string>
@@ -152,4 +153,7 @@
     <string name="choice_library">Bannières de bibliothèque</string>
     <string name="choice_library_on">Affichées</string>
     <string name="choice_library_off">Masquées</string>
+    <string name="choice_art">Mode Art</string>
+    <string name="choice_art_off">Désactivé</string>
+    <string name="choice_art_on">Activé</string>
 </resources>

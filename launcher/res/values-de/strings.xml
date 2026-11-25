@@ -5,6 +5,7 @@
 
     <!-- Home screen -->
     <string name="options">Optionen</string>
+    <string name="art">Kunst</string>
     <string name="settings">Einstellungen</string>
     <string name="row_apps">Apps</string>
     <string name="row_inputs">Eingänge</string>
@@ -153,4 +154,7 @@
     <string name="choice_library">Bibliotheksbanner</string>
     <string name="choice_library_on">Angezeigt</string>
     <string name="choice_library_off">Ausgeblendet</string>
+    <string name="choice_art">Kunstmodus</string>
+    <string name="choice_art_off">Aus</string>
+    <string name="choice_art_on">An</string>
 </resources>
