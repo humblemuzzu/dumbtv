@@ -1,0 +1,28 @@
+id: fireos-insignia-aftdct31-ps7704
+title: "Insignia AFTDCT31"
+platform: fireos
+status: tested
+tested_on: "PS7704.5024N"
+models: []
+adb:
+  port: 5555
+  transport: wifi
+developer_mode: >-
+  Settings > My Fire TV > About > click the device name 7 times, then My Fire TV > Developer Options > ADB debugging: ON
+ip_location: "Settings > Network"
+prompts:
+  - name: "Allow USB debugging?"
+    blocks_automation: true
+    fix: "press Allow on the TV and tick Always allow"
+data:
+  packages: data/fireos/packages.txt
+  protected: data/fireos/protected.txt
+  never_disable: data/fireos/never-disable.txt
+  user_apps: data/fireos/user-apps.txt
+quirks:
+  - "PS7704.5024N with parental controls on (PARENTAL_CONTROLS_STATE=1): launcher.sh failed inside all.sh with 'Fire OS did not bind the HOME guard' after its own off-and-on retry. Running launcher.sh -y once more, with parental controls still on and nothing else changed, bound the guard and verify.sh passed."
+  - "com.amazon.tv.developer.dataservice kept running after being disabled; debloat.sh cut its background work as designed."
+notes: "Fire OS 7.7.0.4 (PS7704.5024N, Android 9, SDK 28). all.sh with PRIME=1 ALEXA=1 LAUNCHER=1 DNSFILTER=1 YOUTUBE=0: debloat disabled 32, protected 0, suspect 0, apps uninstalled 0; dnsfilter self-test passed after the script's own reboot; launcher.sh needed a second run (see quirks); verify.sh then exited 0 with all checks passing: 33 disabled, 13 settings, filter 396 entries, launcher 1.11, data saver on."
+verify:
+  blocked: data/blocklists/verify-blocked.txt
+  allowed: data/blocklists/verify-allowed.txt
