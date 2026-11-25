@@ -38,6 +38,15 @@ final class Config {
     static final String FILE = "home.conf";
     /** Options › Export settings writes this copy into the media folder, for adb pull. */
     static final String EXPORT = "home-export.conf";
+    /**
+     * Input to open right after the TV wakes: an input id, or "home" / unset to stay on Home.
+     */
+    static final String WAKE_INPUT = "wake_input";
+    /**
+     * Stops {@code idle_input}: "off", or until an epoch time in ms. Unset or "0" lets it run.
+     * dumbtv quick settings sets it from its Auto-switch row (Home.onActivityResult).
+     */
+    static final String IDLE_PAUSE = "idle_pause";
 
     static final class Choice {
         final String key, title;
