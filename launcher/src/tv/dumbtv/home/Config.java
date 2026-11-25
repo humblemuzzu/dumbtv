@@ -44,7 +44,6 @@ final class Config {
     static final String WAKE_INPUT = "wake_input";
     /**
      * Stops {@code idle_input}: "off", or until an epoch time in ms. Unset or "0" lets it run.
-     * dumbtv quick settings sets it from its Auto-switch row (Home.onActivityResult).
      */
     static final String IDLE_PAUSE = "idle_pause";
 

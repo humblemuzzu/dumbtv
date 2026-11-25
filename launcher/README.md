@@ -137,14 +137,13 @@ For a TV that mostly shows one source (a Chromecast, a cable box):
 
 - **Options › Show on startup**: pick whether the TV wakes to the Home screen or
   directly to an input (HDMI 1, Chromecast, Live TV, etc.). Saved as `wake_input`
-  in [the settings file](#the-settings-file).
+  in [the settings file](#the-settings-file). Fire OS 7 and 8 only: the wake is seen by
+  the HOME guard, which Fire OS 6 does not run.
 - `idle_input=<minutes>` in the settings file: after that long on home with no key
   pressed, switch to the startup input. Set `idle_input` below the screensaver delay
   (Settings, 5 minutes by default) and the input's own picture, such as a Chromecast's
   ambient photos, takes the screensaver's place. HOME still returns to the home screen.
-  `idle_pause=off` stops the idle switch, and `idle_pause=<epoch ms>` stops it until then;
-  [dumbtv quick settings](../quick/README.md) sets this from its Auto-switch row where it
-  is installed.
+  `idle_pause=off` stops the idle switch, and `idle_pause=<epoch ms>` stops it until then.
 
 ## Child lock
 
@@ -248,6 +247,12 @@ memory=off
 inputs=on
 # auto tv home
 switch=auto
+# home, or an input's id (Options › Show on startup)
+wake_input=home
+# minutes on the home screen before wake_input opens; 0 = never
+idle_input=0
+# unset, off, or an epoch time in ms until which idle_input waits
+idle_pause=
 # black graphite midnight image adaptive adaptive-tint
 background=black
 # 0 20 40 60 80, image backgrounds only
