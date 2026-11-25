@@ -192,10 +192,11 @@ sleep 2
 source ../scripts/accessibility.sh
 user=$(sh_ am get-current-user | tr -d '\r')
 bound=0
-# A Hisense AFTHA001 left the first enable unbound, and a second run bound it at once (PR #193),
-# so the service is switched off and on once more before this gives up.
-for attempt in 1 2; do
-  [[ $attempt == 2 ]] && { echo "the HOME guard is not bound yet; switching it off and on again"; set_guard $GUARD; }
+# A Hisense AFTHA001 left the first enable unbound, and a second run bound it at once (PR #193);
+# an Insignia AFTDCT31 with parental controls on needed a third (PR #224). So the service is
+# switched off and on twice more before this gives up.
+for attempt in 1 2 3; do
+  [[ $attempt -gt 1 ]] && { echo "the HOME guard is not bound yet; switching it off and on again"; set_guard $GUARD; }
   for _ in $(seq 1 15); do
     if sh_ dumpsys accessibility | guard_bound "${user:-0}"; then bound=1; break; fi
     sleep 1
