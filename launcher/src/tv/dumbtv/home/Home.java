@@ -369,7 +369,7 @@ public final class Home extends Activity {
         ui.removeCallbacks(idle);
         int minutes;
         try {
-            minutes = Integer.parseInt(cfg.get("idle_input", "0").trim());
+            minutes = Integer.parseInt(cfg.get(Config.IDLE_INPUT, "0").trim());
         } catch (NumberFormatException e) {
             minutes = 0;
         }

@@ -5,6 +5,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ResolveInfo;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
@@ -144,6 +145,26 @@ public final class Input extends Activity {
             names.add(cfg.get("name." + current, current));
         }
         return new Config.Choice(Config.WAKE_INPUT, "Show on startup", "home",
+                values.toArray(new String[0]), names.toArray(new String[0]));
+    }
+
+    /**
+     * Inactivity timeout on the home screen before switching to the startup input.
+     * Values in minutes, or "off".
+     */
+    static Config.Choice idleChoice(Config cfg) {
+        String current = cfg.get(Config.IDLE_INPUT, "off");
+        if ("0".equals(current)) current = "off";
+        List<String> values = new ArrayList<>(Arrays.asList("off", "1", "2", "3", "4", "5", "10", "15", "30"));
+        List<String> names = new ArrayList<>(Arrays.asList(
+                "Off", "1 minute", "2 minutes", "3 minutes", "4 minutes",
+                "5 minutes", "10 minutes", "15 minutes", "30 minutes"
+        ));
+        if (!values.contains(current)) {
+            values.add(current);
+            names.add(current + " minutes");
+        }
+        return new Config.Choice(Config.IDLE_INPUT, "Switch to startup input after", "off",
                 values.toArray(new String[0]), names.toArray(new String[0]));
     }
 
