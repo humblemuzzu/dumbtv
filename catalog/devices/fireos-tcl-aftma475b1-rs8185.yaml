@@ -1,0 +1,40 @@
+id: fireos-tcl-aftma475b1-rs8185
+title: "TCL 50PF650K Freely Fire TV (AFTMA475B1), Fire OS 8.1.8.5"
+contributors:
+  - agentcragg
+platform: fireos
+status: partial
+tested_on: "Fire OS 8.1.8.5, RS8185.3885N (Android 11, SDK 30)"
+models:
+  - "AFTMA475B1 (TCL 50PF650K, UK, Freely)"
+adb:
+  port: 5555
+  transport: wifi
+developer_mode: >-
+  Settings > Device & Software > About > press OK on Your TV 7 times, then Device & Software > Developer Options > ADB debugging: ON
+ip_location: "Settings > About > Network"
+prompts:
+  - name: "Allow USB debugging?"
+    blocks_automation: true
+    fix: "Tick Always allow from this computer and press Allow; adb devices showed device within seconds"
+  - name: "ADB off after the first debloat reboot"
+    blocks_automation: true
+    fix: "Port 5555 refused although the TV was up, so reboot_wait stopped. Developer Options > ADB debugging off and on again, then allow this computer. On four later reboots ADB came back by itself"
+  - name: "Reconnect your remote (after the first debloat reboot)"
+    blocks_automation: true
+    fix: "Pressing Home as the prompt said turned the screen off. The owner woke the TV and turned ADB back on; restore.sh ran cleanly, a plain reboot with nothing disabled showed no prompt, and the same 31 packages were applied again with no prompt on that reboot or two later ones. com.amazon.vizzini was never disabled. Cause not isolated; pressing a button other than Home is the safer first try"
+data:
+  packages: data/fireos/packages.txt
+  protected: data/fireos/protected.txt
+  never_disable: data/fireos/never-disable.txt
+  user_apps: data/fireos/user-apps.txt
+quirks:
+  - "debloat.sh: 31 disabled, 0 protected, 0 system-disabled, 4 absent (shoptv.firetv.client, tv.fw.metrics, tigris, android.nfc), 0 suspect, with com.amazon.tv.forcedotaupdater.v2 and com.amazon.tv.easyupgrade kept (KEEP_APPS) because the owner wanted Amazon updates. neo.minerva.logcat, tv.developer.dataservice and device_remote_config_sync_service kept running after disable-user. All 31 stayed disabled through three reboots"
+  - "Freely (com.vewd.core.*), the HDMI inputs, the remote and Netflix worked after the debloat and after the launcher; Freely, AirPlay and com.mediatek.opapp show up as launchable apps in dumbtv home and were hidden with apps.hide"
+  - "launcher.sh: dumbtv home 1.12 installed and the Guard bound on the first try. appops answers 'Unknown operation string: AUTO_START' on this build, which install.sh tolerates. HOME from an app, HOME after standby, and HOME after a reboot all land on dumbtv home, and verify.sh's HOME-key check passed"
+  - "A home.conf pushed to /sdcard/Android/media/tv.dumbtv.home/ (apps.order, apps.show=com.amazon.venezia, apps.hide) was applied when the home screen next showed"
+  - "Turning ADB debugging OFF in Developer Options does not close port 5555 until a real reboot; standby is not enough. settings global adb_enabled already reads 0 while network ADB is up, so it is not the switch on this build"
+notes: "Debloat and launcher only, with PRIME=1 ALEXA=1 LAUNCHER=1 DNSFILTER=0 YOUTUBE=0; lockdown.sh and the DNS filter were not run, by the owner's choice. verify.sh passed (DNS checks skipped, data-saver warning expected). Same model code and build as fireos-tcl-aftma475b1, a different panel size."
+verify:
+  blocked: data/blocklists/verify-blocked.txt
+  allowed: data/blocklists/verify-allowed.txt
